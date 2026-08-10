@@ -1,0 +1,274 @@
+@import 'katex/dist/katex.min.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --aksara-ink: #0c2e2a;
+        --aksara-teal: #147a68;
+        --aksara-teal-dark: #0f5c4e;
+        --aksara-mist: #eef6f4;
+        --aksara-paper: #f5f8f7;
+        --aksara-line: #d5e3df;
+        --aksara-muted: #5b716c;
+        --aksara-warn: #b45309;
+        --aksara-danger: #b42318;
+        --aksara-info: #0369a1;
+        --aksara-ok: #047857;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    body {
+        @apply bg-aksara-paper text-aksara-ink antialiased;
+    }
+}
+
+@layer components {
+    .aksara-shell {
+        @apply min-h-screen bg-aksara-paper text-aksara-ink;
+    }
+
+    .aksara-sidebar {
+        @apply flex h-full flex-col border-r border-aksara-line bg-white overflow-hidden;
+        width: 100%;
+    }
+
+    /* ── Sidebar collapsed (stripbar) state — all via CSS, zero FOUC ── */
+    .sidebar-collapsed .aksara-sidebar .sb-label   { display: none !important; }
+    .sidebar-collapsed .aksara-sidebar .sb-divider  { display: none !important; }
+    .sidebar-collapsed .aksara-sidebar .sb-chevron  { display: none !important; }
+    .sidebar-collapsed .aksara-sidebar .sb-strip    { display: block !important; }
+
+    .sidebar-collapsed .aksara-sidebar .sb-link {
+        justify-content: center !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    .sidebar-collapsed .aksara-sidebar .sb-header-logo { justify-content: center !important; }
+    .sidebar-collapsed .aksara-sidebar .sb-user     { justify-content: center !important; }
+
+    /* Allow popups to escape sidebar overflow when collapsed */
+    .sidebar-collapsed .aksara-sidebar { overflow: visible !important; }
+    .sidebar-collapsed .aksara-sidebar nav { overflow: visible !important; }
+
+    /* Hover popup for collapsed groups */
+    .sb-group { position: relative; }
+    .sb-popup {
+        display: none;
+        position: absolute;
+        left: 100%;
+        top: 0;
+        z-index: 9999;
+        min-width: 12rem;
+        padding: 0.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--aksara-line);
+        background: white;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+    }
+    .sidebar-collapsed .sb-group:hover > .sb-popup { display: block; }
+    .sb-popup .aksara-sidebar-link { white-space: nowrap; }
+
+    .aksara-sidebar-link {
+        @apply flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-aksara-muted transition hover:bg-aksara-mist hover:text-aksara-ink;
+    }
+
+    .aksara-sidebar-link-active {
+        @apply bg-aksara-mist font-semibold text-aksara-teal-dark;
+    }
+
+    .aksara-topbar {
+        @apply sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-aksara-line bg-white/95 px-4 backdrop-blur sm:px-6;
+    }
+
+    .aksara-footer {
+        @apply sticky bottom-0 z-30 shrink-0 border-t border-aksara-line bg-white/95 px-4 py-3 text-xs text-aksara-muted backdrop-blur sm:px-6;
+    }
+
+    .aksara-panel {
+        @apply rounded-2xl border border-aksara-line bg-white shadow-sm;
+    }
+
+    .aksara-card {
+        @apply rounded-2xl border border-aksara-line bg-white shadow-sm transition-all;
+    }
+
+    .aksara-card-header {
+        @apply flex items-center justify-between border-b border-aksara-line px-6 py-4;
+    }
+
+    .aksara-card-body {
+        @apply p-6;
+    }
+
+    /* Buttons */
+    .aksara-btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-aksara-teal px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-aksara-teal-dark focus:outline-none focus:ring-2 focus:ring-aksara-teal focus:ring-offset-2 disabled:opacity-50;
+    }
+
+    .aksara-btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl border border-aksara-line bg-white px-4 py-2.5 text-sm font-semibold text-aksara-ink shadow-sm transition hover:bg-aksara-mist focus:outline-none focus:ring-2 focus:ring-aksara-teal focus:ring-offset-2 disabled:opacity-50;
+    }
+
+    .aksara-btn-danger {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50;
+    }
+
+    /* Form Controls */
+    .aksara-label {
+        @apply mb-1.5 block text-sm font-medium text-aksara-ink;
+    }
+
+    .aksara-input {
+        @apply w-full rounded-xl border-aksara-line bg-white text-sm text-aksara-ink shadow-sm transition focus:border-aksara-teal focus:ring-aksara-teal placeholder:text-aksara-muted/60;
+    }
+
+    .aksara-select {
+        @apply w-full rounded-xl border-aksara-line bg-white text-sm text-aksara-ink shadow-sm transition focus:border-aksara-teal focus:ring-aksara-teal;
+    }
+
+    .aksara-textarea {
+        @apply w-full rounded-xl border-aksara-line bg-white text-sm text-aksara-ink shadow-sm transition focus:border-aksara-teal focus:ring-aksara-teal placeholder:text-aksara-muted/60;
+    }
+
+    /* Tables */
+    .aksara-table {
+        @apply w-full text-left text-sm text-aksara-ink;
+    }
+
+    .aksara-th {
+        @apply border-b border-aksara-line bg-aksara-mist/50 px-4 py-3 font-semibold text-aksara-muted;
+    }
+
+    .aksara-td {
+        @apply border-b border-aksara-line/60 px-4 py-3.5 align-middle;
+    }
+
+    /* Tiptap Canvas Custom Style */
+    .ProseMirror {
+        @apply min-h-[160px] p-4 text-sm text-aksara-ink outline-none;
+        overflow: visible !important;
+        /* ruang untuk interaksi gambar di dekat tepi */
+        padding: 1.25rem !important;
+    }
+
+    .ProseMirror h1 { @apply text-2xl font-bold font-display my-3 text-aksara-ink; }
+    .ProseMirror h2 { @apply text-xl font-semibold font-display my-2 text-aksara-ink; }
+    .ProseMirror h3 { @apply text-lg font-medium font-display my-2 text-aksara-ink; }
+    .ProseMirror ul { @apply list-disc list-inside space-y-1 my-2; }
+    .ProseMirror ol { @apply list-decimal list-inside space-y-1 my-2; }
+    .ProseMirror blockquote { @apply border-l-4 border-aksara-teal pl-4 italic text-aksara-muted my-2; }
+    .ProseMirror table { @apply w-full border-collapse my-3 text-sm; }
+    .ProseMirror th { @apply border border-aksara-line bg-aksara-mist p-2 font-semibold text-left; }
+    .ProseMirror td { @apply border border-aksara-line p-2; }
+
+    .ProseMirror img,
+    .ProseMirror .aksara-editor-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        display: block;
+        pointer-events: auto !important;
+    }
+
+    .ProseMirror [data-resize-container],
+    .ProseMirror [data-aksara-image] {
+        position: relative;
+        max-width: 100%;
+        margin: 0.75rem auto;
+        outline: none;
+        overflow: visible !important;
+        z-index: 2;
+        pointer-events: auto !important;
+    }
+
+    .ProseMirror [data-resize-container][data-align="left"] {
+        margin-left: 0;
+        margin-right: auto;
+    }
+
+    .ProseMirror [data-resize-container][data-align="right"] {
+        margin-left: auto;
+        margin-right: 0;
+    }
+
+    .ProseMirror [data-resize-wrapper] {
+        position: relative !important;
+        display: inline-block !important;
+        max-width: 100%;
+        line-height: 0;
+        overflow: visible !important;
+        pointer-events: auto !important;
+    }
+
+    .ProseMirror-selectednode[data-resize-container],
+    .ProseMirror-selectednode [data-resize-wrapper],
+    .ProseMirror [data-resize-container].is-image-selected [data-resize-wrapper] {
+        outline: 2px solid rgba(15, 118, 110, 0.75) !important;
+        outline-offset: 3px;
+        border-radius: 0.5rem;
+    }
+
+    /* TipTap handles — inset di dalam gambar (tidak keluar overflow ancestor) */
+    .ProseMirror [data-resize-handle] {
+        position: absolute !important;
+        width: 18px !important;
+        height: 18px !important;
+        background: #0f766e !important;
+        border: 2px solid #fff !important;
+        border-radius: 9999px !important;
+        box-shadow: 0 0 0 1px rgba(15, 118, 110, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+        z-index: 70 !important;
+        pointer-events: auto !important;
+        opacity: 1 !important;
+        transform: none !important;
+        touch-action: none !important;
+    }
+
+    .ProseMirror [data-resize-handle="top-left"] {
+        top: 4px !important;
+        left: 4px !important;
+        right: auto !important;
+        bottom: auto !important;
+        cursor: nwse-resize;
+    }
+
+    .ProseMirror [data-resize-handle="top-right"] {
+        top: 4px !important;
+        right: 4px !important;
+        left: auto !important;
+        bottom: auto !important;
+        cursor: nesw-resize;
+    }
+
+    .ProseMirror [data-resize-handle="bottom-left"] {
+        bottom: 4px !important;
+        left: 4px !important;
+        top: auto !important;
+        right: auto !important;
+        cursor: nesw-resize;
+    }
+
+    .ProseMirror [data-resize-handle="bottom-right"] {
+        bottom: 4px !important;
+        right: 4px !important;
+        top: auto !important;
+        left: auto !important;
+        cursor: nwse-resize;
+    }
+
+    .ProseMirror a { @apply text-aksara-teal underline underline-offset-2 hover:text-aksara-teal-dark; }
+
+    /* Isolasi stacking context editor agar tidak kalah dari sticky chrome */
+    .aksara-tiptap-root {
+        position: relative;
+        z-index: 10;
+        overflow: visible !important;
+        isolation: isolate;
+    }
+}

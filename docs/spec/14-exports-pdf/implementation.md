@@ -1,0 +1,16 @@
+# Implementation — Export PDF (Blade)
+
+## Artefak
+
+| Area | Path |
+|---|---|
+| Views | `resources/views/exports/{plans-pdf,single-plan-pdf,cp-tp-pdf,atp-pdf}.blade.php` |
+| Controllers | `LearningPlanExportController`, `CurriculumExportController` |
+| Services | `LearningPlanExportImportService`, `CurriculumExportImportService` |
+| Routes | `plans.export`, `plans.export.single`, `references.export.cp-tp`, `references.export.atp` |
+| Tests | `LearningPlanExportImportTest`, `ReferenceExportImportTest` |
+
+## Catatan
+
+- Jangan menambah Blade page UI baru; PDF-only exception.
+- Permission mengikuti group plans/references.

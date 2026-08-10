@@ -1,0 +1,12 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+
+    # Level 5 — seimbang antara strict dan praktis untuk workshop
+    level: 5
+
+    excludePaths:
+        - app/Http/Middleware/EnsureRole.php

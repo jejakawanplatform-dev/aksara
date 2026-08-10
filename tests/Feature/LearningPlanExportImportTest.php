@@ -1,0 +1,106 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\AcademicYear;
+use App\Models\LearningPlan;
+use App\Models\SchoolClass;
+use App\Models\Semester;
+use App\Models\Subject;
+use App\Models\User;
+use Database\Seeders\DemoDataSeeder;
+use Database\Seeders\SystemSettingSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Tests\TestCase;
+
+class LearningPlanExportImportTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(DemoDataSeeder::class);
+        $this->seed(SystemSettingSeeder::class);
+    }
+
+    public function test_guru_bisa_mengunduh_ekspor_excel_rencana_pembelajaran(): void
+    {
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
+
+        $response = $this->actingAs($guru)
+            ->get(route('plans.export', ['format' => 'excel']));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_guru_bisa_mengunduh_ekspor_word_rencana_pembelajaran(): void
+    {
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
+
+        $response = $this->actingAs($guru)
+            ->get(route('plans.export', ['format' => 'word']));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    }
+
+    public function test_guru_bisa_membuka_halaman_cetak_pdf_rencana_pembelajaran(): void
+    {
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
+
+        $response = $this->actingAs($guru)
+            ->get(route('plans.export', ['format' => 'pdf']));
+
+        $response->assertOk();
+        $response->assertSee('Rekap Rencana Pembelajaran');
+    }
+
+    public function test_guru_bisa_mengunduh_ekspor_single_word_dan_pdf(): void
+    {
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
+        $plan = LearningPlan::where('teacher_id', $guru->id)->firstOrFail();
+
+        $wordResponse = $this->actingAs($guru)
+            ->get(route('plans.export.single', [$plan, 'word']));
+        $wordResponse->assertOk();
+
+        $pdfResponse = $this->actingAs($guru)
+            ->get(route('plans.export.single', [$plan, 'pdf']));
+        $pdfResponse->assertOk();
+        $pdfResponse->assertSee($plan->topic);
+    }
+
+    public function test_guru_bisa_mengunduh_template_impor_excel(): void
+    {
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
+
+        $response = $this->actingAs($guru)
+            ->get(route('plans.import.template'));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_guru_bisa_mengimpor_file_rencana_pembelajaran(): void
+    {
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
+        $service = app(\App\Services\LearningPlanExportImportService::class);
+
+        $templateContent = $service->downloadTemplate();
+        $file = UploadedFile::fake()->createWithContent('import.xlsx', $templateContent);
+
+        $this->actingAs($guru)
+            ->post(route('plans.import'), [
+                'importFile' => $file,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('learning_plans', [
+            'teacher_id' => $guru->id,
+            'topic' => 'Berpikir Komputasional: Algoritma Pemrograman',
+        ]);
+    }
+}
