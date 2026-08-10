@@ -406,7 +406,7 @@ class LearningPlanExportImportService
                     'teacher_id' => $teacherId,
                     'academic_year_id' => $activeYear->id,
                     'semester_id' => $activeSemester->id,
-                    'class_id' => $class?->id ?? SchoolClass::query()->value('id') ?? 1,
+                    'class_id' => $class !== null ? $class->id : (SchoolClass::query()->value('id') ?? 1),
                     'subject_id' => $subject->id,
                     'phase' => strtoupper($phase),
                     'grade' => $grade ?: 7,

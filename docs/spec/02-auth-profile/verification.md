@@ -15,6 +15,7 @@
 - [x] Login/register/logout via page Vue
 - [x] Profil edit/update/destroy
 - [x] Feature Auth + Profile hijau
+- [x] FormRequest scaffold `authorize(): false` dihapus (tak terpakai)
 
 ## Perintah
 

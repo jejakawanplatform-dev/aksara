@@ -1,8 +1,8 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Card from '@/Components/ui/Card.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'Hak Akses (RBAC)' },
@@ -14,7 +14,8 @@ const props = defineProps({
 });
 
 const form = useForm({
-    matrix: structuredClone(props.matrix),
+    // props.* is a Vue Proxy — structuredClone cannot clone proxies
+    matrix: JSON.parse(JSON.stringify(props.matrix)),
 });
 
 function isLocked(roleValue, permName) {
@@ -36,19 +37,17 @@ function resetDefaults() {
         <template #header>{{ pageTitle }}</template>
 
         <div class="space-y-6">
-            <Card
-                title="Matrix Hak Akses & Otorisasi"
-                description="Pengaturan hak akses permission per role secara terpusat. Role tetap (enum). Permission wajib admin terkunci."
+            <PageHeader
+                title="Hak Akses (RBAC)"
+                description="Matrix permission per role. Role tetap (enum); permission wajib admin terkunci."
             >
                 <template #actions>
-                    <div class="flex flex-wrap gap-2">
-                        <Btn type="button" :disabled="form.processing" @click="save">Simpan matrix</Btn>
-                        <Btn type="button" variant="secondary" :disabled="form.processing" @click="resetDefaults">
-                            Reset default
-                        </Btn>
-                    </div>
+                    <Btn type="button" size="sm" :disabled="form.processing" @click="save">Simpan matrix</Btn>
+                    <Btn type="button" variant="secondary" size="sm" :disabled="form.processing" @click="resetDefaults">
+                        Reset default
+                    </Btn>
                 </template>
-            </Card>
+            </PageHeader>
 
             <div class="overflow-x-auto rounded-2xl border border-aksara-line bg-white">
                 <table class="min-w-full text-sm">

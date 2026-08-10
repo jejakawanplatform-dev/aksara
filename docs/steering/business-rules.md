@@ -45,7 +45,7 @@ draft → reviewed → published
 ### Aturan
 
 1. Siswa hanya boleh membaca materi berstatus `published`.
-2. Idealnya materi difilter ke kelas yang diikuti siswa (`class_members`).
+2. Idealnya materi difilter ke kelas yang diikuti siswa (`class_members`) — ditegakkan di `MaterialController` index/show + dashboard siswa.
 3. Membuka materi mencatat `learning_events` (`material_opened` / `material_read`).
 4. Konten teks seksi disimpan di JSON `learning_materials.content` (`title`, `sections[].heading/body`, `reflectionQuestion`).
 5. File gambar materi (jika ada) disimpan di disk `public` (`materials/{material_id}/`); HTML body hanya boleh mereferensikan `/storage/...` atau `data:image/...` tepercaya (ADR-008).
@@ -107,11 +107,8 @@ draft → reviewed → published
 
 ## 10. Aturan yang belum sepenuhnya ditegakkan (debt)
 
-Catatan untuk agent/developer — perbaiki bila menyentuh modul terkait:
+Catatan untuk agent/developer:
 
-- Filter materi siswa berdasarkan keanggotaan kelas (saat ini bisa menampilkan semua `published`).
-- Akses laporan/absensi untuk `homeroom_teacher` masih terbatas di beberapa jalur.
-- Form kuis guru ada di `Quiz/Form.vue` (via `/plans/{plan}/quiz`); penyimpanan by-title masih debt.
-- Policy Laravel belum wajib; otorisasi fitur lewat Spatie permission + kepemilikan data. Matrix di `/access`.
+- Policy Laravel per-model **opsional** (P3 / deferred) — otorisasi fitur lewat Spatie permission + kepemilikan data. Matrix di `/access`. Lihat ADR-003/007.
 
 Lihat juga `docs/steering/decision-log.md` dan `docs/steering/handover.md`.

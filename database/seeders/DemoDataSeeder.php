@@ -27,6 +27,7 @@ class DemoDataSeeder extends Seeder
         $this->call([
             RolePermissionSeeder::class,
             InformatikaCurriculumSeeder::class,
+            SystemSettingSeeder::class,
         ]);
 
         $year = AcademicYear::active() ?? AcademicYear::query()->firstOrFail();
@@ -39,6 +40,7 @@ class DemoDataSeeder extends Seeder
                 'name' => 'Admin Aksara',
                 'password' => Hash::make('password'),
                 'role' => UserRole::Admin,
+                'email_verified_at' => now(),
             ],
         );
         $admin->syncAppRole();
@@ -49,6 +51,7 @@ class DemoDataSeeder extends Seeder
                 'name' => 'Ibu Naya',
                 'password' => Hash::make('password'),
                 'role' => UserRole::Teacher,
+                'email_verified_at' => now(),
             ],
         );
         $guru->syncAppRole();
@@ -59,6 +62,7 @@ class DemoDataSeeder extends Seeder
                 'name' => 'Pak Arif',
                 'password' => Hash::make('password'),
                 'role' => UserRole::HomeroomTeacher,
+                'email_verified_at' => now(),
             ],
         );
         $waliKelas->syncAppRole();
@@ -72,6 +76,7 @@ class DemoDataSeeder extends Seeder
                     'name' => $nama,
                     'password' => Hash::make('password'),
                     'role' => UserRole::Student,
+                    'email_verified_at' => now(),
                 ],
             );
             $s->syncAppRole();
@@ -84,6 +89,7 @@ class DemoDataSeeder extends Seeder
                 'name' => 'Ortu Adit',
                 'password' => Hash::make('password'),
                 'role' => UserRole::Parent,
+                'email_verified_at' => now(),
             ],
         );
         $waliAdit->syncAppRole();
@@ -94,6 +100,7 @@ class DemoDataSeeder extends Seeder
                 'name' => 'Ortu Bunga',
                 'password' => Hash::make('password'),
                 'role' => UserRole::Parent,
+                'email_verified_at' => now(),
             ],
         );
         $waliBunga->syncAppRole();

@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Enums\AttendanceStatus;
 use App\Enums\MaterialStatus;
 use App\Enums\PlanStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\AiGeneration;
+use App\Models\AttendanceRecord;
 use App\Models\LearningMaterial;
 use App\Models\LearningPlan;
+use App\Models\QuizAttempt;
 use App\Models\SchoolClass;
 use App\Models\TeacherEvaluation;
 use App\Models\User;
@@ -175,19 +178,99 @@ class DashboardController extends Controller
 
     private function waliKelas(User $user): Response
     {
-        $classes = SchoolClass::where('homeroom_teacher_id', $user->id)
+        $classes = SchoolClass::query()
+            ->where('homeroom_teacher_id', $user->id)
+            ->with(['students:id,name'])
             ->withCount('students')
-            ->get()
-            ->map(fn (SchoolClass $class) => [
+            ->orderBy('name')
+            ->get();
+
+        $classSummaries = $classes->map(function (SchoolClass $class) {
+            $planIds = LearningPlan::query()
+                ->where('class_id', $class->id)
+                ->pluck('id');
+
+            $attendances = $planIds->isEmpty()
+                ? collect()
+                : AttendanceRecord::query()->whereIn('plan_id', $planIds)->get();
+
+            $totalAttendance = $attendances->count();
+            $hadirCount = $attendances->where('status', AttendanceStatus::Present)->count();
+            $pctHadir = $totalAttendance > 0
+                ? (int) round(($hadirCount / $totalAttendance) * 100)
+                : null;
+
+            $publishedMaterials = LearningMaterial::query()
+                ->where('status', MaterialStatus::Published)
+                ->whereHas('plan', fn ($q) => $q->where('class_id', $class->id))
+                ->count();
+
+            $attempts = $planIds->isEmpty()
+                ? collect()
+                : QuizAttempt::query()
+                    ->whereHas('quiz', fn ($q) => $q->whereIn('plan_id', $planIds))
+                    ->get();
+
+            $avgQuizScore = $attempts->count() > 0
+                ? (int) round($attempts->avg('score'))
+                : null;
+
+            $attentionStudents = $class->students
+                ->map(function (User $student) use ($attendances) {
+                    $records = $attendances->where('student_id', $student->id);
+                    $total = $records->count();
+                    if ($total === 0) {
+                        return null;
+                    }
+                    $hadir = $records->where('status', AttendanceStatus::Present)->count();
+                    $pct = (int) round(($hadir / $total) * 100);
+
+                    return [
+                        'id' => $student->id,
+                        'name' => $student->name,
+                        'pctHadir' => $pct,
+                        'hadirCount' => $hadir,
+                        'totalAttendance' => $total,
+                    ];
+                })
+                ->filter()
+                ->sortBy('pctHadir')
+                ->take(5)
+                ->values()
+                ->all();
+
+            return [
                 'id' => $class->id,
                 'name' => $class->name,
                 'grade' => $class->grade,
                 'studentsCount' => $class->students_count,
-            ]);
+                'plansCount' => $planIds->count(),
+                'publishedMaterials' => $publishedMaterials,
+                'pctHadir' => $pctHadir,
+                'hadirCount' => $hadirCount,
+                'totalAttendance' => $totalAttendance,
+                'quizAttempts' => $attempts->count(),
+                'avgQuizScore' => $avgQuizScore,
+                'attentionStudents' => $attentionStudents,
+                'attendanceSummaryUrl' => route('attendance.summary', ['classId' => $class->id]),
+            ];
+        })->values();
+
+        $withAttendance = $classSummaries->filter(fn (array $c) => $c['totalAttendance'] > 0);
+        $overallPct = $withAttendance->isNotEmpty()
+            ? (int) round($withAttendance->avg('pctHadir'))
+            : null;
 
         return Inertia::render('Dashboard/WaliKelas', [
             'userName' => $user->name,
-            'classes' => $classes,
+            'metrics' => [
+                'classesCount' => $classSummaries->count(),
+                'studentsCount' => $classSummaries->sum('studentsCount'),
+                'publishedMaterials' => $classSummaries->sum('publishedMaterials'),
+                'pctHadir' => $overallPct,
+                'quizAttempts' => $classSummaries->sum('quizAttempts'),
+            ],
+            'classes' => $classSummaries,
             'attendanceSummaryUrl' => route('attendance.summary'),
         ]);
     }

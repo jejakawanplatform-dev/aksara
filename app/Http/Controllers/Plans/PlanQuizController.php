@@ -21,6 +21,7 @@ class PlanQuizController extends Controller
         $existing = $plan->quizzes()->latest()->get();
 
         $defaults = [
+            'id' => null,
             'title' => 'Kuis: '.$plan->topic,
             'questions' => [
                 [
@@ -35,6 +36,7 @@ class PlanQuizController extends Controller
         if ($existing->isNotEmpty()) {
             $latest = $existing->first();
             $defaults = [
+                'id' => $latest->id,
                 'title' => $latest->title,
                 'questions' => is_array($latest->questions) && count($latest->questions) > 0
                     ? $latest->questions
@@ -56,6 +58,7 @@ class PlanQuizController extends Controller
                 'title' => $q->title,
                 'status' => $q->status,
                 'questionCount' => is_array($q->questions) ? count($q->questions) : 0,
+                'questions' => is_array($q->questions) ? $q->questions : [],
             ]),
             'form' => $defaults,
             'storeUrl' => route('plans.quiz.store', $plan),
@@ -68,6 +71,7 @@ class PlanQuizController extends Controller
         abort_unless($plan->teacher_id === Auth::id(), 403);
 
         $validated = $request->validate([
+            'id' => 'nullable|integer',
             'title' => 'required|string|min:3|max:255',
             'status' => 'required|in:draft,published',
             'questions' => 'required|array|min:1',
@@ -85,13 +89,25 @@ class PlanQuizController extends Controller
             }
         }
 
-        Quiz::updateOrCreate(
-            ['plan_id' => $plan->id, 'title' => $validated['title']],
-            [
-                'questions' => array_values($validated['questions']),
-                'status' => $validated['status'],
-            ]
-        );
+        $payload = [
+            'title' => $validated['title'],
+            'questions' => array_values($validated['questions']),
+            'status' => $validated['status'],
+        ];
+
+        $quizId = $validated['id'] ?? null;
+        if ($quizId) {
+            $quiz = Quiz::query()
+                ->where('plan_id', $plan->id)
+                ->whereKey($quizId)
+                ->first();
+
+            abort_unless($quiz !== null, 404);
+
+            $quiz->update($payload);
+        } else {
+            $plan->quizzes()->create($payload);
+        }
 
         $message = $validated['status'] === 'published'
             ? 'Kuis diterbitkan. Siswa dapat mengerjakan.'

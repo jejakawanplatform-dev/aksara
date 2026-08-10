@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/ui/Card.vue';
 import Field from '@/Components/ui/Field.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Modal from '@/Components/ui/Modal.vue';
 
 const props = defineProps({
     mustVerifyEmail: { type: Boolean, default: false },
@@ -190,59 +191,54 @@ function destroyAccount() {
             >
                 <Btn
                     type="button"
-                    class="!bg-red-600 hover:!bg-red-700 focus:!ring-red-500"
+                    variant="danger"
                     @click="showDeleteConfirm = true"
                 >
                     Hapus akun
                 </Btn>
 
-                <div
-                    v-if="showDeleteConfirm"
-                    class="fixed inset-0 z-50 flex items-center justify-center bg-aksara-ink/40 p-4"
-                    @keydown.escape.window="showDeleteConfirm = false"
+                <Modal
+                    :open="showDeleteConfirm"
+                    title="Yakin ingin menghapus akun?"
+                    description="Masukkan password untuk mengonfirmasi penghapusan permanen."
+                    max-width="md"
+                    @close="showDeleteConfirm = false"
                 >
-                    <div class="w-full max-w-md rounded-2xl border border-aksara-line bg-white p-6 shadow-lg">
-                        <h3 class="font-display text-lg font-semibold text-aksara-ink">
-                            Yakin ingin menghapus akun?
-                        </h3>
-                        <p class="mt-2 text-sm text-aksara-muted">
-                            Masukkan password untuk mengonfirmasi penghapusan permanen.
-                        </p>
+                    <form class="space-y-4" @submit.prevent="destroyAccount">
+                        <Field
+                            label="Password"
+                            for-id="delete_password"
+                            :error="deleteForm.errors.password"
+                        >
+                            <input
+                                id="delete_password"
+                                v-model="deleteForm.password"
+                                type="password"
+                                class="aksara-input"
+                                placeholder="Password"
+                            />
+                        </Field>
 
-                        <form class="mt-4 space-y-4" @submit.prevent="destroyAccount">
-                            <Field
-                                label="Password"
-                                for-id="delete_password"
-                                :error="deleteForm.errors.password"
+                        <div class="flex justify-end gap-2">
+                            <Btn
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                @click="showDeleteConfirm = false"
                             >
-                                <input
-                                    id="delete_password"
-                                    v-model="deleteForm.password"
-                                    type="password"
-                                    class="aksara-input"
-                                    placeholder="Password"
-                                />
-                            </Field>
-
-                            <div class="flex justify-end gap-2">
-                                <Btn
-                                    type="button"
-                                    variant="secondary"
-                                    @click="showDeleteConfirm = false"
-                                >
-                                    Batal
-                                </Btn>
-                                <Btn
-                                    type="submit"
-                                    class="!bg-red-600 hover:!bg-red-700 focus:!ring-red-500"
-                                    :disabled="deleteForm.processing"
-                                >
-                                    Hapus akun
-                                </Btn>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                                Batal
+                            </Btn>
+                            <Btn
+                                type="submit"
+                                variant="danger"
+                                size="sm"
+                                :disabled="deleteForm.processing"
+                            >
+                                Hapus akun
+                            </Btn>
+                        </div>
+                    </form>
+                </Modal>
             </Card>
         </div>
     </AppLayout>

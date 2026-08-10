@@ -11,8 +11,8 @@ const page = usePage();
 const openGroups = ref({});
 
 const permissions = computed(() => page.props.auth?.permissions ?? []);
-const user = computed(() => page.props.auth?.user);
 const dashboardUrl = computed(() => page.props.urls?.dashboard || '/dashboard');
+const copyrightYear = new Date().getFullYear();
 
 const groups = computed(() => {
     const raw = page.props.nav ?? [];
@@ -38,10 +38,6 @@ function toggleGroup(title) {
         ...openGroups.value,
         [title]: !isOpen(title),
     };
-}
-
-function initial(name) {
-    return (name || 'U').charAt(0).toUpperCase();
 }
 </script>
 
@@ -155,19 +151,17 @@ function initial(name) {
             </template>
         </nav>
 
-        <div class="border-t border-aksara-line bg-aksara-mist/30 p-3 text-xs text-aksara-muted">
-            <div
-                class="sb-user flex items-center gap-2.5"
-                :title="`${user?.name || ''} (${user?.roleLabel || ''})`"
+        <div class="sb-footer border-t border-aksara-line bg-aksara-mist/30 px-3 py-3 text-center">
+            <p class="sb-label text-[10px] leading-snug text-aksara-muted">
+                © {{ copyrightYear }} Aksara
+            </p>
+            <p class="sb-label mt-0.5 text-[10px] text-aksara-muted/70">Pembelajaran AI</p>
+            <p
+                class="sb-footer-mark hidden text-[10px] font-semibold tracking-wide text-aksara-muted"
+                title="Aksara"
             >
-                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-aksara-teal/10 font-semibold text-aksara-teal">
-                    {{ initial(user?.name) }}
-                </div>
-                <div class="sb-label overflow-hidden">
-                    <p class="truncate font-medium text-aksara-ink">{{ user?.name }}</p>
-                    <p class="truncate text-[11px] text-aksara-muted">{{ user?.roleLabel }}</p>
-                </div>
-            </div>
+                ©
+            </p>
         </div>
     </aside>
 </template>

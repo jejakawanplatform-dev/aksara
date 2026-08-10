@@ -8,14 +8,17 @@ trait ScopesTeacherOrAdmin
 {
     /**
      * Scope query berdasarkan role user:
-     * - Admin / User dengan permission khusus: Dapat mengakses seluruh record (Global).
-     * - Guru: Ter-scope hanya pada record miliknya (teacher_id = auth->id).
+     * - Admin: seluruh record
+     * - Guru: hanya `teacher_id` miliknya
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeForCurrentUser(Builder $query, string $teacherColumn = 'teacher_id'): Builder
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return $query;
         }
 
@@ -23,6 +26,6 @@ trait ScopesTeacherOrAdmin
             return $query;
         }
 
-        return $query->where($this->getTable() . '.' . $teacherColumn, $user->id);
+        return $query->where($this->getTable().'.'.$teacherColumn, $user->id);
     }
 }

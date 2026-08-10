@@ -261,9 +261,9 @@ export const AksaraImage = Image.extend({
             dom.style.visibility = 'visible';
             dom.style.pointerEvents = 'auto';
             dom.style.overflow = 'visible';
-            // Outline selalu — bukti NodeView aktif + mudah diklik
-            dom.style.outline = '2px dashed rgba(15, 118, 110, 0.35)';
-            dom.style.outlineOffset = '4px';
+            // Outline hanya via CSS .ProseMirror-selectednode / .is-image-selected
+            dom.style.outline = 'none';
+            dom.style.outlineOffset = '';
             dom.style.borderRadius = '0.5rem';
 
             if (node.attrs.width) {

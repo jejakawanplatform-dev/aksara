@@ -6,14 +6,15 @@ const props = defineProps({
     title: { type: String, default: null },
 });
 
+/** Prefer aksara semantic tokens (spec 17) — avoid ad-hoc purple/sky palettes */
 const tones = {
-    info: 'border-sky-200 bg-sky-50 text-sky-900',
-    success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    ok: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    warning: 'border-amber-200 bg-amber-50 text-amber-950',
-    warn: 'border-amber-200 bg-amber-50 text-amber-950',
-    danger: 'border-red-200 bg-red-50 text-red-900',
-    critical: 'border-red-200 bg-red-50 text-red-900',
+    info: 'border-aksara-info/25 bg-aksara-info/5 text-aksara-ink',
+    success: 'border-aksara-ok/25 bg-aksara-ok/5 text-aksara-ink',
+    ok: 'border-aksara-ok/25 bg-aksara-ok/5 text-aksara-ink',
+    warning: 'border-aksara-warn/30 bg-aksara-warn/5 text-aksara-ink',
+    warn: 'border-aksara-warn/30 bg-aksara-warn/5 text-aksara-ink',
+    danger: 'border-aksara-danger/25 bg-aksara-danger/5 text-aksara-ink',
+    critical: 'border-aksara-danger/25 bg-aksara-danger/5 text-aksara-ink',
     ai: 'border-aksara-line bg-aksara-mist text-aksara-ink',
 };
 
@@ -22,8 +23,8 @@ const toneClass = computed(() => tones[props.tone] || tones.info);
 
 <template>
     <div class="rounded-xl border px-4 py-3 text-sm" :class="toneClass">
-        <p v-if="title" class="font-semibold">{{ title }}</p>
-        <div :class="{ 'mt-1': !!title }">
+        <p v-if="title" class="font-semibold text-aksara-ink">{{ title }}</p>
+        <div :class="{ 'mt-1': !!title }" class="text-aksara-ink/90">
             <slot />
         </div>
     </div>

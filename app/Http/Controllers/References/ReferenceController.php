@@ -32,9 +32,10 @@ class ReferenceController extends Controller
 
     public function index(Request $request, SettingService $service): Response
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::REFERENCES_VIEW), 403);
+        $user = Auth::user();
+        abort_unless($user && $user->can(PermissionCatalog::REFERENCES_VIEW), 403);
 
-        $canManage = Auth::user()?->can(PermissionCatalog::REFERENCES_MANAGE) ?? false;
+        $canManage = $user->can(PermissionCatalog::REFERENCES_MANAGE);
 
         $tab = (string) $request->query('tab', $canManage ? 'profil' : 'tahun');
         if (! in_array($tab, self::TABS, true)) {
@@ -160,7 +161,7 @@ class ReferenceController extends Controller
                     'grade' => $tp->grade,
                     'sequence' => $tp->sequence,
                     'curriculum_cp_id' => $tp->curriculum_cp_id,
-                ])->values(),
+                ])->values()->all(),
             ]);
 
         $atp = CurriculumAtpItem::query()
@@ -277,7 +278,7 @@ class ReferenceController extends Controller
             'availableStudents' => $availableStudents,
             'teacherEnrolledClassIds' => $teacherEnrolledClassIds,
             'mySubjectIds' => $mySubjectIds,
-            'isTeacher' => Auth::user()?->isTeacher() || Auth::user()?->isHomeroomTeacher(),
+            'isTeacher' => $user->isTeacher() || $user->isHomeroomTeacher(),
             'urls' => [
                 'index' => route('references.index'),
                 'school' => route('references.school'),
@@ -900,7 +901,7 @@ class ReferenceController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:100',
-            'code' => 'required|string|max:20|unique:subjects,code,'.($subject?->id ?? 'NULL'),
+            'code' => 'required|string|max:20|unique:subjects,code,'.($subject !== null ? $subject->id : 'NULL'),
             'phase' => 'required|string|max:5',
             'jenjang' => 'required|string|max:20',
             'description' => 'nullable|string|max:500',

@@ -46,7 +46,7 @@ class QuizAttemptController extends Controller
             'alreadyDone' => (bool) $existing && ! $justSubmitted,
             'submitted' => (bool) $existing,
             'score' => $existing?->score,
-            'answers' => $existing?->answers ?? [],
+            'answers' => $existing !== null ? ($existing->answers ?? []) : [],
             'submitUrl' => route('quiz.attempt.submit', $quiz),
         ]);
     }

@@ -1,15 +1,15 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import Sidebar from '@/Layouts/Sidebar.vue';
 import Topbar from '@/Layouts/Topbar.vue';
 import Flash from '@/Components/ui/Flash.vue';
+import NavIcon from '@/Components/ui/NavIcon.vue';
 
 defineProps({
     title: { type: String, default: '' },
 });
 
-const page = usePage();
 const sidebarOpen = ref(false);
 const sidebarCollapsed = ref(false);
 
@@ -35,6 +35,22 @@ function toggleCollapse() {
                 <Sidebar :collapsed="sidebarCollapsed" />
             </div>
 
+            <!-- Collapse control sits on the seam between sidebar + topbar -->
+            <button
+                type="button"
+                class="aksara-sidebar-edge-toggle"
+                :title="sidebarCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'"
+                :aria-label="sidebarCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'"
+                :aria-pressed="sidebarCollapsed"
+                @click="toggleCollapse"
+            >
+                <NavIcon
+                    name="chevron-left"
+                    class="h-4 w-4 transition-transform duration-300"
+                    :class="{ 'rotate-180': sidebarCollapsed }"
+                />
+            </button>
+
             <div
                 v-show="sidebarOpen"
                 class="fixed inset-0 z-40 lg:hidden"
@@ -50,12 +66,7 @@ function toggleCollapse() {
             </div>
 
             <div class="aksara-content-rail flex min-h-0 min-w-0 flex-1 flex-col">
-                <Topbar
-                    :title="title"
-                    :collapsed="sidebarCollapsed"
-                    @toggle-mobile="sidebarOpen = !sidebarOpen"
-                    @toggle-collapse="toggleCollapse"
-                >
+                <Topbar :title="title" @toggle-mobile="sidebarOpen = !sidebarOpen">
                     <template #title>
                         <slot name="header">{{ title }}</slot>
                     </template>

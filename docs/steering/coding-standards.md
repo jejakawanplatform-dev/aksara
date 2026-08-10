@@ -55,9 +55,9 @@ resources/js/
   inertia-app.js               ← createInertiaApp
   bootstrap.js
   Layouts/                     ← AppLayout, GuestLayout, Sidebar, Topbar
-  Components/ui/               ← Btn, Card, Field, Flash, StatusBadge,
-                               ← Alert, EmptyState, Table, Loading, Icon
-  Components/tiptap/           ← TipTapEditor.vue, aksara-image.js
+  Components/ui/               ← Btn, Card, Field, Flash, StatusBadge, PageHeader,
+                               ← Alert, EmptyState, Table, Loading, Icon, Modal
+  Components/tiptap/           ← TipTapEditor.vue, TipTapToolbar.vue, aksara-image.js, MediaPicker.vue
   Pages/{Domain}/              ← satu page per layar
   Composables/
   lib/
@@ -86,8 +86,9 @@ tests/Feature|Unit/
 - Alias import: `@/` → `resources/js/`.
 - Layout authenticated: `Layouts/AppLayout.vue` + shared `auth` / `nav` / flash dari `HandleInertiaRequests`.
 - Layout guest: `Layouts/GuestLayout.vue`.
-- TipTap: `@tiptap/vue-3` + `Components/tiptap/*`; KaTeX hanya di-load bila mode STEM (`with-math`).
-- Design tokens / utility: class `.aksara-*` di CSS + komponen `Components/ui/*`.
+- TipTap: `@tiptap/vue-3` + `Components/tiptap/*`; props `withMath` + `media` (list/upload/delete URL). KaTeX lazy hanya bila `withMath`.
+- Design system SoT: `docs/spec/17-design-system` + token `.aksara-*` / `aksara.*` Tailwind (ADR-012 light-only).
+- Design tokens / utility: class `.aksara-*` di CSS + komponen `Components/ui/*` (Btn/Modal/Card/…).
 - Tailwind `content` wajib include `resources/js/**/*.{js,vue}`.
 - Config: `inertia.use_script_element_for_initial_page=true` (client Inertia v3).
 

@@ -63,10 +63,10 @@ function statusClass(status) {
                         </p>
                     </div>
 
-                    <div class="rounded-lg border border-purple-100 bg-purple-50 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-purple-600">Status</p>
+                    <div class="rounded-lg border border-aksara-line bg-aksara-mist/50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-aksara-teal">Status</p>
                         <p class="mt-1 text-2xl font-bold" :class="statusClass(data.status)">{{ data.status }}</p>
-                        <p class="mt-1 text-xs text-purple-500">Berdasarkan kehadiran & nilai</p>
+                        <p class="mt-1 text-xs text-aksara-muted">Berdasarkan kehadiran & nilai</p>
                     </div>
                 </div>
             </Card>

@@ -8,23 +8,26 @@
 | Pages | `resources/js/Pages/Quiz/{Form,Attempt}.vue` |
 | Models | `Quiz`, `QuizAttempt` |
 | Routes | `plans.quiz*`, `quiz.attempt*` |
-| Test | `tests/Feature/LearningPipelineTest.php` |
+| Tests | `LearningPipelineTest`, `PlanQuizTest` |
 
 ## Checklist
 
 - [x] Form guru (`plans.manage`) + attempt siswa (`quiz.attempt`)
 - [x] Satu attempt per siswa
-- [x] Pipeline test menyentuh kuis
+- [x] Simpan/update by `id` (bukan title)
+- [x] Pipeline + `PlanQuizTest` hijau
 
 ## Perintah
 
 ```bash
 php artisan test --filter=LearningPipelineTest
+php artisan test --filter=PlanQuizTest
 ```
 
 ## Uji manual
 
 | Langkah | Akun | Harapan |
 |---|---|---|
-| Sunting kuis | guru | tersimpan |
+| Sunting kuis + ganti judul | guru | entri sama (id) ter-update |
+| + Kuis baru | guru | entri baru |
 | Kerjakan kuis 2× | siswa | kedua ditolak |

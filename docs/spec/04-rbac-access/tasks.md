@@ -9,4 +9,4 @@
 | T05 | Page `Access/Index.vue` (matrix checkbox) | P0 | done | wireKey form-safe |
 | T06 | Gate route domain dengan `permission:*` | P0 | done | `routes/web.php` |
 | T07 | `RbacMatrixTest` | P1 | done | |
-| T08 | Policy Laravel per-model (opsional) | P3 | todo | belum wajib |
+| T08 | Policy Laravel per-model (opsional) | P3 | deferred | belum wajib (Spatie + ownership) |

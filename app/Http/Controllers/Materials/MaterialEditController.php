@@ -83,10 +83,42 @@ class MaterialEditController extends Controller
                 'update' => route('materials.update', $material),
                 'publish' => route('materials.publish', $material),
                 'images' => route('materials.images', $material),
+                'media' => route('materials.media', $material),
+                'mediaDestroyBase' => url('/materials/'.$material->id.'/media'),
                 'copilot' => route('materials.copilot', $material),
                 'show' => route('materials.show', $material),
             ],
         ]);
+    }
+
+    public function indexMedia(LearningMaterial $material, MaterialImageService $images): JsonResponse
+    {
+        $this->authorizeEditor($material);
+
+        return response()->json([
+            'items' => $images->list($material),
+        ]);
+    }
+
+    public function destroyMedia(LearningMaterial $material, string $filename, MaterialImageService $images): JsonResponse
+    {
+        $this->authorizeEditor($material);
+
+        try {
+            $images->delete($material, $filename);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'errors' => ['filename' => [$e->getMessage()]],
+            ], 422);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'errors' => ['filename' => [$e->getMessage()]],
+            ], 422);
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     public function update(Request $request, LearningMaterial $material): RedirectResponse

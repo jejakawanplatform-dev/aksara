@@ -3,10 +3,9 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
-use App\Models\AttendanceRecord;
-use App\Models\LearningPlan;
-use App\Models\QuizAttempt;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +13,21 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property UserRole $role
+ * @property-read Collection<int, AttendanceRecord> $attendances
+ * @property-read Collection<int, QuizAttempt> $quizAttempts
+ * @property-read Collection<int, LearningPlan> $learningPlans
+ * @property-read Collection<int, SchoolClass> $classes
+ * @property-read Collection<int, User> $children
+ * @property-read Collection<int, User> $parents
+ * @property-read Collection<int, SchoolClass> $homeroomClasses
+ * @property-read Collection<int, Subject> $taughtSubjects
+ */
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles;
@@ -73,6 +86,9 @@ class User extends Authenticatable
         }
     }
 
+    /**
+     * @return list<int>
+     */
     public function classIds(): array
     {
         if ($this->isStudent()) {
@@ -98,41 +114,49 @@ class User extends Authenticatable
         return in_array($classId, $this->classIds(), true);
     }
 
+    /** @return HasMany<AttendanceRecord, $this> */
     public function attendances(): HasMany
     {
         return $this->hasMany(AttendanceRecord::class, 'student_id');
     }
 
+    /** @return HasMany<QuizAttempt, $this> */
     public function quizAttempts(): HasMany
     {
         return $this->hasMany(QuizAttempt::class, 'student_id');
     }
 
+    /** @return HasMany<LearningPlan, $this> */
     public function learningPlans(): HasMany
     {
         return $this->hasMany(LearningPlan::class, 'teacher_id');
     }
 
+    /** @return BelongsToMany<SchoolClass, $this> */
     public function classes(): BelongsToMany
     {
         return $this->belongsToMany(SchoolClass::class, 'class_members', 'student_id', 'class_id');
     }
 
+    /** @return BelongsToMany<User, $this> */
     public function children(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'parent_students', 'parent_id', 'student_id');
     }
 
+    /** @return BelongsToMany<User, $this> */
     public function parents(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'parent_students', 'student_id', 'parent_id');
     }
 
+    /** @return HasMany<SchoolClass, $this> */
     public function homeroomClasses(): HasMany
     {
         return $this->hasMany(SchoolClass::class, 'homeroom_teacher_id');
     }
 
+    /** @return BelongsToMany<Subject, $this> */
     public function taughtSubjects(): BelongsToMany
     {
         return $this->belongsToMany(Subject::class, 'subject_teachers', 'teacher_id', 'subject_id');

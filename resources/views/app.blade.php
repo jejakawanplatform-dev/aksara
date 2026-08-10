@@ -20,13 +20,23 @@
             .aksara-content-rail { padding-left: 16rem; }
             .sidebar-collapsed .aksara-sidebar-rail { width: 5rem; }
             .sidebar-collapsed .aksara-content-rail { padding-left: 5rem; }
+            .aksara-sidebar-edge-toggle {
+                left: 16rem;
+            }
+            .sidebar-collapsed .aksara-sidebar-edge-toggle {
+                left: 5rem;
+            }
             .sidebar-animate .aksara-sidebar-rail,
             .sidebar-animate .aksara-content-rail {
                 transition: width 300ms ease, padding-left 300ms ease;
             }
+            .sidebar-animate .aksara-sidebar-edge-toggle {
+                transition: left 300ms ease;
+            }
             @media (max-width: 1023px) {
                 .aksara-sidebar-rail { width: 0 !important; }
                 .aksara-content-rail { padding-left: 0 !important; }
+                .aksara-sidebar-edge-toggle { display: none !important; }
             }
             .sidebar-collapsed .aksara-sidebar-rail { overflow: visible !important; }
         </style>

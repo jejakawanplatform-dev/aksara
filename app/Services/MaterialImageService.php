@@ -14,6 +14,64 @@ class MaterialImageService
     private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
     /**
+     * List image files in the material's public storage folder (context-scoped).
+     *
+     * @return list<array{name: string, url: string, size: int, updated_at: string|null}>
+     */
+    public function list(LearningMaterial $material): array
+    {
+        $directory = $this->directory($material);
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($directory)) {
+            return [];
+        }
+
+        $items = [];
+        foreach ($disk->files($directory) as $path) {
+            $name = basename($path);
+            $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            if ($extension === 'jpeg') {
+                $extension = 'jpg';
+            }
+            if (! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+                continue;
+            }
+
+            $items[] = [
+                'name' => $name,
+                'url' => '/storage/'.$path,
+                'size' => (int) $disk->size($path),
+                'updated_at' => $disk->lastModified($path)
+                    ? date('c', $disk->lastModified($path))
+                    : null,
+            ];
+        }
+
+        usort($items, static fn (array $a, array $b) => strcmp($b['updated_at'] ?? '', $a['updated_at'] ?? ''));
+
+        return $items;
+    }
+
+    /**
+     * Delete a basename under the material folder. Rejects path traversal.
+     */
+    public function delete(LearningMaterial $material, string $filename): void
+    {
+        $safe = $this->assertSafeBasename($filename);
+        $path = $this->directory($material).'/'.$safe;
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($path)) {
+            throw new InvalidArgumentException('File tidak ditemukan di konteks materi ini.');
+        }
+
+        if (! $disk->delete($path)) {
+            throw new \RuntimeException('Gagal menghapus file gambar.');
+        }
+    }
+
+    /**
      * Store an uploaded material image on the public disk and return a relative public path.
      */
     public function store(LearningMaterial $material, UploadedFile $file): string
@@ -53,7 +111,7 @@ class MaterialImageService
         }
 
         $filename = Str::uuid()->toString().'.'.$extension;
-        $directory = 'materials/'.$material->id;
+        $directory = $this->directory($material);
         $path = $directory.'/'.$filename;
 
         $ok = Storage::disk('public')->put($path, $binary);
@@ -94,6 +152,29 @@ class MaterialImageService
             'extension' => $this->extensionFromMime($mime) ?? 'jpg',
             'mime' => $mime,
         ];
+    }
+
+    private function directory(LearningMaterial $material): string
+    {
+        return 'materials/'.$material->id;
+    }
+
+    private function assertSafeBasename(string $filename): string
+    {
+        $name = basename(str_replace(['\\', "\0"], '', trim($filename)));
+        if ($name === '' || $name === '.' || $name === '..' || str_contains($name, '..')) {
+            throw new InvalidArgumentException('Nama file tidak valid.');
+        }
+
+        $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if ($extension === 'jpeg') {
+            $extension = 'jpg';
+        }
+        if (! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+            throw new InvalidArgumentException('Ekstensi gambar tidak didukung: '.$extension);
+        }
+
+        return $name;
     }
 
     private function extensionFromMime(string $mime): ?string

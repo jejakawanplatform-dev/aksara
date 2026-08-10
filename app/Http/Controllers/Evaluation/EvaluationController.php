@@ -32,9 +32,9 @@ class EvaluationController extends Controller
                 'className' => $plan->class?->name,
             ],
             'form' => [
-                'notes' => $existing?->notes ?? '',
-                'challenges' => $existing?->challenges ?? '',
-                'next_action' => $existing?->next_action ?? '',
+                'notes' => $existing !== null ? (string) $existing->notes : '',
+                'challenges' => $existing !== null ? (string) $existing->challenges : '',
+                'next_action' => $existing !== null ? (string) $existing->next_action : '',
             ],
             'isStem' => SubjectContext::isStem($plan->subject),
             'saveUrl' => route('evaluation.save', $plan),

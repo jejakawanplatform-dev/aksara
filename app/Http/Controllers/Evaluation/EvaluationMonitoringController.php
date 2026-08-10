@@ -19,11 +19,11 @@ class EvaluationMonitoringController extends Controller
         $user = Auth::user();
 
         abort_unless(
-            $user?->isAdmin() || $user?->can(PermissionCatalog::EVALUATION_MANAGE),
+            $user !== null && ($user->isAdmin() || $user->can(PermissionCatalog::EVALUATION_MANAGE)),
             403
         );
 
-        $isAdmin = (bool) $user?->isAdmin();
+        $isAdmin = $user->isAdmin();
         $search = (string) $request->query('search', '');
         $teacherFilter = (string) $request->query('teacher', '');
         $subjectFilter = (string) $request->query('subject', '');

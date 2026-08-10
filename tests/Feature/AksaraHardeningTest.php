@@ -242,5 +242,15 @@ class AksaraHardeningTest extends TestCase
         $this->actingAs($siswa)
             ->get(route('materials.show', $material))
             ->assertForbidden();
+
+        $this->actingAs($siswa)
+            ->get(route('materials.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Materials/Index')
+                ->where('materials', fn ($rows) => ! collect($rows)->contains(
+                    fn ($row) => ($row['title'] ?? '') === 'Khusus VII-B'
+                ))
+            );
     }
 }

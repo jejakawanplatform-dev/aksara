@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/ui/Card.vue';
 import Field from '@/Components/ui/Field.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Alert from '@/Components/ui/Alert.vue';
 import TipTapEditor from '@/Components/tiptap/TipTapEditor.vue';
 
 const props = defineProps({
@@ -36,12 +37,10 @@ function submit() {
         </template>
 
         <div class="mx-auto max-w-3xl space-y-5">
-            <div class="flex items-center gap-2 rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-700">
-                <span>
-                    Refleksi adalah bagian penting dari siklus pembelajaran. Tuliskan dengan jujur apa yang terjadi, apa
-                    yang bisa diperbaiki, dan langkah konkret berikutnya.
-                </span>
-            </div>
+            <Alert tone="ai" title="Refleksi pembelajaran">
+                Refleksi adalah bagian penting dari siklus pembelajaran. Tuliskan dengan jujur apa yang terjadi, apa
+                yang bisa diperbaiki, dan langkah konkret berikutnya.
+            </Alert>
 
             <Card
                 :title="`Refleksi Guru: ${plan.topic}`"
@@ -54,7 +53,7 @@ function submit() {
                         hint="Apa yang berjalan baik hari ini? Momen penting atau metode yang berhasil."
                         :error="editor.errors.notes"
                     >
-                        <TipTapEditor v-model="editor.notes" />
+                        <TipTapEditor v-model="editor.notes" :with-math="isStem" />
                     </Field>
 
                     <Field
@@ -63,7 +62,7 @@ function submit() {
                         hint="Apa yang masih sulit? Kendala teknis, pemahaman siswa, atau manajemen waktu."
                         :error="editor.errors.challenges"
                     >
-                        <TipTapEditor v-model="editor.challenges" />
+                        <TipTapEditor v-model="editor.challenges" :with-math="isStem" />
                     </Field>
 
                     <Field
@@ -72,7 +71,7 @@ function submit() {
                         hint="Langkah konkret perbaikan untuk pembelajaran berikutnya."
                         :error="editor.errors.next_action"
                     >
-                        <TipTapEditor v-model="editor.next_action" />
+                        <TipTapEditor v-model="editor.next_action" :with-math="isStem" />
                     </Field>
 
                     <div class="flex justify-end border-t border-aksara-line pt-4">

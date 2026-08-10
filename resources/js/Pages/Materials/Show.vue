@@ -75,7 +75,7 @@ onMounted(async () => {
                     </h3>
                     <div
                         v-if="section.body"
-                        class="ProseMirror min-h-0 p-0 text-sm leading-relaxed text-aksara-ink"
+                        class="aksara-prose ProseMirror min-h-0 !p-0 text-sm leading-relaxed text-aksara-ink"
                         v-html="section.body"
                     />
                 </div>

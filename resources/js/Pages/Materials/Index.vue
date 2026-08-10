@@ -1,7 +1,8 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import StatusBadge from '@/Components/ui/StatusBadge.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
+import EmptyState from '@/Components/ui/EmptyState.vue';
 
 defineProps({
     materials: { type: Array, default: () => [] },
@@ -14,6 +15,11 @@ defineProps({
         <template #header>2. Materi Pembelajaran (Bahan Ajar)</template>
 
         <div class="space-y-4">
+            <PageHeader
+                title="Materi Pembelajaran"
+                description="Bahan ajar yang terhubung ke rencana pembelajaran."
+            />
+
             <a
                 v-for="material in materials"
                 :key="material.id"
@@ -34,19 +40,13 @@ defineProps({
                 </span>
             </a>
 
-            <div
-                v-if="!materials.length"
-                class="rounded-2xl border border-dashed border-aksara-line bg-white p-10 text-center"
-            >
-                <h3 class="font-display text-lg font-semibold text-aksara-ink">Belum Ada Bahan Ajar</h3>
-                <p class="mt-2 text-sm text-aksara-muted">
-                    {{
-                        isStudent
-                            ? 'Materi pembelajaran hanya muncul setelah diterbitkan oleh guru pengampu kelas Anda.'
-                            : 'Belum ada bahan ajar yang dibuat. Buat draf Rencana Pembelajaran terlebih dahulu di menu Rencana Pembelajaran.'
-                    }}
-                </p>
-            </div>
+            <EmptyState v-if="!materials.length" title="Belum Ada Bahan Ajar">
+                {{
+                    isStudent
+                        ? 'Materi pembelajaran hanya muncul setelah diterbitkan oleh guru pengampu kelas Anda.'
+                        : 'Belum ada bahan ajar yang dibuat. Buat draf Rencana Pembelajaran terlebih dahulu di menu Rencana Pembelajaran.'
+                }}
+            </EmptyState>
         </div>
     </AppLayout>
 </template>

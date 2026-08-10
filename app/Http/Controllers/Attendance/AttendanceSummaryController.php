@@ -6,6 +6,7 @@ use App\Enums\AttendanceStatus;
 use App\Http\Controllers\Controller;
 use App\Models\LearningPlan;
 use App\Models\SchoolClass;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -15,41 +16,51 @@ class AttendanceSummaryController extends Controller
 {
     public function index(Request $request): Response
     {
+        /** @var User $user */
         $user = Auth::user();
         $classId = $request->query('classId') ? (int) $request->query('classId') : null;
         $planId = $request->query('planId') ? (int) $request->query('planId') : null;
 
+        $allowedClassIds = $this->allowedClassIds($user);
         $classes = SchoolClass::query()
-            ->when(
-                $user->isTeacher() && ! $user->isHomeroomTeacher(),
-                fn ($q) => $q->whereIn(
-                    'id',
-                    LearningPlan::where('teacher_id', $user->id)->pluck('class_id')
-                )
-            )
-            ->when(
-                $user->isHomeroomTeacher(),
-                fn ($q) => $q->where('homeroom_teacher_id', $user->id)
-            )
+            ->whereIn('id', $allowedClassIds)
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        if ($classId !== null && ! $allowedClassIds->contains($classId)) {
+            abort(403);
+        }
+
+        $plans = collect();
+        $allowedPlanIds = collect();
         $summaryData = [];
 
-        if ($classId && $classes->contains('id', $classId)) {
-            $class = SchoolClass::find($classId);
-            $students = $class?->students ?? collect();
+        if ($classId !== null) {
+            // Wali kelas / admin: semua rencana di kelas. Guru mapel: hanya miliknya.
+            $plans = LearningPlan::query()
+                ->where('class_id', $classId)
+                ->when(
+                    $user->isTeacher(),
+                    fn ($q) => $q->where('teacher_id', $user->id)
+                )
+                ->orderBy('topic')
+                ->get(['id', 'topic']);
+            $allowedPlanIds = $plans->pluck('id');
+
+            if ($planId !== null && ! $allowedPlanIds->contains($planId)) {
+                abort(403);
+            }
+
+            $planIdsForSummary = $planId !== null
+                ? collect([$planId])
+                : $allowedPlanIds;
+
+            $class = SchoolClass::query()->with('students:id,name')->find($classId);
+            $students = $class !== null ? $class->students : collect();
 
             foreach ($students as $student) {
                 $records = $student->attendances()
-                    ->when($planId, fn ($q) => $q->where('plan_id', $planId))
-                    ->when(
-                        $user->isTeacher() && ! $user->isHomeroomTeacher(),
-                        fn ($q) => $q->whereIn(
-                            'plan_id',
-                            LearningPlan::where('teacher_id', $user->id)->pluck('id')
-                        )
-                    )
+                    ->whereIn('plan_id', $planIdsForSummary)
                     ->get();
 
                 $hadir = $records->where('status', AttendanceStatus::Present)->count();
@@ -70,6 +81,10 @@ class AttendanceSummaryController extends Controller
 
         return Inertia::render('Attendance/Summary', [
             'classes' => $classes,
+            'plans' => $plans->map(fn (LearningPlan $plan) => [
+                'id' => $plan->id,
+                'topic' => $plan->topic,
+            ]),
             'summaryData' => $summaryData,
             'filters' => [
                 'classId' => $classId,
@@ -77,5 +92,28 @@ class AttendanceSummaryController extends Controller
             ],
             'indexUrl' => route('attendance.summary'),
         ]);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    private function allowedClassIds(User $user)
+    {
+        if ($user->isHomeroomTeacher()) {
+            return SchoolClass::query()
+                ->where('homeroom_teacher_id', $user->id)
+                ->pluck('id');
+        }
+
+        if ($user->isTeacher()) {
+            return LearningPlan::query()
+                ->where('teacher_id', $user->id)
+                ->pluck('class_id')
+                ->unique()
+                ->values();
+        }
+
+        // Admin atau role lain yang punya attendance.summary via matrix override.
+        return SchoolClass::query()->pluck('id');
     }
 }

@@ -21,3 +21,4 @@ Unduhan dokumen cetak tanpa membangun UI PDF di Vue.
 - [x] Empat template exports ada
 - [x] Terhubung LearningPlan & Curriculum export controllers
 - [x] Format non-PDF (xlsx/docx) tetap lewat service yang sama
+- [x] Kop sekolah dari `system_settings` (partial bersama)

@@ -79,7 +79,7 @@ defineProps({
                             <td class="py-3">
                                 <div class="flex gap-2 text-xs">
                                     <a :href="row.attendanceUrl" class="text-aksara-teal hover:underline">Absen</a>
-                                    <a :href="row.evaluationUrl" class="text-purple-600 hover:underline">Refleksi</a>
+                                    <a :href="row.evaluationUrl" class="text-aksara-teal hover:underline">Refleksi</a>
                                 </div>
                             </td>
                         </tr>

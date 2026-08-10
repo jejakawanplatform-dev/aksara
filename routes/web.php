@@ -45,7 +45,11 @@ Route::middleware(['auth', 'permission:materials.read|plans.manage'])->prefix('m
     Route::get('/{material}/edit', [\App\Http\Controllers\Materials\MaterialEditController::class, 'edit'])->name('edit');
     Route::put('/{material}', [\App\Http\Controllers\Materials\MaterialEditController::class, 'update'])->name('update');
     Route::post('/{material}/publish', [\App\Http\Controllers\Materials\MaterialEditController::class, 'publish'])->name('publish');
+    Route::get('/{material}/media', [\App\Http\Controllers\Materials\MaterialEditController::class, 'indexMedia'])->name('media');
     Route::post('/{material}/images', [\App\Http\Controllers\Materials\MaterialEditController::class, 'storeImage'])->name('images');
+    Route::delete('/{material}/media/{filename}', [\App\Http\Controllers\Materials\MaterialEditController::class, 'destroyMedia'])
+        ->where('filename', '[^/]+')
+        ->name('media.destroy');
     Route::post('/{material}/copilot', [\App\Http\Controllers\Materials\MaterialEditController::class, 'copilot'])->name('copilot');
 });
 

@@ -29,10 +29,8 @@ class HandleInertiaRequests extends Middleware
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role instanceof \BackedEnum ? $user->role->value : $user->role,
-                    'roleLabel' => method_exists($user->role, 'label')
-                        ? $user->role->label()
-                        : (string) ($user->role instanceof \BackedEnum ? $user->role->value : $user->role),
+                    'role' => $user->role->value,
+                    'roleLabel' => $user->role->label(),
                 ] : null,
                 'permissions' => $user ? $user->getAllPermissions()->pluck('name')->values() : [],
             ],

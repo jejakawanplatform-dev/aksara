@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/ui/Card.vue';
 import Field from '@/Components/ui/Field.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Modal from '@/Components/ui/Modal.vue';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'Manajemen Pengguna' },
@@ -226,62 +227,54 @@ function saveHomeroom() {
             </div>
         </div>
 
-        <!-- Create / Edit modal -->
-        <div v-if="showForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-aksara-ink/40" @click="closeForm" />
-            <div class="relative z-10 w-full max-w-lg rounded-2xl border border-aksara-line bg-white p-6 shadow-lg">
-                <h3 class="font-display text-lg font-semibold text-aksara-ink">
-                    {{ editingId ? 'Edit pengguna' : 'Tambah pengguna' }}
-                </h3>
-                <form class="mt-4 space-y-3" @submit.prevent="saveUser">
-                    <Field label="Nama" required for-id="uf-name" :error="userForm.errors.name">
-                        <input id="uf-name" v-model="userForm.name" class="aksara-input" />
-                    </Field>
-                    <Field label="Email" required for-id="uf-email" :error="userForm.errors.email">
-                        <input id="uf-email" v-model="userForm.email" type="email" class="aksara-input" />
-                    </Field>
-                    <Field label="Role" required for-id="uf-role" :error="userForm.errors.role">
-                        <select id="uf-role" v-model="userForm.role" class="aksara-select">
-                            <option v-for="r in roles" :key="r.value" :value="r.value">{{ r.label }}</option>
-                        </select>
-                    </Field>
-                    <Field
-                        :label="editingId ? 'Password (opsional)' : 'Password'"
-                        :required="!editingId"
-                        for-id="uf-password"
-                        :error="userForm.errors.password"
-                    >
-                        <input id="uf-password" v-model="userForm.password" type="password" class="aksara-input" />
-                    </Field>
-                    <Field label="Konfirmasi password" for-id="uf-password2">
-                        <input id="uf-password2" v-model="userForm.password_confirmation" type="password" class="aksara-input" />
-                    </Field>
-                    <div class="flex justify-end gap-2 pt-2">
-                        <Btn type="button" variant="secondary" @click="closeForm">Batal</Btn>
-                        <Btn type="submit" :disabled="userForm.processing">Simpan</Btn>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <Modal
+            :open="showForm"
+            :title="editingId ? 'Edit pengguna' : 'Tambah pengguna'"
+            @close="closeForm"
+        >
+            <form class="space-y-3" @submit.prevent="saveUser">
+                <Field label="Nama" required for-id="uf-name" :error="userForm.errors.name">
+                    <input id="uf-name" v-model="userForm.name" class="aksara-input" />
+                </Field>
+                <Field label="Email" required for-id="uf-email" :error="userForm.errors.email">
+                    <input id="uf-email" v-model="userForm.email" type="email" class="aksara-input" />
+                </Field>
+                <Field label="Role" required for-id="uf-role" :error="userForm.errors.role">
+                    <select id="uf-role" v-model="userForm.role" class="aksara-select">
+                        <option v-for="r in roles" :key="r.value" :value="r.value">{{ r.label }}</option>
+                    </select>
+                </Field>
+                <Field
+                    :label="editingId ? 'Password (opsional)' : 'Password'"
+                    :required="!editingId"
+                    for-id="uf-password"
+                    :error="userForm.errors.password"
+                >
+                    <input id="uf-password" v-model="userForm.password" type="password" class="aksara-input" />
+                </Field>
+                <Field label="Konfirmasi password" for-id="uf-password2">
+                    <input id="uf-password2" v-model="userForm.password_confirmation" type="password" class="aksara-input" />
+                </Field>
+            </form>
+            <template #footer>
+                <Btn type="button" variant="secondary" size="sm" @click="closeForm">Batal</Btn>
+                <Btn type="button" size="sm" :disabled="userForm.processing" @click="saveUser">Simpan</Btn>
+            </template>
+        </Modal>
 
-        <!-- Links modal -->
-        <div v-if="linksUser" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-aksara-ink/40" @click="closeLinks" />
-            <div class="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-aksara-line bg-white p-6 shadow-lg">
-                <div class="flex items-start justify-between gap-3">
-                    <div>
-                        <h3 class="font-display text-lg font-semibold text-aksara-ink">Tautan — {{ linksUser.name }}</h3>
-                        <p class="text-xs text-aksara-muted">Rombel, anak, atau homeroom</p>
-                    </div>
-                    <button type="button" class="text-sm text-aksara-muted" @click="closeLinks">Tutup</button>
-                </div>
-
-                <div v-if="linksUser.isStudent" class="mt-4 space-y-3">
+        <Modal
+            :open="!!linksUser"
+            :title="linksUser ? `Tautan — ${linksUser.name}` : 'Tautan'"
+            description="Rombel, anak, atau homeroom"
+            @close="closeLinks"
+        >
+            <template v-if="linksUser">
+                <div v-if="linksUser.isStudent" class="space-y-3">
                     <h4 class="text-sm font-semibold">Rombel</h4>
                     <ul class="space-y-1 text-sm">
                         <li v-for="c in linksUser.classes" :key="c.id" class="flex justify-between">
                             <span>{{ c.name }}</span>
-                            <button type="button" class="text-xs text-red-600" @click="detachClass(c.id)">Lepas</button>
+                            <button type="button" class="text-xs text-aksara-danger" @click="detachClass(c.id)">Lepas</button>
                         </li>
                     </ul>
                     <div class="flex gap-2">
@@ -289,16 +282,16 @@ function saveHomeroom() {
                             <option value="">Pilih rombel</option>
                             <option v-for="c in classes" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
                         </select>
-                        <Btn type="button" class="!px-3 !py-2 text-xs" @click="attachClass">Tambah</Btn>
+                        <Btn type="button" size="sm" @click="attachClass">Tambah</Btn>
                     </div>
                 </div>
 
-                <div v-if="linksUser.isParent" class="mt-4 space-y-3">
+                <div v-if="linksUser.isParent" class="space-y-3">
                     <h4 class="text-sm font-semibold">Anak</h4>
                     <ul class="space-y-1 text-sm">
                         <li v-for="c in linksUser.children" :key="c.id" class="flex justify-between">
                             <span>{{ c.name }}</span>
-                            <button type="button" class="text-xs text-red-600" @click="detachChild(c.id)">Lepas</button>
+                            <button type="button" class="text-xs text-aksara-danger" @click="detachChild(c.id)">Lepas</button>
                         </li>
                     </ul>
                     <div class="flex gap-2">
@@ -306,19 +299,19 @@ function saveHomeroom() {
                             <option value="">Pilih siswa</option>
                             <option v-for="s in students" :key="s.id" :value="String(s.id)">{{ s.name }}</option>
                         </select>
-                        <Btn type="button" class="!px-3 !py-2 text-xs" @click="attachChild">Tautkan</Btn>
+                        <Btn type="button" size="sm" @click="attachChild">Tautkan</Btn>
                     </div>
                 </div>
 
-                <div v-if="linksUser.isHomeroomTeacher" class="mt-4 space-y-3">
+                <div v-if="linksUser.isHomeroomTeacher" class="space-y-3">
                     <h4 class="text-sm font-semibold">Homeroom</h4>
                     <select v-model="homeroomForm.homeroom_class_id" class="aksara-select w-full">
                         <option value="">— Tidak ditugaskan —</option>
                         <option v-for="c in classes" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
                     </select>
-                    <Btn type="button" class="!px-3 !py-2 text-xs" @click="saveHomeroom">Simpan homeroom</Btn>
+                    <Btn type="button" size="sm" @click="saveHomeroom">Simpan homeroom</Btn>
                 </div>
-            </div>
-        </div>
+            </template>
+        </Modal>
     </AppLayout>
 </template>

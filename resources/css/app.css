@@ -1,5 +1,3 @@
-@import 'katex/dist/katex.min.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -50,7 +48,8 @@
         padding-right: 0 !important;
     }
     .sidebar-collapsed .aksara-sidebar .sb-header-logo { justify-content: center !important; }
-    .sidebar-collapsed .aksara-sidebar .sb-user     { justify-content: center !important; }
+    .sidebar-collapsed .aksara-sidebar .sb-footer .sb-label { display: none !important; }
+    .sidebar-collapsed .aksara-sidebar .sb-footer-mark { display: block !important; }
 
     /* Allow popups to escape sidebar overflow when collapsed */
     .sidebar-collapsed .aksara-sidebar { overflow: visible !important; }
@@ -86,6 +85,28 @@
         @apply sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-aksara-line bg-white/95 px-4 backdrop-blur sm:px-6;
     }
 
+    .aksara-sidebar-edge-toggle {
+        @apply fixed z-40 hidden h-7 w-7 items-center justify-center rounded-full border border-aksara-line bg-white text-aksara-muted shadow-sm lg:inline-flex;
+        top: 2rem; /* center of h-16 topbar */
+        transform: translate(-50%, -50%);
+    }
+
+    .aksara-sidebar-edge-toggle:hover {
+        @apply bg-aksara-mist text-aksara-ink;
+    }
+
+    .aksara-profile-toggle {
+        @apply inline-flex max-w-[14rem] items-center gap-2 rounded-xl border border-aksara-line bg-white px-2 py-1.5 text-left transition hover:bg-aksara-mist sm:max-w-xs sm:px-2.5;
+    }
+
+    .aksara-profile-menu {
+        @apply absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-aksara-line bg-white py-1 shadow-lg;
+    }
+
+    .aksara-profile-menu__item {
+        @apply flex items-center gap-2 px-3 py-2 text-sm text-aksara-ink transition hover:bg-aksara-mist;
+    }
+
     .aksara-footer {
         @apply sticky bottom-0 z-30 shrink-0 border-t border-aksara-line bg-white/95 px-4 py-3 text-xs text-aksara-muted backdrop-blur sm:px-6;
     }
@@ -116,7 +137,7 @@
     }
 
     .aksara-btn-danger {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-aksara-danger px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-aksara-danger focus:ring-offset-2 disabled:opacity-50;
     }
 
     /* Form Controls */
@@ -149,23 +170,41 @@
         @apply border-b border-aksara-line/60 px-4 py-3.5 align-middle;
     }
 
-    /* Tiptap Canvas Custom Style */
+    /* Shared prose — TipTap editor + materi show */
+    .aksara-prose,
     .ProseMirror {
-        @apply min-h-[160px] p-4 text-sm text-aksara-ink outline-none;
-        overflow: visible !important;
-        /* ruang untuk interaksi gambar di dekat tepi */
-        padding: 1.25rem !important;
+        @apply text-sm leading-relaxed text-aksara-ink outline-none;
     }
 
+    .aksara-prose h1,
     .ProseMirror h1 { @apply text-2xl font-bold font-display my-3 text-aksara-ink; }
+    .aksara-prose h2,
     .ProseMirror h2 { @apply text-xl font-semibold font-display my-2 text-aksara-ink; }
+    .aksara-prose h3,
     .ProseMirror h3 { @apply text-lg font-medium font-display my-2 text-aksara-ink; }
+    .aksara-prose p,
+    .ProseMirror p { @apply my-2; }
+    .aksara-prose ul,
     .ProseMirror ul { @apply list-disc list-inside space-y-1 my-2; }
+    .aksara-prose ol,
     .ProseMirror ol { @apply list-decimal list-inside space-y-1 my-2; }
+    .aksara-prose blockquote,
     .ProseMirror blockquote { @apply border-l-4 border-aksara-teal pl-4 italic text-aksara-muted my-2; }
+    .aksara-prose table,
     .ProseMirror table { @apply w-full border-collapse my-3 text-sm; }
+    .aksara-prose th,
     .ProseMirror th { @apply border border-aksara-line bg-aksara-mist p-2 font-semibold text-left; }
+    .aksara-prose td,
     .ProseMirror td { @apply border border-aksara-line p-2; }
+    .aksara-prose a,
+    .ProseMirror a { @apply text-aksara-teal underline underline-offset-2 hover:text-aksara-teal-dark; }
+
+    /* Tiptap canvas */
+    .ProseMirror {
+        @apply min-h-[160px];
+        overflow: visible !important;
+        padding: 1.25rem !important;
+    }
 
     .ProseMirror img,
     .ProseMirror .aksara-editor-image {
@@ -262,13 +301,62 @@
         cursor: nwse-resize;
     }
 
-    .ProseMirror a { @apply text-aksara-teal underline underline-offset-2 hover:text-aksara-teal-dark; }
-
     /* Isolasi stacking context editor agar tidak kalah dari sticky chrome */
     .aksara-tiptap-root {
         position: relative;
         z-index: 10;
         overflow: visible !important;
         isolation: isolate;
+    }
+
+    .aksara-tiptap-toolbar {
+        @apply flex flex-wrap items-center gap-0.5 border-b border-aksara-line px-1.5 py-1;
+        background: linear-gradient(180deg, #f7faf9 0%, #f1f5f4 100%);
+    }
+
+    .aksara-tiptap-toolbar__group {
+        @apply flex items-center gap-0.5;
+    }
+
+    .aksara-tiptap-toolbar__sep {
+        @apply mx-1 h-5 w-px shrink-0 bg-aksara-line/80;
+    }
+
+    .aksara-tiptap-tb {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-md text-aksara-muted transition;
+        border: 1px solid transparent;
+        background: transparent;
+    }
+
+    .aksara-tiptap-tb:hover {
+        @apply bg-white text-aksara-ink;
+        border-color: rgba(12, 46, 42, 0.08);
+        box-shadow: 0 1px 2px rgba(12, 46, 42, 0.06);
+    }
+
+    .aksara-tiptap-tb:active {
+        transform: translateY(0.5px);
+    }
+
+    .aksara-tiptap-tb.is-active {
+        @apply bg-aksara-teal/10 text-aksara-teal-dark;
+        border-color: rgba(20, 122, 104, 0.28);
+        box-shadow: inset 0 0 0 1px rgba(20, 122, 104, 0.08);
+    }
+
+    .aksara-tiptap-tb--label {
+        @apply w-auto min-w-8 px-1.5 text-[11px] font-bold tracking-tight;
+    }
+
+    .aksara-tiptap-tb--danger:hover,
+    .aksara-tiptap-tb--danger.is-active {
+        @apply bg-red-50 text-red-600;
+        border-color: rgba(220, 38, 38, 0.2);
+    }
+
+    .aksara-tiptap-tb svg {
+        width: 1.05rem;
+        height: 1.05rem;
+        display: block;
     }
 }

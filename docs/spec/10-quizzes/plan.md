@@ -5,7 +5,7 @@
 | Field | Isi |
 |---|---|
 | Kode | `10-quizzes` |
-| Status | selesai / aktif (debt kecil) |
+| Status | selesai |
 | Steering | `business-rules`, ADR-005 |
 
 ## Ringkasan

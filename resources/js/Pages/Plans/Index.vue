@@ -6,6 +6,7 @@ import Card from '@/Components/ui/Card.vue';
 import StatusBadge from '@/Components/ui/StatusBadge.vue';
 import Btn from '@/Components/ui/Btn.vue';
 import Field from '@/Components/ui/Field.vue';
+import Modal from '@/Components/ui/Modal.vue';
 
 const props = defineProps({
     plans: { type: Object, required: true },
@@ -253,35 +254,29 @@ function deletePlan(url) {
             </div>
         </Card>
 
-        <div
-            v-if="showImport"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs"
+        <Modal
+            :open="showImport"
+            title="Import Modul Ajar"
+            @close="showImport = false"
         >
-            <div class="w-full max-w-lg space-y-4 rounded-2xl border border-aksara-line bg-white p-6 shadow-2xl">
-                <div class="flex items-center justify-between border-b border-aksara-line pb-3">
-                    <h3 class="font-display text-lg font-semibold text-aksara-ink">Import Modul Ajar</h3>
-                    <button type="button" class="text-aksara-muted" @click="showImport = false">✕</button>
-                </div>
+            <ul v-if="importErrors?.length" class="mb-4 space-y-1 rounded-xl bg-aksara-danger/5 p-3 text-xs text-aksara-danger">
+                <li v-for="(err, i) in importErrors" :key="i">• {{ err }}</li>
+            </ul>
 
-                <ul v-if="importErrors?.length" class="space-y-1 rounded-xl bg-red-50 p-3 text-xs text-red-700">
-                    <li v-for="(err, i) in importErrors" :key="i">• {{ err }}</li>
-                </ul>
+            <p class="text-xs text-aksara-muted">
+                Unduh
+                <a :href="importTemplateUrl" class="font-semibold text-aksara-teal hover:underline">template Excel</a>
+                lalu unggah berkas .xlsx / .xls / .csv (maks. 5MB).
+            </p>
 
-                <p class="text-xs text-aksara-muted">
-                    Unduh
-                    <a :href="importTemplateUrl" class="font-semibold text-aksara-teal hover:underline">template Excel</a>
-                    lalu unggah berkas .xlsx / .xls / .csv (maks. 5MB).
-                </p>
+            <Field class="mt-4" label="Berkas" :error="importForm.errors.importFile">
+                <input type="file" accept=".xlsx,.xls,.csv" class="aksara-input" @change="onImportFile" />
+            </Field>
 
-                <Field label="Berkas" :error="importForm.errors.importFile">
-                    <input type="file" accept=".xlsx,.xls,.csv" class="aksara-input" @change="onImportFile" />
-                </Field>
-
-                <div class="flex justify-end gap-2">
-                    <Btn variant="secondary" @click="showImport = false">Batal</Btn>
-                    <Btn :disabled="importForm.processing" @click="submitImport">Impor</Btn>
-                </div>
-            </div>
-        </div>
+            <template #footer>
+                <Btn variant="secondary" size="sm" @click="showImport = false">Batal</Btn>
+                <Btn size="sm" :disabled="importForm.processing" @click="submitImport">Impor</Btn>
+            </template>
+        </Modal>
     </AppLayout>
 </template>

@@ -6,6 +6,7 @@ use App\Enums\AttendanceStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceRecord;
 use App\Models\LearningPlan;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,17 +21,22 @@ class AttendanceController extends Controller
         abort_unless($plan->teacher_id === Auth::id(), 403);
 
         $plan->load('class.students');
-        $students = $plan->class?->students ?? collect();
+        $class = $plan->class;
+        $students = $class !== null ? $class->students : collect();
         $existing = AttendanceRecord::where('plan_id', $plan->id)->get()->keyBy('student_id');
 
-        $rows = $students->map(function ($student) use ($existing) {
+        $rows = $students->map(function (User $student) use ($existing) {
             $record = $existing->get($student->id);
 
             return [
                 'id' => $student->id,
                 'name' => $student->name,
-                'status' => $record?->status?->value ?? AttendanceStatus::Present->value,
-                'notes' => $record?->notes ?? '',
+                'status' => $record instanceof AttendanceRecord
+                    ? $record->status->value
+                    : AttendanceStatus::Present->value,
+                'notes' => $record instanceof AttendanceRecord
+                    ? (string) ($record->notes ?? '')
+                    : '',
             ];
         })->values();
 
@@ -56,7 +62,8 @@ class AttendanceController extends Controller
     {
         abort_unless($plan->teacher_id === Auth::id(), 403);
 
-        $studentIds = ($plan->class?->students ?? collect())->pluck('id')->all();
+        $class = $plan->class;
+        $studentIds = $class !== null ? $class->students->pluck('id')->all() : [];
 
         $validated = $request->validate([
             'attendance' => ['required', 'array'],
@@ -78,6 +85,6 @@ class AttendanceController extends Controller
             );
         }
 
-        return back()->with('message', 'Data kehadiran berhasil disimpan!');
+        return back()->with('message', 'Absensi berhasil disimpan.');
     }
 }

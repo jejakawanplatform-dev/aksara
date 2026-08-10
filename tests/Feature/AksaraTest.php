@@ -147,6 +147,7 @@ class AksaraTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Dashboard/WaliKelas')
                 ->has('userName')
+                ->has('metrics')
                 ->has('classes')
                 ->missing('recentPlans'));
     }

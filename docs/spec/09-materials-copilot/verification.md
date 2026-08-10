@@ -1,4 +1,4 @@
-# Verification — Materi, TipTap & Co-Pilot
+# Verification — Materi & Co-Pilot
 
 ## Lokasi artefak (stack terkini)
 
@@ -6,17 +6,15 @@
 |---|---|
 | Controllers | `Materials/MaterialController`, `MaterialEditController` |
 | Pages | `resources/js/Pages/Materials/{Index,Show,Edit}.vue` |
-| TipTap | `resources/js/Components/tiptap/TipTapEditor.vue`, `aksara-image.js` |
-| Math | `resources/js/tiptap-math.js` |
-| Services | `AiDraftService`, `MaterialImageService`, `MaterialContentHtml` |
-| Tests | `MaterialAuthoringTest`, `MaterialAiCopilotTest`, `MaterialContentHtmlTest` |
+| Services | `AiDraftService`, `MaterialContentHtml`, `MaterialCopilotPatch` |
+| Tests | `MaterialAuthoringTest`, `MaterialAiCopilotTest`, `MaterialContentHtmlTest`, `MaterialCopilotPatchTest` |
 
 ## Checklist
 
-- [x] Edit + upload `POST materials/{id}/images`
 - [x] Co-Pilot `POST materials/{id}/copilot`
+- [x] Patch apply tidak wipe seksi lain (ADR-009) — unit + feature
 - [x] Tests authoring/copilot/html hijau
-- [x] `npm run build` (TipTap bundle)
+- [x] Edit wire TipTap (lihat verifikasi 15/16 untuk media)
 
 ## Perintah
 
@@ -24,7 +22,7 @@
 php artisan test --filter=MaterialAuthoringTest
 php artisan test --filter=MaterialAiCopilotTest
 php artisan test --filter=MaterialContentHtmlTest
-npm run build
+php artisan test --filter=MaterialCopilotPatchTest
 ```
 
 ## Uji manual
@@ -32,5 +30,4 @@ npm run build
 | Langkah | Akun | Harapan |
 |---|---|---|
 | Edit materi | guru | TipTap + Co-Pilot |
-| Upload gambar | guru | `/storage/materials/{id}/…` |
 | Siswa buka draft | siswa | ditolak |

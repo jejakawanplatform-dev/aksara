@@ -61,7 +61,7 @@ final class MaterialContentHtml
         return (string) preg_replace_callback(
             '/<img\b([^>]*)>/i',
             static function (array $matches): string {
-                $attrs = $matches[1] ?? '';
+                $attrs = $matches[1];
                 $src = self::attributeValue($attrs, 'src');
                 $alt = self::attributeValue($attrs, 'alt') ?: 'Ilustrasi materi';
 
@@ -204,7 +204,7 @@ final class MaterialContentHtml
             $endPos = null;
             $closeTagLen = 0;
 
-            while ($cursor < $length && $depth > 0) {
+            while ($cursor < $length) {
                 if (! preg_match('/<\/?blockquote\b[^>]*>/i', $html, $tagMatch, PREG_OFFSET_CAPTURE, $cursor)) {
                     break;
                 }

@@ -21,3 +21,4 @@ Ringkasan peran-spesifik + laporan aktivitas mengajar.
 - [x] Dispatch dashboard per role
 - [x] Laporan guru permission-gated
 - [x] Wali murid hanya data anak terhubung
+- [x] Dashboard wali kelas memuat ringkasan kelas yang diampu

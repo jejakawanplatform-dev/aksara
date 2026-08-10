@@ -8,4 +8,4 @@
 | T04 | Wire `CurriculumExportController` | P0 | done | |
 | T05 | Excel/Word via PhpSpreadsheet/PhpWord | P0 | done | service |
 | T06 | Tests export/import | P1 | done | |
-| T07 | Rapikan styling PDF kop sekolah | P2 | todo | opsional |
+| T07 | Rapikan styling PDF kop sekolah | P2 | done | partial `exports/partials/*` |

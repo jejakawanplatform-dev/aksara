@@ -7,6 +7,7 @@ use App\Models\LearningMaterial;
 use App\Models\LearningPlan;
 use App\Models\User;
 use App\Support\MaterialContentHtml;
+use App\Support\MaterialCopilotPatch;
 use Database\Seeders\DemoDataSeeder;
 use Database\Seeders\SystemSettingSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,6 +91,57 @@ class MaterialAiCopilotTest extends TestCase
         $response->assertOk();
         $this->assertContains($response->json('intent'), ['patch', 'rewrite', 'create']);
         $this->assertNotEmpty($response->json('replyMessage'));
+    }
+
+    public function test_copilot_patch_lalu_simpan_tidak_menghapus_seksi_lain(): void
+    {
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
+        $plan = LearningPlan::where('teacher_id', $guru->id)->firstOrFail();
+        $material = LearningMaterial::where('plan_id', $plan->id)->firstOrFail();
+
+        $sections = [
+            [
+                'heading' => '1. Konsep',
+                'body' => '<p>'.str_repeat('Konten materi yang sudah cukup panjang untuk dianggap bukan placeholder. ', 4).'</p>',
+            ],
+            [
+                'heading' => '2. Penerapan',
+                'body' => '<p>'.str_repeat('Bagian kedua juga sudah berisi teks substantif yang panjang. ', 4).'</p>',
+            ],
+        ];
+
+        $copilot = $this->actingAs($guru)->postJson(route('materials.copilot', $material), [
+            'message' => 'Perbaiki hanya seksi konsep agar lebih ringkas.',
+            'history' => [],
+            'templates' => ['references' => true],
+            'title' => 'Judul Materi',
+            'sections' => $sections,
+            'reflectionsText' => '',
+        ]);
+
+        $copilot->assertOk();
+        $copilot->assertJsonPath('applyMode', 'patch');
+        $this->assertNotEmpty($copilot->json('materialData.sections'));
+
+        $merged = MaterialCopilotPatch::mergeSections(
+            $sections,
+            $copilot->json('materialData.sections')
+        );
+
+        $this->assertCount(2, $merged);
+        $this->assertStringContainsString('Bagian kedua juga sudah berisi', $merged[1]['body']);
+
+        $this->actingAs($guru)
+            ->put(route('materials.update', $material), [
+                'title' => 'Judul Materi',
+                'sections' => $merged,
+                'reflectionsText' => '',
+            ])
+            ->assertRedirect();
+
+        $saved = $material->fresh()->content;
+        $this->assertCount(2, $saved['sections']);
+        $this->assertStringContainsString('Bagian kedua juga sudah berisi', $saved['sections'][1]['body']);
     }
 
     public function test_sanitize_menukar_img_palsu_jadi_blok_ilustrasi(): void

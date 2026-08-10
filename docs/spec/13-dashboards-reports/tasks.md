@@ -8,4 +8,4 @@
 | T04 | `TeacherReportController` + Reports/Teacher.vue | P0 | done | |
 | T05 | KPI/hub guru di Dashboard/Guru | P1 | done | |
 | T06 | Smoke di AksaraTest / AdminOversightTest | P1 | done | |
-| T07 | Perkaya laporan wali kelas | P2 | todo | debt akses |
+| T07 | Perkaya laporan wali kelas | P2 | done | dashboard metrik + perhatian siswa |

@@ -4,6 +4,9 @@ import { useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TipTapEditor from '@/Components/tiptap/TipTapEditor.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
+import StatusBadge from '@/Components/ui/StatusBadge.vue';
+import Btn from '@/Components/ui/Btn.vue';
 
 const props = defineProps({
     material: { type: Object, required: true },
@@ -219,6 +222,8 @@ const templateOptions = [
     { key: 'stem_code', label: 'STEM / kode' },
     { key: 'glossary', label: 'Glosarium' },
 ];
+
+// Patch merge semantics: keep in sync with App\Support\MaterialCopilotPatch (tests ADR-009).
 </script>
 
 <template>
@@ -226,41 +231,25 @@ const templateOptions = [
         <template #header>Edit Materi</template>
 
         <div class="space-y-6">
-            <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                <div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="rounded-lg bg-aksara-teal/10 px-2.5 py-1 text-xs font-semibold text-aksara-teal">
-                            {{ material.plan.subject || '-' }}
-                        </span>
-                        <span class="text-xs text-aksara-muted">
-                            · Kelas {{ material.plan.className || material.plan.grade }}
-                        </span>
-                        <span
-                            class="rounded-lg px-2 py-0.5 text-xs font-semibold"
-                            :class="
-                                material.status === 'published'
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : 'bg-amber-100 text-amber-800'
-                            "
-                        >
-                            {{ statusLabel }}
-                        </span>
-                    </div>
-                    <h2 class="mt-1 font-display text-xl font-bold text-aksara-ink">
-                        {{ material.plan.topic }}
-                    </h2>
-                    <p class="mt-0.5 text-xs text-aksara-muted">
-                        Editor Vue + TipTap (Inertia).
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    class="aksara-btn-secondary shrink-0 text-xs"
-                    @click="showCopilot = !showCopilot"
-                >
-                    {{ showCopilot ? 'Sembunyikan Co-Pilot' : 'Tampilkan Co-Pilot' }}
-                </button>
-            </div>
+            <PageHeader
+                :title="material.plan.topic"
+                description="Editor Vue + TipTap (Inertia)."
+            >
+                <template #meta>
+                    <span class="rounded-lg bg-aksara-teal/10 px-2.5 py-1 text-xs font-semibold text-aksara-teal">
+                        {{ material.plan.subject || '-' }}
+                    </span>
+                    <span class="text-xs text-aksara-muted">
+                        · Kelas {{ material.plan.className || material.plan.grade }}
+                    </span>
+                    <StatusBadge :status="material.status" :label="statusLabel" />
+                </template>
+                <template #actions>
+                    <Btn type="button" variant="secondary" size="sm" @click="showCopilot = !showCopilot">
+                        {{ showCopilot ? 'Sembunyikan Co-Pilot' : 'Tampilkan Co-Pilot' }}
+                    </Btn>
+                </template>
+            </PageHeader>
 
             <div
                 class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]"
@@ -329,7 +318,12 @@ const templateOptions = [
                                         <span class="text-sm font-semibold text-aksara-ink">Isi Penjelasan</span>
                                         <TipTapEditor
                                             v-model="section.body"
-                                            :upload-url="api.images"
+                                            :with-math="isStem"
+                                            :media="{
+                                                listUrl: api.media,
+                                                uploadUrl: api.images,
+                                                deleteUrl: api.mediaDestroyBase,
+                                            }"
                                         />
                                     </div>
                                 </div>

@@ -7,24 +7,53 @@ import { TableRow } from '@tiptap/extension-table-row';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { Link } from '@tiptap/extension-link';
-import axios from 'axios';
 import { AksaraImage } from './aksara-image';
-import { compressImageFile } from '@/lib/image-compress';
+import MediaPicker from './MediaPicker.vue';
+import TipTapToolbar from './TipTapToolbar.vue';
 
 const props = defineProps({
     modelValue: { type: String, default: '' },
+    /** @deprecated gunakan media.uploadUrl */
     uploadUrl: { type: String, default: '' },
+    withMath: { type: Boolean, default: false },
+    media: {
+        type: Object,
+        default: null,
+        // { listUrl, uploadUrl, deleteUrl }
+    },
     editable: { type: Boolean, default: true },
 });
 
 const emit = defineEmits(['update:modelValue']);
 
-const fileInput = ref(null);
-const uploading = ref(false);
-const uploadError = ref('');
 const imageSelected = ref(false);
 const showProps = ref(false);
+const showPicker = ref(false);
+const showMath = ref(false);
 const propsForm = ref({ alt: '', title: '', width: '', align: 'center' });
+const mathFormula = ref('');
+const mathDisplay = ref(true);
+const mathPreviewHtml = ref('');
+const mathError = ref('');
+const mathReady = ref(false);
+let katexModule = null;
+
+const mediaConfig = computed(() => {
+    if (props.media && props.media.listUrl && props.media.uploadUrl) {
+        return {
+            listUrl: props.media.listUrl,
+            uploadUrl: props.media.uploadUrl,
+            deleteUrl: props.media.deleteUrl || '',
+        };
+    }
+    if (props.uploadUrl) {
+        return null;
+    }
+    return null;
+});
+
+const canUseMedia = computed(() => !!mediaConfig.value);
+const canUseImageActions = computed(() => imageSelected.value && !!editor.value);
 
 const editor = useEditor({
     content: props.modelValue || '',
@@ -43,7 +72,7 @@ const editor = useEditor({
     ],
     editorProps: {
         attributes: {
-            class: 'aksara-tiptap-prose focus:outline-none min-h-[160px] px-3 py-2',
+            class: 'aksara-prose aksara-tiptap-prose focus:outline-none min-h-[160px] px-3 py-2',
         },
         handleDOMEvents: {
             contextmenu: (view, event) => {
@@ -103,12 +132,16 @@ watch(
     },
 );
 
+watch(
+    () => props.editable,
+    (value) => {
+        editor.value?.setEditable(value);
+    },
+);
+
 onBeforeUnmount(() => {
     editor.value?.destroy();
 });
-
-const canUploadImages = computed(() => !!props.uploadUrl);
-const canUseImageActions = computed(() => imageSelected.value && !!editor.value);
 
 function run(cmd) {
     if (!editor.value) return;
@@ -126,55 +159,29 @@ function setLink() {
     run((c) => c.extendMarkRange('link').setLink({ href: url }));
 }
 
-function pickImage() {
-    if (!canUploadImages.value) return;
-    uploadError.value = '';
-    fileInput.value?.click();
+function insertTable() {
+    run((c) =>
+        c.insertTable({
+            rows: 3,
+            cols: 3,
+            withHeaderRow: true,
+        }),
+    );
 }
 
-async function onFileChange(event) {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file || !editor.value) return;
-
-    uploading.value = true;
-    uploadError.value = '';
-
-    try {
-        const compressed = await compressImageFile(file);
-        const dataUrl = await fileToDataUrl(compressed);
-        const { data } = await axios.post(props.uploadUrl, {
-            dataUrl,
-            originalName: file.name || 'ilustrasi.jpg',
-        });
-        const url = data?.url;
-        if (!url) {
-            throw new Error('Server tidak mengembalikan URL gambar.');
-        }
-        editor.value
-            .chain()
-            .focus()
-            .setImage({ src: url, alt: file.name || 'Ilustrasi', align: 'center' })
-            .run();
-    } catch (err) {
-        const msg =
-            err?.response?.data?.errors?.dataUrl?.[0] ||
-            err?.response?.data?.message ||
-            err?.message ||
-            'Gagal mengunggah gambar.';
-        uploadError.value = msg;
-    } finally {
-        uploading.value = false;
-    }
+function openPicker() {
+    if (!canUseMedia.value) return;
+    showPicker.value = true;
 }
 
-function fileToDataUrl(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error('Gagal membaca file.'));
-        reader.readAsDataURL(file);
-    });
+function onMediaSelect({ url, name }) {
+    if (!editor.value || !url) return;
+    editor.value
+        .chain()
+        .focus()
+        .setImage({ src: url, alt: name || 'Ilustrasi', align: 'center' })
+        .run();
+    showPicker.value = false;
 }
 
 function openProps() {
@@ -200,7 +207,7 @@ function applyProps() {
 
 function replaceImage() {
     if (!canUseImageActions.value) return;
-    pickImage();
+    openPicker();
 }
 
 function deleteImage() {
@@ -216,7 +223,6 @@ function selectImageUnderCursor(event) {
     if (!container || !editor.value.view.dom.contains(container)) {
         return;
     }
-    // Let TipTap handle click; ensure NodeSelection via setNodeSelection if needed
     try {
         const pos = editor.value.view.posAtDOM(container, 0);
         if (typeof pos === 'number') {
@@ -226,56 +232,92 @@ function selectImageUnderCursor(event) {
         // ignore
     }
 }
+
+async function ensureKatex() {
+    if (katexModule) {
+        mathReady.value = true;
+        return katexModule;
+    }
+    await import('katex/dist/katex.min.css');
+    katexModule = await import('katex');
+    mathReady.value = true;
+    return katexModule;
+}
+
+async function openMath() {
+    if (!props.withMath) return;
+    mathFormula.value = '';
+    mathDisplay.value = true;
+    mathPreviewHtml.value = '';
+    mathError.value = '';
+    showMath.value = true;
+    try {
+        await ensureKatex();
+    } catch (err) {
+        mathError.value = err?.message || 'Gagal memuat KaTeX.';
+    }
+}
+
+async function refreshMathPreview() {
+    const raw = mathFormula.value.trim();
+    if (!raw) {
+        mathPreviewHtml.value = '';
+        mathError.value = '';
+        return;
+    }
+    try {
+        const katex = await ensureKatex();
+        mathPreviewHtml.value = katex.default.renderToString(raw, {
+            displayMode: mathDisplay.value,
+            throwOnError: false,
+        });
+        mathError.value = '';
+    } catch (err) {
+        mathError.value = err?.message || 'Preview gagal.';
+        mathPreviewHtml.value = '';
+    }
+}
+
+watch([mathFormula, mathDisplay], () => {
+    if (showMath.value) {
+        refreshMathPreview();
+    }
+});
+
+function insertMath() {
+    const raw = mathFormula.value.trim();
+    if (!raw || !editor.value) return;
+    const token = mathDisplay.value ? `$$${raw}$$` : `$${raw}$`;
+    editor.value.chain().focus().insertContent(token).run();
+    showMath.value = false;
+}
 </script>
 
 <template>
-    <div class="aksara-tiptap-root overflow-visible rounded-xl border border-aksara-line bg-white" @click="selectImageUnderCursor">
-        <div class="flex flex-wrap items-center gap-1 border-b border-aksara-line bg-aksara-mist/40 px-2 py-1.5">
-            <button type="button" class="aksara-btn-secondary !px-2 !py-1 text-xs" @click="run((c) => c.toggleBold())">B</button>
-            <button type="button" class="aksara-btn-secondary !px-2 !py-1 text-xs" @click="run((c) => c.toggleItalic())">I</button>
-            <button type="button" class="aksara-btn-secondary !px-2 !py-1 text-xs" @click="run((c) => c.toggleHeading({ level: 2 }))">H2</button>
-            <button type="button" class="aksara-btn-secondary !px-2 !py-1 text-xs" @click="run((c) => c.toggleBulletList())">• List</button>
-            <button type="button" class="aksara-btn-secondary !px-2 !py-1 text-xs" @click="run((c) => c.toggleOrderedList())">1. List</button>
-            <button type="button" class="aksara-btn-secondary !px-2 !py-1 text-xs" @click="setLink">Link</button>
-            <button
-                type="button"
-                class="aksara-btn-secondary !px-2 !py-1 text-xs"
-                :disabled="uploading || !canUploadImages"
-                :title="canUploadImages ? 'Unggah gambar' : 'Unggah gambar tidak tersedia'"
-                @click="pickImage"
-            >
-                {{ uploading ? 'Unggah…' : 'Gambar' }}
-            </button>
-            <span class="mx-1 h-4 w-px bg-aksara-line" />
-            <button
-                type="button"
-                class="aksara-btn-secondary !px-2 !py-1 text-xs"
-                :disabled="!canUseImageActions"
-                @click="openProps"
-            >
-                Properti
-            </button>
-            <button
-                type="button"
-                class="aksara-btn-secondary !px-2 !py-1 text-xs"
-                :disabled="!canUseImageActions || uploading"
-                @click="replaceImage"
-            >
-                Ganti
-            </button>
-            <button
-                type="button"
-                class="aksara-btn-secondary !px-2 !py-1 text-xs text-red-600"
-                :disabled="!canUseImageActions"
-                @click="deleteImage"
-            >
-                Hapus
-            </button>
-        </div>
-
-        <p v-if="uploadError" class="border-b border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
-            {{ uploadError }}
-        </p>
+    <div class="aksara-tiptap-root overflow-visible rounded-xl border border-aksara-line bg-white shadow-sm" @click="selectImageUnderCursor">
+        <TipTapToolbar
+            :editor="editor"
+            :with-math="withMath"
+            :can-use-media="canUseMedia"
+            :can-use-image-actions="canUseImageActions"
+            @undo="run((c) => c.undo())"
+            @redo="run((c) => c.redo())"
+            @bold="run((c) => c.toggleBold())"
+            @italic="run((c) => c.toggleItalic())"
+            @strike="run((c) => c.toggleStrike())"
+            @h2="run((c) => c.toggleHeading({ level: 2 }))"
+            @h3="run((c) => c.toggleHeading({ level: 3 }))"
+            @bullet="run((c) => c.toggleBulletList())"
+            @ordered="run((c) => c.toggleOrderedList())"
+            @quote="run((c) => c.toggleBlockquote())"
+            @link="setLink"
+            @table="insertTable"
+            @image="openPicker"
+            @math="openMath"
+            @image-props="openProps"
+            @image-replace="replaceImage"
+            @image-delete="deleteImage"
+        />
 
         <div
             v-if="showProps && imageSelected"
@@ -315,12 +357,58 @@ function selectImageUnderCursor(event) {
 
         <EditorContent :editor="editor" class="overflow-visible" />
 
-        <input
-            ref="fileInput"
-            type="file"
-            accept="image/*"
-            class="hidden"
-            @change="onFileChange"
+        <MediaPicker
+            v-if="mediaConfig"
+            :open="showPicker"
+            :list-url="mediaConfig.listUrl"
+            :upload-url="mediaConfig.uploadUrl"
+            :delete-url="mediaConfig.deleteUrl"
+            @close="showPicker = false"
+            @select="onMediaSelect"
         />
+
+        <Teleport to="body">
+            <div
+                v-if="showMath"
+                class="fixed inset-0 z-[80] flex items-center justify-center bg-aksara-ink/40 p-4"
+                @click.self="showMath = false"
+            >
+                <div class="w-full max-w-lg rounded-2xl border border-aksara-line bg-white p-4 shadow-xl">
+                    <h3 class="font-display text-base font-semibold text-aksara-ink">Sisipkan rumus</h3>
+                    <p class="mt-1 text-xs text-aksara-muted">KaTeX — contoh: <code>E = mc^2</code> atau <code>\frac{a}{b}</code></p>
+                    <label class="mt-3 block text-xs font-semibold text-aksara-muted">
+                        Formula
+                        <textarea
+                            v-model="mathFormula"
+                            rows="3"
+                            class="aksara-input mt-1 font-mono text-sm"
+                            placeholder="x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}"
+                        />
+                    </label>
+                    <label class="mt-2 flex items-center gap-2 text-xs text-aksara-ink">
+                        <input v-model="mathDisplay" type="checkbox" class="rounded border-aksara-line" />
+                        Mode blok ($$…$$)
+                    </label>
+                    <div class="mt-3 min-h-[3rem] rounded-lg border border-aksara-line bg-aksara-mist/30 px-3 py-2 text-sm">
+                        <p v-if="mathError" class="text-xs text-red-600">{{ mathError }}</p>
+                        <div v-else-if="mathPreviewHtml" class="overflow-x-auto" v-html="mathPreviewHtml" />
+                        <p v-else class="text-xs text-aksara-muted">Preview muncul di sini…</p>
+                    </div>
+                    <div class="mt-3 flex justify-end gap-2">
+                        <button type="button" class="aksara-btn-secondary !px-3 !py-1.5 text-xs" @click="showMath = false">
+                            Batal
+                        </button>
+                        <button
+                            type="button"
+                            class="aksara-btn-primary !px-3 !py-1.5 text-xs"
+                            :disabled="!mathFormula.trim()"
+                            @click="insertMath"
+                        >
+                            Sisipkan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>

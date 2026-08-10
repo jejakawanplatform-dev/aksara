@@ -6,6 +6,8 @@ import Card from '@/Components/ui/Card.vue';
 import Field from '@/Components/ui/Field.vue';
 import Btn from '@/Components/ui/Btn.vue';
 import StatusBadge from '@/Components/ui/StatusBadge.vue';
+import Modal from '@/Components/ui/Modal.vue';
+import Alert from '@/Components/ui/Alert.vue';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'Pengaturan Sistem Global' },
@@ -341,56 +343,49 @@ async function testConnection() {
             </Card>
         </div>
 
-        <div v-if="showVendorModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-aksara-ink/40" @click="showVendorModal = false" />
-            <div class="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-aksara-line bg-white p-6 shadow-lg">
-                <h3 class="font-display text-lg font-semibold">
-                    {{ editingProviderId ? 'Edit Vendor AI' : 'Tambah Vendor AI Custom' }}
-                </h3>
-                <form class="mt-4 space-y-3" @submit.prevent="saveVendor">
-                    <Field label="Nama" required for-id="vn-name" :error="vendorForm.errors.name">
-                        <input id="vn-name" v-model="vendorForm.name" class="aksara-input" />
+        <Modal
+            :open="showVendorModal"
+            :title="editingProviderId ? 'Edit Vendor AI' : 'Tambah Vendor AI Custom'"
+            @close="showVendorModal = false"
+        >
+            <form id="settings-vendor-form" class="space-y-3" @submit.prevent="saveVendor">
+                <Field label="Nama" required for-id="vn-name" :error="vendorForm.errors.name">
+                    <input id="vn-name" v-model="vendorForm.name" class="aksara-input" />
+                </Field>
+                <Field label="Base URL" for-id="vn-url">
+                    <input id="vn-url" v-model="vendorForm.base_url" class="aksara-input" />
+                </Field>
+                <Field label="API Key" for-id="vn-key">
+                    <input id="vn-key" v-model="vendorForm.api_key" class="aksara-input" />
+                </Field>
+                <Field label="Model" required for-id="vn-model" :error="vendorForm.errors.model">
+                    <input id="vn-model" v-model="vendorForm.model" class="aksara-input" />
+                </Field>
+                <div class="grid grid-cols-3 gap-2">
+                    <Field label="Max tokens" for-id="vn-tokens">
+                        <input id="vn-tokens" v-model.number="vendorForm.max_tokens" type="number" class="aksara-input" />
                     </Field>
-                    <Field label="Base URL" for-id="vn-url">
-                        <input id="vn-url" v-model="vendorForm.base_url" class="aksara-input" />
+                    <Field label="Temperature" for-id="vn-temp">
+                        <input id="vn-temp" v-model.number="vendorForm.temperature" type="number" step="0.1" class="aksara-input" />
                     </Field>
-                    <Field label="API Key" for-id="vn-key">
-                        <input id="vn-key" v-model="vendorForm.api_key" class="aksara-input" />
+                    <Field label="Timeout" for-id="vn-timeout">
+                        <input id="vn-timeout" v-model.number="vendorForm.timeout" type="number" class="aksara-input" />
                     </Field>
-                    <Field label="Model" required for-id="vn-model" :error="vendorForm.errors.model">
-                        <input id="vn-model" v-model="vendorForm.model" class="aksara-input" />
-                    </Field>
-                    <div class="grid grid-cols-3 gap-2">
-                        <Field label="Max tokens" for-id="vn-tokens">
-                            <input id="vn-tokens" v-model.number="vendorForm.max_tokens" type="number" class="aksara-input" />
-                        </Field>
-                        <Field label="Temperature" for-id="vn-temp">
-                            <input id="vn-temp" v-model.number="vendorForm.temperature" type="number" step="0.1" class="aksara-input" />
-                        </Field>
-                        <Field label="Timeout" for-id="vn-timeout">
-                            <input id="vn-timeout" v-model.number="vendorForm.timeout" type="number" class="aksara-input" />
-                        </Field>
-                    </div>
-                    <label class="flex items-center gap-2 text-sm">
-                        <input v-model="vendorForm.is_active" type="checkbox" class="rounded" />
-                        Aktif
-                    </label>
-                    <div
-                        v-if="ping.message"
-                        class="rounded-lg border p-3 text-xs"
-                        :class="ping.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-red-200 bg-red-50 text-red-800'"
-                    >
-                        {{ ping.message }}
-                    </div>
-                    <div class="flex justify-between gap-2 pt-2">
-                        <Btn type="button" variant="secondary" @click="testConnection">Uji koneksi</Btn>
-                        <div class="flex gap-2">
-                            <Btn type="button" variant="secondary" @click="showVendorModal = false">Batal</Btn>
-                            <Btn type="submit" :disabled="vendorForm.processing">Simpan</Btn>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
+                </div>
+                <label class="flex items-center gap-2 text-sm">
+                    <input v-model="vendorForm.is_active" type="checkbox" class="rounded" />
+                    Aktif
+                </label>
+                <Alert v-if="ping.message" :tone="ping.type === 'success' ? 'ok' : 'danger'">
+                    {{ ping.message }}
+                </Alert>
+            </form>
+            <template #footer>
+                <Btn type="button" variant="secondary" size="sm" @click="testConnection">Uji koneksi</Btn>
+                <div class="flex-1" />
+                <Btn type="button" variant="secondary" size="sm" @click="showVendorModal = false">Batal</Btn>
+                <Btn type="submit" form="settings-vendor-form" size="sm" :disabled="vendorForm.processing">Simpan</Btn>
+            </template>
+        </Modal>
     </AppLayout>
 </template>

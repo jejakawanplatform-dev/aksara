@@ -70,16 +70,16 @@ defineProps({
                         {{ metrics.totalPlans }}
                     </p>
                     <p class="mt-1 text-[11px]">
-                        <span class="font-semibold text-green-700">{{ metrics.publishedPlans }} Terbit</span>
+                        <span class="font-semibold text-aksara-ok">{{ metrics.publishedPlans }} Terbit</span>
                         <span class="text-aksara-muted"> · </span>
-                        <span class="font-medium text-amber-700">{{ metrics.draftPlans }} Draf</span>
+                        <span class="font-medium text-aksara-warn">{{ metrics.draftPlans }} Draf</span>
                     </p>
                 </Card>
                 <Card>
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">
                         Materi Terbit
                     </p>
-                    <p class="mt-2 font-display text-2xl font-bold text-blue-700">
+                    <p class="mt-2 font-display text-2xl font-bold text-aksara-info">
                         {{ metrics.publishedMaterials }}
                     </p>
                     <p class="mt-1 text-[11px] text-aksara-muted">
@@ -90,7 +90,7 @@ defineProps({
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">
                         Jurnal Refleksi
                     </p>
-                    <p class="mt-2 font-display text-2xl font-bold text-purple-700">
+                    <p class="mt-2 font-display text-2xl font-bold text-aksara-teal-dark">
                         {{ metrics.evaluationsCount }}
                     </p>
                     <p class="mt-1 text-[11px] text-aksara-muted">Catatan evaluasi terisi</p>
@@ -99,13 +99,13 @@ defineProps({
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">
                         Kuota AI Hari Ini
                     </p>
-                    <p class="mt-2 font-display text-2xl font-bold text-amber-700">
+                    <p class="mt-2 font-display text-2xl font-bold text-aksara-warn">
                         {{ metrics.todayAiCount }}
                         <span class="text-xs font-medium text-aksara-muted">/ {{ metrics.dailyLimit }}</span>
                     </p>
                     <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-aksara-mist">
                         <div
-                            class="h-1.5 rounded-full bg-amber-500"
+                            class="h-1.5 rounded-full bg-aksara-warn"
                             :style="{ width: `${metrics.aiPercentage}%` }"
                         />
                     </div>
@@ -230,13 +230,13 @@ defineProps({
                     <Card title="Batas AI Harian">
                         <div class="mb-2 flex items-center justify-between text-xs">
                             <span class="text-aksara-muted">Pemakaian hari ini</span>
-                            <span class="font-bold text-amber-700">
+                            <span class="font-bold text-aksara-warn">
                                 {{ metrics.todayAiCount }} / {{ metrics.dailyLimit }}
                             </span>
                         </div>
                         <div class="h-2 w-full overflow-hidden rounded-full bg-aksara-mist">
                             <div
-                                class="h-2 rounded-full bg-amber-500"
+                                class="h-2 rounded-full bg-aksara-warn"
                                 :style="{ width: `${metrics.aiPercentage}%` }"
                             />
                         </div>

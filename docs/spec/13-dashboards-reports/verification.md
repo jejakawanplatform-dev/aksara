@@ -8,17 +8,19 @@
 | Pages | `resources/js/Pages/Dashboard/{Admin,Guru,Siswa,WaliKelas,WaliMurid,Generic}.vue` |
 | Laporan | `resources/js/Pages/Reports/Teacher.vue` |
 | Routes | `dashboard`, `reports.guru` |
-| Tests | `AksaraTest`, `AdminOversightTest` |
+| Tests | `AksaraTest`, `AdminOversightTest`, `HomeroomDashboardTest` |
 
 ## Checklist
 
 - [x] Dispatch page per `users.role`
 - [x] Laporan `permission:reports.teacher`
+- [x] Dashboard wali kelas: metrik + rekap per kelas + link absensi
 
 ## Perintah
 
 ```bash
 php artisan test --filter=AksaraTest
+php artisan test --filter=HomeroomDashboardTest
 php artisan test --filter=AdminOversightTest
 ```
 

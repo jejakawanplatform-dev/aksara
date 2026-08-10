@@ -56,7 +56,7 @@ class PlanController extends Controller
             ->through(function (LearningPlan $plan) {
                 $hasMaterial = (bool) $plan->material;
                 $materialPublished = $hasMaterial
-                    && ($plan->material->status?->value ?? $plan->material->status) === 'published';
+                    && $plan->material->status->value === 'published';
 
                 return [
                     'id' => $plan->id,
@@ -166,7 +166,8 @@ class PlanController extends Controller
 
         try {
             $plan = $this->createPlan($validated);
-            $subject = Subject::find($validated['subject_id'])?->name ?? 'Umum';
+            $subjectModel = Subject::find($validated['subject_id']);
+            $subject = $subjectModel !== null ? $subjectModel->name : 'Umum';
 
             $output = $aiDraftService->generateDraft([
                 'phase' => $validated['phase'],
@@ -496,9 +497,10 @@ class PlanController extends Controller
      */
     private function resolveCreateDefaults(): array
     {
-        $academicYearId = AcademicYear::active()?->id
-            ?? AcademicYear::query()->value('id')
-            ?? 0;
+        $activeYear = AcademicYear::active();
+        $academicYearId = $activeYear !== null
+            ? $activeYear->id
+            : (AcademicYear::query()->value('id') ?? 0);
 
         $semesterId = $this->resolveDefaultSemesterId((int) $academicYearId);
 
@@ -518,12 +520,12 @@ class PlanController extends Controller
         return [
             'academic_year_id' => (int) $academicYearId,
             'semester_id' => (int) $semesterId,
-            'class_id' => (int) ($class?->id ?? 0),
+            'class_id' => (int) ($class !== null ? $class->id : 0),
             'subject_id' => (int) $subjectId,
             'curriculum_cp_id' => null,
             'curriculum_tp_id' => null,
             'phase' => $phase,
-            'grade' => (int) ($class?->grade ?? 7),
+            'grade' => (int) ($class !== null ? $class->grade : 7),
             'topic' => '',
             'duration_minutes' => 80,
             'learning_objectives' => '',
@@ -535,7 +537,9 @@ class PlanController extends Controller
     private function resolveDefaultSemesterId(int $academicYearId): int
     {
         if (! $academicYearId) {
-            return (int) (Semester::active()?->id ?? 0);
+            $active = Semester::active();
+
+            return (int) ($active !== null ? $active->id : 0);
         }
 
         return (int) (Semester::query()

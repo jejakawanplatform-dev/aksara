@@ -58,7 +58,9 @@ Mutasi users/settings (POST/PUT/DELETE providers, dll.) di group yang sama — l
 | GET | `/materials/{material}/edit` | `materials.edit` | sama | `Materials/Edit` + TipTap Vue |
 | PUT | `/materials/{material}` | `materials.update` | sama | simpan konten JSON |
 | POST | `/materials/{material}/publish` | `materials.publish` | sama | publish materi |
+| GET | `/materials/{material}/media` | `materials.media` | sama | list file di `public/materials/{id}/` |
 | POST | `/materials/{material}/images` | `materials.images` | sama | upload → `public/materials/{id}/` |
+| DELETE | `/materials/{material}/media/{filename}` | `materials.media.destroy` | sama | hapus file di folder materi |
 | POST | `/materials/{material}/copilot` | `materials.copilot` | sama | JSON Co-Pilot (`chatRefineMaterial`) |
 
 ### Kehadiran, evaluasi, laporan, kuis siswa
@@ -126,7 +128,7 @@ Preferensi model per fitur: `system_settings` (`ai.model_*`).
 4. Validasi schema sebelum persist ke `ai_generations`.
 5. Mock mode = draf deterministik untuk workshop.
 6. Co-Pilot materi: `chatRefineMaterial()` + intent create/patch/rewrite; dilarang emit `<img>` URL fiktif.
-7. Upload gambar: `POST materials/{id}/images` → disk `public` `materials/{id}/`.
+7. Media context-scoped: list/upload/delete hanya di `materials/{id}/` (ADR-008 extend).
 8. Failover mengikuti `priority_order` pada `ai_providers`.
 9. Jangan kirim PII siswa.
 

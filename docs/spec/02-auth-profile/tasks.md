@@ -8,4 +8,4 @@
 | T04 | ProfileController + Profile/Edit.vue | P0 | done | edit / password / hapus akun |
 | T05 | GuestLayout untuk halaman auth | P0 | done | |
 | T06 | Feature tests Auth + Profile | P1 | done | `tests/Feature/Auth/*`, `ProfileTest` |
-| T07 | Rapikan FormRequest scaffold `authorize(): false` | P2 | todo | bila masih dipakai |
+| T07 | Rapikan FormRequest scaffold `authorize(): false` | P2 | done | dihapus (tak terpakai) |

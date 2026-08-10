@@ -56,6 +56,8 @@ class LearningPlanExportImportTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Rekap Rencana Pembelajaran');
+        $response->assertSee('NPSN');
+        $response->assertSee((string) setting('school.name', 'SMP Negeri 1 Aksara'));
     }
 
     public function test_guru_bisa_mengunduh_ekspor_single_word_dan_pdf(): void
@@ -71,6 +73,8 @@ class LearningPlanExportImportTest extends TestCase
             ->get(route('plans.export.single', [$plan, 'pdf']));
         $pdfResponse->assertOk();
         $pdfResponse->assertSee($plan->topic);
+        $pdfResponse->assertSee('NPSN');
+        $pdfResponse->assertSee((string) setting('school.name', 'SMP Negeri 1 Aksara'));
     }
 
     public function test_guru_bisa_mengunduh_template_impor_excel(): void

@@ -6,6 +6,7 @@ use App\Enums\MaterialStatus;
 use App\Http\Controllers\Controller;
 use App\Models\LearningEvent;
 use App\Models\LearningMaterial;
+use App\Models\LearningPlan;
 use App\Support\MaterialContentHtml;
 use App\Support\SubjectContext;
 use Illuminate\Http\Request;
@@ -28,8 +29,9 @@ class MaterialController extends Controller
                 ->latest('published_at')
                 ->get();
         } else {
+            $planIds = LearningPlan::query()->forCurrentUser()->pluck('id');
             $materials = $query
-                ->whereHas('plan', fn ($q) => $q->forCurrentUser())
+                ->whereIn('plan_id', $planIds)
                 ->latest()
                 ->get();
         }

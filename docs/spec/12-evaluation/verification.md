@@ -8,18 +8,20 @@
 | Pages | `resources/js/Pages/Evaluation/{Form,Monitoring}.vue` |
 | Model | `TeacherEvaluation` |
 | Routes | `evaluation.*`, `evaluations.monitoring` |
-| Test | `AdminOversightTest` |
+| Test | `AdminOversightTest`, `AttendanceEvaluationInertiaTest` |
 
 ## Checklist
 
 - [x] Form refleksi + monitoring hub
 - [x] `permission:evaluation.manage`
 - [x] Oversight test hijau
+- [x] Form evaluasi assertInertia
 
 ## Perintah
 
 ```bash
 php artisan test --filter=AdminOversightTest
+php artisan test --filter=AttendanceEvaluationInertiaTest
 ```
 
 ## Uji manual

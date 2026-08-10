@@ -15,6 +15,7 @@ class ReferenceExportImportTest extends \Tests\TestCase
     {
         parent::setUp();
         $this->seed(\Database\Seeders\DemoDataSeeder::class);
+        $this->seed(\Database\Seeders\SystemSettingSeeder::class);
     }
 
     public function test_export_cp_tp_excel_and_word(): void
@@ -39,6 +40,7 @@ class ReferenceExportImportTest extends \Tests\TestCase
 
         $responsePdf->assertStatus(200);
         $responsePdf->assertSee('Dokumen Capaian Pembelajaran (CP)');
+        $responsePdf->assertSee('NPSN');
     }
 
     public function test_export_atp_excel_word_and_pdf(): void

@@ -15,6 +15,7 @@ const props = defineProps({
 });
 
 const editor = useForm({
+    id: props.form.id ?? null,
     title: props.form.title,
     questions: props.form.questions.map((q) => ({
         question: q.question || '',
@@ -37,6 +38,35 @@ function removeQuestion(index) {
     editor.questions.splice(index, 1);
 }
 
+function startNewQuiz() {
+    editor.id = null;
+    editor.title = `Kuis: ${props.plan.topic}`;
+    editor.questions = [
+        {
+            question: '',
+            options: ['', '', '', ''],
+            correct_answer: '',
+        },
+    ];
+    editor.status = 'draft';
+    editor.clearErrors();
+}
+
+function loadQuiz(row) {
+    editor.id = row.id;
+    editor.title = row.title;
+    editor.status = row.status || 'draft';
+    const questions = Array.isArray(row.questions) && row.questions.length
+        ? row.questions
+        : [{ question: '', options: ['', '', '', ''], correct_answer: '' }];
+    editor.questions = questions.map((q) => ({
+        question: q.question || '',
+        options: [...(q.options || ['', '', '', ''])],
+        correct_answer: q.correct_answer || '',
+    }));
+    editor.clearErrors();
+}
+
 function save(status) {
     editor.status = status;
     editor.post(props.storeUrl, { preserveScroll: true });
@@ -56,17 +86,33 @@ function save(status) {
             :description="`${plan.subject || '-'} · Kelas ${plan.className || plan.grade}`"
         >
             <div v-if="existingQuizzes.length" class="mb-4 space-y-2">
-                <p class="text-xs font-semibold text-aksara-muted">Kuis yang sudah ada</p>
-                <div
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-xs font-semibold text-aksara-muted">Kuis yang sudah ada</p>
+                    <Btn type="button" variant="secondary" size="sm" @click="startNewQuiz">+ Kuis baru</Btn>
+                </div>
+                <button
                     v-for="q in existingQuizzes"
                     :key="q.id"
-                    class="flex items-center justify-between rounded-xl border border-aksara-line px-3 py-2 text-sm"
+                    type="button"
+                    class="flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition"
+                    :class="
+                        editor.id === q.id
+                            ? 'border-aksara-teal bg-aksara-teal/5'
+                            : 'border-aksara-line hover:bg-aksara-mist/40'
+                    "
+                    @click="loadQuiz(q)"
                 >
                     <span>{{ q.title }} ({{ q.questionCount }} soal)</span>
                     <StatusBadge :status="q.status" />
-                </div>
+                </button>
             </div>
 
+            <p v-if="editor.id" class="mb-3 text-xs text-aksara-muted">
+                Menyunting kuis #{{ editor.id }}. Ubah judul tidak membuat salinan baru.
+            </p>
+            <p v-else class="mb-3 text-xs text-aksara-muted">
+                Mode kuis baru — simpan akan membuat entri terpisah.
+            </p>
             <Field label="Judul Kuis" required :error="editor.errors.title">
                 <input v-model="editor.title" type="text" class="aksara-input" />
             </Field>

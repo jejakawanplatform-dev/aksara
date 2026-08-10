@@ -6,6 +6,7 @@ import Card from '@/Components/ui/Card.vue';
 
 const props = defineProps({
     classes: { type: Array, default: () => [] },
+    plans: { type: Array, default: () => [] },
     summaryData: { type: Array, default: () => [] },
     filters: { type: Object, default: () => ({}) },
     indexUrl: { type: String, required: true },
@@ -13,14 +14,33 @@ const props = defineProps({
 
 const local = reactive({
     classId: props.filters.classId ? String(props.filters.classId) : '',
+    planId: props.filters.planId ? String(props.filters.planId) : '',
 });
 
 watch(
     () => local.classId,
     (value) => {
+        local.planId = '';
         router.get(
             props.indexUrl,
             { classId: value || undefined },
+            { preserveState: true, replace: true },
+        );
+    },
+);
+
+watch(
+    () => local.planId,
+    (value) => {
+        if (!local.classId) {
+            return;
+        }
+        router.get(
+            props.indexUrl,
+            {
+                classId: local.classId,
+                planId: value || undefined,
+            },
             { preserveState: true, replace: true },
         );
     },
@@ -38,10 +58,19 @@ function pctClass(pct) {
         <template #header>Rekap Kehadiran Siswa</template>
 
         <Card>
-            <div class="mb-4 flex gap-3">
+            <div class="mb-4 flex flex-wrap gap-3">
                 <select id="filter-class" v-model="local.classId" class="aksara-select">
                     <option value="">-- Pilih Kelas --</option>
                     <option v-for="c in classes" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
+                </select>
+                <select
+                    id="filter-plan"
+                    v-model="local.planId"
+                    class="aksara-select"
+                    :disabled="!local.classId"
+                >
+                    <option value="">Semua rencana</option>
+                    <option v-for="p in plans" :key="p.id" :value="String(p.id)">{{ p.topic }}</option>
                 </select>
             </div>
 

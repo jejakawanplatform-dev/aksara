@@ -95,9 +95,41 @@ Catat keputusan arsitektur/produk yang mengubah arah kerja. Format mengikuti ADR
   2. Ceklis **Link Gambar Ilustrasi**: deskripsi, prompt, tautan Unsplash/Wikimedia — bukan hotlink file.
   3. Sanitasi HTML (`MaterialContentHtml`): hanya `data:image/...` dan `/storage/...`.
   4. Upload ke disk `public` `materials/{material_id}/` dari TipTap Vue.
-- **Alasan:** Hindari broken image; aset di storage sendiri.
-- **Alternatif:** Auto DALL·E tanpa cek provider — ditolak sementara.
-- **Dampak:** Co-Pilot kondisional di `Materials/Edit.vue`; `php artisan storage:link` wajib.
+  5. **Extend:** media **context-scoped** — list/upload/delete hanya folder konteks aktif (fase 1: materi). Tidak ada library user/sekolah atau File Manager global. TipTap menerima prop `media` `{ listUrl, uploadUrl, deleteUrl }`.
+- **Alasan:** Hindari broken image; aset di storage sendiri; isolasi antar materi/user.
+- **Alternatif:** Auto DALL·E tanpa cek provider; DAM/library bersama — ditolak sementara.
+- **Dampak:** Co-Pilot kondisional di `Materials/Edit.vue`; `php artisan storage:link` wajib; API `materials.media*`; spec **15/16**.
+
+---
+
+## ADR-011: TipTap global + STEM via `withMath`
+
+- **Tanggal:** 2026-08-10
+- **Status:** diterima
+- **Konteks:** Editor sempat digabung spek materi; KaTeX hanya post-render Show.
+- **Keputusan:**
+  1. TipTap = komponen global (`Components/tiptap`) — spek **15**, terpisah dari materi/Co-Pilot (**09**).
+  2. Prop `withMath` (bukan Blade `with-math`): toolbar rumus + lazy KaTeX; insert `$…$` / `$$…$$`.
+  3. Media picker = spek **16** (context-scoped).
+- **Alasan:** Reuse di Evaluation/dll.; zero overhead non-STEM.
+- **Alternatif:** Editor khusus materi — ditolak.
+- **Dampak:** `TipTapEditor` props; `MediaPicker.vue`; docs `15-tiptap-editor`, `16-context-media`.
+
+---
+
+## ADR-012: Design system Vue SoT + light-only
+
+- **Tanggal:** 2026-08-10
+- **Status:** diterima
+- **Konteks:** Cutover Inertia+Vue; visual rules tersebar; aksen ungu/ad-hoc muncul di page; belum ada keputusan dark mode.
+- **Keputusan:**
+  1. Spec **17-design-system** = SoT visual (token, tipografi, ikon, kontrak `Components/ui`).
+  2. Spec **03** hanya app shell / nav.
+  3. **Light-only** untuk v1 produk; dark mode ditunda (override CSS var nanti).
+  4. Larangan palette ad-hoc (ungu, dll.) dan library ikon kedua tanpa ADR.
+- **Alasan:** Konsistensi bimtek; dark mode = biaya QA besar tanpa kebutuhan workshop.
+- **Alternatif:** Perbesar 03; dark mode segera; shadcn/Storybook — ditolak sementara.
+- **Dampak:** `Modal.vue`, `Btn` danger; migrasi callout/dashboard ke token; coding-standards mengarah ke 17.
 
 ---
 
@@ -125,7 +157,7 @@ Catat keputusan arsitektur/produk yang mengubah arah kerja. Format mengikuti ADR
   4. Tetap **bukan** REST API publik (session web).
 - **Alasan:** TipTap first-class di Vue; DX jelas untuk app session-based di Laravel.
 - **Alternatif:** Blade + island TipTap; SPA terpisah + API — di luar scope bimtek.
-- **Dampak:** `resources/js/Pages/**`, `Http/Controllers/{Domain}`, Pest feature Inertia/HTTP; spek kemampuan di `docs/spec/01–14`.
+- **Dampak:** `resources/js/Pages/**`, `Http/Controllers/{Domain}`, Pest feature Inertia/HTTP; spek kemampuan di `docs/spec/01–17`.
 
 ---
 

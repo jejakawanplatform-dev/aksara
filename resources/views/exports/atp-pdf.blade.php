@@ -3,46 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Alur Tujuan Pembelajaran (ATP) - {{ $subject->name }}</title>
-    <style>
-        body { font-family: sans-serif; font-size: 11px; color: #1e293b; margin: 20px; line-height: 1.4; }
-        .header { text-align: center; border-bottom: 2px solid #0d9488; padding-bottom: 12px; margin-bottom: 16px; }
-        .header h1 { margin: 0; font-size: 16px; color: #0f766e; text-transform: uppercase; }
-        .header p { margin: 4px 0 0 0; font-size: 10px; color: #64748b; }
-        .meta-table { width: 100%; margin-bottom: 16px; font-size: 11px; border-collapse: collapse; }
-        .meta-table td { padding: 4px 8px; }
-        table.atp-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px; }
-        table.atp-table th, table.atp-table td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
-        table.atp-table th { background: #0f766e; color: white; font-weight: bold; }
-        table.atp-table tr:nth-child(even) { background: #f8fafc; }
-        @media print {
-            body { margin: 0; }
-            .no-print { display: none; }
-        }
-    </style>
+    @include('exports.partials.styles')
 </head>
 <body>
-    <div class="no-print" style="margin-bottom: 16px; text-align: right;">
-        <button onclick="window.print()" style="background: #0d9488; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">
-            🖨️ Cetak / Simpan PDF
-        </button>
-    </div>
+    @include('exports.partials.print-button')
+    @include('exports.partials.kop')
 
-    <div class="header">
+    <div class="doc-title">
         <h1>Alur Tujuan Pembelajaran (ATP)</h1>
-        <p>Satuan Pendidikan: {{ $schoolName }} · Kurikulum Merdeka</p>
+        <p>Kurikulum Merdeka · Dicetak {{ now()->translatedFormat('d F Y') }}</p>
     </div>
 
     <table class="meta-table">
         <tr>
-            <td width="20%"><strong>Mata Pelajaran:</strong></td>
-            <td width="30%">{{ $subject->name }} ({{ $subject->code }})</td>
-            <td width="20%"><strong>Fase / Kelas:</strong></td>
-            <td width="30%">Fase {{ $subject->phase ?: 'D' }} {{ $grade ? "(Kelas {$grade})" : '(Semua Kelas)' }}</td>
+            <th style="width: 20%;">Mata Pelajaran</th>
+            <td style="width: 30%;">{{ $subject->name }} ({{ $subject->code }})</td>
+            <th style="width: 20%;">Fase / Kelas</th>
+            <td style="width: 30%;">
+                Fase {{ $subject->phase ?: 'D' }}
+                {{ $grade ? "(Kelas {$grade})" : '(Semua Kelas)' }}
+            </td>
         </tr>
         <tr>
-            <td><strong>Jenjang:</strong></td>
+            <th>Jenjang</th>
             <td>{{ $subject->jenjang ?: 'SMP' }}</td>
-            <td><strong>Tanggal Cetak:</strong></td>
+            <th>Tanggal Cetak</th>
             <td>{{ now()->translatedFormat('d F Y') }}</td>
         </tr>
     </table>
@@ -77,5 +62,9 @@
             @endforelse
         </tbody>
     </table>
+
+    <div class="doc-footer">
+        Dokumen dihasilkan oleh Aksara · {{ $schoolName ?? setting('school.name', 'SMP Negeri 1 Aksara') }}
+    </div>
 </body>
 </html>

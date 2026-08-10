@@ -11,4 +11,4 @@
 | T07 | `DemoDataSeeder` + command `aksara:seed-demo` | P0 | done | |
 | T08 | Config Inertia `use_script_element_for_initial_page` | P0 | done | |
 | T09 | Pest/Pint/Larastan + `AksaraTest` dasar | P1 | done | |
-| T10 | Hapus controller scaffold tak ter-route | P2 | todo | `AiGenerationController`, `LearningPlanController`, `QuizController`, `ReportController` |
+| T10 | Hapus controller scaffold tak ter-route | P2 | done | dihapus |

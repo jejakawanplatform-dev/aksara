@@ -21,12 +21,13 @@ Jangan menambah stack UI di luar Inertia + Vue tanpa ADR baru.
 
 ### Selesai
 
-- Domain + UI Inertia/Vue sesuai `docs/spec/01–14` (scaffold → exports)
-- Design system Vue: `Components/ui/*`; TipTap: `Components/tiptap/*`
+- Domain + UI Inertia/Vue sesuai `docs/spec/01–17` (scaffold → design system)
+- Design system Vue SoT: spec **17** + `Components/ui/*`; TipTap: `Components/tiptap/*` (spec 15)
+- Media context-scoped materi: list/upload/delete (spec 16)
 
 ### Perlu penguatan
 
-- Smoke browser TipTap image resize/properti + Co-Pilot apply setelah deploy
+- Smoke browser TipTap MediaPicker + resize/properti + Co-Pilot apply setelah deploy
 - Perluas assertInertia pada feature test kritis
 - PHPStan: banyak noise typing Eloquent di controller (utang terpisah)
 
@@ -55,7 +56,11 @@ Seed berisi rencana/materi/kuis **Informatika — Dekomposisi Masalah** (publish
 
 ## Perubahan terakhir
 
-- Spek `01–14`: verification memakai tabel **Lokasi artefak (stack terkini)** — path konkret, tanpa checklist generik “ada di disk”.
+- Spek **17** design system SoT (light-only ADR-012); **15/16** TipTap + media; **09** materi & Co-Pilot.
+- UI: `Modal.vue`, `Btn` danger/size; Alert & dashboard bebas ungu ad-hoc.
+- Dashboard wali kelas diperkaya (13 T07); rekap absensi scope ketat (11 T08).
+- PDF export: kop sekolah bersama (`exports/partials/*`); sisa Livewire dihapus (ADR-010).
+- Larastan: model Eloquent bertipe (`@property` + generics relasi); `phpstan analyse` 0 error.
 
 ## Keputusan yang wajib dipatuhi
 
@@ -66,28 +71,29 @@ Seed berisi rencana/materi/kuis **Informatika — Dekomposisi Masalah** (publish
 5. Perubahan skema lewat migration; keputusan besar di `decision-log.md`.
 6. Teks CP/TP/ATP seed = adaptasi workshop — verifikasi resmi sebelum produksi.
 7. Jangan CRUD role bebas — matrix permission pada role tetap (ADR-007).
-8. TipTap: KaTeX hanya jika mode STEM (`with-math`).
+8. TipTap global: KaTeX hanya jika `withMath` (ADR-011).
 9. Scoping data: `ScopesTeacherOrAdmin`.
 10. Failover AI: `ai_providers.priority_order`.
-11. Materi: tidak ada `<img>` fiktif dari AI teks; file hanya storage tepercaya (ADR-008).
+11. Materi: tidak ada `<img>` fiktif dari AI teks; media context-scoped storage tepercaya (ADR-008).
 12. Ceklis Generate Gambar AI hanya jika provider image terkonfigurasi.
 13. Co-Pilot tunggal; patch tidak wipe seksi tak terkait (ADR-009).
 14. UI = Inertia + Vue; domain PHP dipertahankan (ADR-010).
 15. Preferensi model: `system_settings` (`ai.model_*`).
+16. Visual SoT = spec **17**; light-only v1 (ADR-012).
 
 ## Test
 
 ```bash
-php artisan test          # terakhir: 114 passed (2026-08-10)
+php artisan test
+# terakhir: 131 passed
+vendor/bin/phpstan analyse   # 0 error
 npm run build
 php artisan storage:link
 ```
 
 ## Known issue
 
-1. FormRequest scaffold masih `authorize(): false` — jangan di-wire mentah.
-2. Simpan kuis plan masih cenderung `updateOrCreate` by title — edit by id lebih baik nanti.
-3. DB lama tanpa reseed provider: `php artisan db:seed --class=AiProviderSeeder`.
+1. DB lama tanpa reseed provider: `php artisan db:seed --class=AiProviderSeeder`.
 
 ## Dokumen baca dulu
 
@@ -99,10 +105,10 @@ php artisan storage:link
 | `api-contract.md` | route / AI |
 | `database-schema.md` | skema |
 | `testing-strategy.md` | cara uji |
+| `deployment.md` | env production, CI, Railway, rollback |
 | `decision-log.md` | ADR |
-| `docs/spec/18-inertia-vue-migration/` | cutover UI |
 
 ## Langkah berikutnya
 
-1. Fitur produk berikutnya sesuai spek baru di `docs/spec/`.
-2. (Opsional) rapikan PHPStan Eloquent typing; tambah assertInertia.
+1. Fitur produk baru sesuai spek (debt spek tersisa hanya deferred: dark mode ADR-012, Policy opsional).
+2. Smoke browser TipTap MediaPicker/Co-Pilot di lingkungan deploy (opsional; API + Edit props sudah di-cover test).

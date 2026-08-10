@@ -6,6 +6,7 @@ import Card from '@/Components/ui/Card.vue';
 import Field from '@/Components/ui/Field.vue';
 import Btn from '@/Components/ui/Btn.vue';
 import StatusBadge from '@/Components/ui/StatusBadge.vue';
+import Modal from '@/Components/ui/Modal.vue';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'Referensi Kurikulum' },
@@ -634,111 +635,105 @@ const formTitle = computed(() => {
             </Card>
         </div>
 
-        <!-- CRUD modal -->
-        <div v-if="showForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-aksara-ink/40" @click="closeForm" />
-            <div class="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-aksara-line bg-white p-6 shadow-lg">
-                <h3 class="font-display text-lg font-semibold">{{ formTitle }}</h3>
-                <form class="mt-4 space-y-3" @submit.prevent="saveEntity">
-                    <template v-if="formEntity === 'year'">
-                        <Field label="Nama Tahun Ajaran" required for-id="year_name"><input id="year_name" v-model="form.name" class="aksara-input" /></Field>
-                        <Field label="Kode" required for-id="year_code"><input id="year_code" v-model="form.code" class="aksara-input" /></Field>
-                        <Field label="Mulai" for-id="year_start"><input id="year_start" v-model="form.starts_on" type="date" class="aksara-input" /></Field>
-                        <Field label="Selesai" for-id="year_end"><input id="year_end" v-model="form.ends_on" type="date" class="aksara-input" /></Field>
-                        <label class="flex items-center gap-2 text-sm"><input v-model="form.is_active" type="checkbox" class="rounded" /> Set Sebagai Tahun Ajaran Aktif</label>
-                    </template>
-                    <template v-else-if="formEntity === 'semester'">
-                        <Field label="Tahun Ajaran" required for-id="sem_year">
-                            <select id="sem_year" v-model="form.academic_year_id" class="aksara-select">
-                                <option v-for="y in years" :key="y.id" :value="y.id">{{ y.name }}</option>
-                            </select>
-                        </Field>
-                        <Field label="Nama" required for-id="sem_name"><input id="sem_name" v-model="form.name" class="aksara-input" /></Field>
-                        <Field label="Kode" required for-id="sem_code"><input id="sem_code" v-model="form.code" class="aksara-input" /></Field>
-                        <Field label="Nomor" required for-id="sem_num"><input id="sem_num" v-model.number="form.number" type="number" class="aksara-input" /></Field>
-                        <label class="flex items-center gap-2 text-sm"><input v-model="form.is_active" type="checkbox" class="rounded" /> Aktif</label>
-                    </template>
-                    <template v-else-if="formEntity === 'rombel'">
-                        <Field label="Tahun Ajaran" required for-id="rom_year">
-                            <select id="rom_year" v-model="form.academic_year_id" class="aksara-select">
-                                <option v-for="y in years" :key="y.id" :value="y.id">{{ y.name }}</option>
-                            </select>
-                        </Field>
-                        <Field label="Nama" required for-id="rom_name"><input id="rom_name" v-model="form.name" class="aksara-input" /></Field>
-                        <Field label="Kode" for-id="rom_code"><input id="rom_code" v-model="form.rombel_code" class="aksara-input" /></Field>
-                        <Field label="Grade" required for-id="rom_grade"><input id="rom_grade" v-model.number="form.grade" type="number" class="aksara-input" /></Field>
-                        <Field label="Wali kelas" for-id="rom_home">
-                            <select id="rom_home" v-model="form.homeroom_teacher_id" class="aksara-select">
-                                <option value="">—</option>
-                                <option v-for="t in homeroomCandidates" :key="t.id" :value="t.id">{{ t.name }}</option>
-                            </select>
-                        </Field>
-                    </template>
-                    <template v-else-if="formEntity === 'mapel'">
-                        <Field label="Nama" required for-id="map_name"><input id="map_name" v-model="form.name" class="aksara-input" /></Field>
-                        <Field label="Kode" required for-id="map_code"><input id="map_code" v-model="form.code" class="aksara-input" /></Field>
-                        <Field label="Fase" required for-id="map_phase"><input id="map_phase" v-model="form.phase" class="aksara-input" /></Field>
-                        <Field label="Jenjang" required for-id="map_jenjang"><input id="map_jenjang" v-model="form.jenjang" class="aksara-input" /></Field>
-                        <Field label="Deskripsi" for-id="map_desc"><textarea id="map_desc" v-model="form.description" class="aksara-input" rows="2" /></Field>
-                    </template>
-                    <template v-else-if="formEntity === 'cp'">
-                        <Field label="Mapel" required for-id="cp_sub">
-                            <select id="cp_sub" v-model="form.subject_id" class="aksara-select">
-                                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
-                            </select>
-                        </Field>
-                        <Field label="Fase" required for-id="cp_phase"><input id="cp_phase" v-model="form.phase" class="aksara-input" /></Field>
-                        <Field label="Kode elemen" required for-id="cp_ecode"><input id="cp_ecode" v-model="form.element_code" class="aksara-input" /></Field>
-                        <Field label="Nama elemen" required for-id="cp_ename"><input id="cp_ename" v-model="form.element_name" class="aksara-input" /></Field>
-                        <Field label="Pernyataan" required for-id="cp_stmt"><textarea id="cp_stmt" v-model="form.statement" class="aksara-input" rows="3" /></Field>
-                        <Field label="Urutan" required for-id="cp_seq"><input id="cp_seq" v-model.number="form.sequence" type="number" class="aksara-input" /></Field>
-                    </template>
-                    <template v-else-if="formEntity === 'tp'">
-                        <Field label="Kode TP" required for-id="tp_code"><input id="tp_code" v-model="form.code" class="aksara-input" /></Field>
-                        <Field label="Pernyataan" required for-id="tp_stmt"><textarea id="tp_stmt" v-model="form.statement" class="aksara-input" rows="3" /></Field>
-                        <Field label="Kelas" for-id="tp_grade"><input id="tp_grade" v-model.number="form.grade" type="number" class="aksara-input" /></Field>
-                        <Field label="Urutan" required for-id="tp_seq"><input id="tp_seq" v-model.number="form.sequence" type="number" class="aksara-input" /></Field>
-                    </template>
-                    <template v-else-if="formEntity === 'atp'">
-                        <Field label="Mapel" required for-id="atp_sub">
-                            <select id="atp_sub" v-model="form.subject_id" class="aksara-select">
-                                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
-                            </select>
-                        </Field>
-                        <Field label="Tahun Ajaran" required for-id="atp_year">
-                            <select id="atp_year" v-model="form.academic_year_id" class="aksara-select">
-                                <option v-for="y in years" :key="y.id" :value="y.id">{{ y.name }}</option>
-                            </select>
-                        </Field>
-                        <Field label="TP" required for-id="atp_tp">
-                            <select id="atp_tp" v-model="form.curriculum_tp_id" class="aksara-select">
-                                <option v-for="tp in tpOptions" :key="tp.id" :value="tp.id">{{ tp.code }}</option>
-                            </select>
-                        </Field>
-                        <Field label="Judul unit" for-id="atp_unit"><input id="atp_unit" v-model="form.unit_title" class="aksara-input" /></Field>
-                        <Field label="Kelas" required for-id="atp_grade"><input id="atp_grade" v-model.number="form.grade" type="number" class="aksara-input" /></Field>
-                        <Field label="Urutan" required for-id="atp_seq"><input id="atp_seq" v-model.number="form.sequence" type="number" class="aksara-input" /></Field>
-                    </template>
-                    <div class="flex justify-end gap-2 pt-2">
-                        <Btn type="button" variant="secondary" @click="closeForm">Batal</Btn>
-                        <Btn type="submit" :disabled="form.processing">Simpan</Btn>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <Modal :open="showForm" :title="formTitle" @close="closeForm">
+            <form id="refs-entity-form" class="space-y-3" @submit.prevent="saveEntity">
+                <template v-if="formEntity === 'year'">
+                    <Field label="Nama Tahun Ajaran" required for-id="year_name"><input id="year_name" v-model="form.name" class="aksara-input" /></Field>
+                    <Field label="Kode" required for-id="year_code"><input id="year_code" v-model="form.code" class="aksara-input" /></Field>
+                    <Field label="Mulai" for-id="year_start"><input id="year_start" v-model="form.starts_on" type="date" class="aksara-input" /></Field>
+                    <Field label="Selesai" for-id="year_end"><input id="year_end" v-model="form.ends_on" type="date" class="aksara-input" /></Field>
+                    <label class="flex items-center gap-2 text-sm"><input v-model="form.is_active" type="checkbox" class="rounded" /> Set Sebagai Tahun Ajaran Aktif</label>
+                </template>
+                <template v-else-if="formEntity === 'semester'">
+                    <Field label="Tahun Ajaran" required for-id="sem_year">
+                        <select id="sem_year" v-model="form.academic_year_id" class="aksara-select">
+                            <option v-for="y in years" :key="y.id" :value="y.id">{{ y.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Nama" required for-id="sem_name"><input id="sem_name" v-model="form.name" class="aksara-input" /></Field>
+                    <Field label="Kode" required for-id="sem_code"><input id="sem_code" v-model="form.code" class="aksara-input" /></Field>
+                    <Field label="Nomor" required for-id="sem_num"><input id="sem_num" v-model.number="form.number" type="number" class="aksara-input" /></Field>
+                    <label class="flex items-center gap-2 text-sm"><input v-model="form.is_active" type="checkbox" class="rounded" /> Aktif</label>
+                </template>
+                <template v-else-if="formEntity === 'rombel'">
+                    <Field label="Tahun Ajaran" required for-id="rom_year">
+                        <select id="rom_year" v-model="form.academic_year_id" class="aksara-select">
+                            <option v-for="y in years" :key="y.id" :value="y.id">{{ y.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Nama" required for-id="rom_name"><input id="rom_name" v-model="form.name" class="aksara-input" /></Field>
+                    <Field label="Kode" for-id="rom_code"><input id="rom_code" v-model="form.rombel_code" class="aksara-input" /></Field>
+                    <Field label="Grade" required for-id="rom_grade"><input id="rom_grade" v-model.number="form.grade" type="number" class="aksara-input" /></Field>
+                    <Field label="Wali kelas" for-id="rom_home">
+                        <select id="rom_home" v-model="form.homeroom_teacher_id" class="aksara-select">
+                            <option value="">—</option>
+                            <option v-for="t in homeroomCandidates" :key="t.id" :value="t.id">{{ t.name }}</option>
+                        </select>
+                    </Field>
+                </template>
+                <template v-else-if="formEntity === 'mapel'">
+                    <Field label="Nama" required for-id="map_name"><input id="map_name" v-model="form.name" class="aksara-input" /></Field>
+                    <Field label="Kode" required for-id="map_code"><input id="map_code" v-model="form.code" class="aksara-input" /></Field>
+                    <Field label="Fase" required for-id="map_phase"><input id="map_phase" v-model="form.phase" class="aksara-input" /></Field>
+                    <Field label="Jenjang" required for-id="map_jenjang"><input id="map_jenjang" v-model="form.jenjang" class="aksara-input" /></Field>
+                    <Field label="Deskripsi" for-id="map_desc"><textarea id="map_desc" v-model="form.description" class="aksara-input" rows="2" /></Field>
+                </template>
+                <template v-else-if="formEntity === 'cp'">
+                    <Field label="Mapel" required for-id="cp_sub">
+                        <select id="cp_sub" v-model="form.subject_id" class="aksara-select">
+                            <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Fase" required for-id="cp_phase"><input id="cp_phase" v-model="form.phase" class="aksara-input" /></Field>
+                    <Field label="Kode elemen" required for-id="cp_ecode"><input id="cp_ecode" v-model="form.element_code" class="aksara-input" /></Field>
+                    <Field label="Nama elemen" required for-id="cp_ename"><input id="cp_ename" v-model="form.element_name" class="aksara-input" /></Field>
+                    <Field label="Pernyataan" required for-id="cp_stmt"><textarea id="cp_stmt" v-model="form.statement" class="aksara-input" rows="3" /></Field>
+                    <Field label="Urutan" required for-id="cp_seq"><input id="cp_seq" v-model.number="form.sequence" type="number" class="aksara-input" /></Field>
+                </template>
+                <template v-else-if="formEntity === 'tp'">
+                    <Field label="Kode TP" required for-id="tp_code"><input id="tp_code" v-model="form.code" class="aksara-input" /></Field>
+                    <Field label="Pernyataan" required for-id="tp_stmt"><textarea id="tp_stmt" v-model="form.statement" class="aksara-input" rows="3" /></Field>
+                    <Field label="Kelas" for-id="tp_grade"><input id="tp_grade" v-model.number="form.grade" type="number" class="aksara-input" /></Field>
+                    <Field label="Urutan" required for-id="tp_seq"><input id="tp_seq" v-model.number="form.sequence" type="number" class="aksara-input" /></Field>
+                </template>
+                <template v-else-if="formEntity === 'atp'">
+                    <Field label="Mapel" required for-id="atp_sub">
+                        <select id="atp_sub" v-model="form.subject_id" class="aksara-select">
+                            <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Tahun Ajaran" required for-id="atp_year">
+                        <select id="atp_year" v-model="form.academic_year_id" class="aksara-select">
+                            <option v-for="y in years" :key="y.id" :value="y.id">{{ y.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="TP" required for-id="atp_tp">
+                        <select id="atp_tp" v-model="form.curriculum_tp_id" class="aksara-select">
+                            <option v-for="tp in tpOptions" :key="tp.id" :value="tp.id">{{ tp.code }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Judul unit" for-id="atp_unit"><input id="atp_unit" v-model="form.unit_title" class="aksara-input" /></Field>
+                    <Field label="Kelas" required for-id="atp_grade"><input id="atp_grade" v-model.number="form.grade" type="number" class="aksara-input" /></Field>
+                    <Field label="Urutan" required for-id="atp_seq"><input id="atp_seq" v-model.number="form.sequence" type="number" class="aksara-input" /></Field>
+                </template>
+            </form>
+            <template #footer>
+                <Btn type="button" variant="secondary" size="sm" @click="closeForm">Batal</Btn>
+                <Btn type="submit" form="refs-entity-form" size="sm" :disabled="form.processing">Simpan</Btn>
+            </template>
+        </Modal>
 
-        <!-- Members modal -->
-        <div v-if="memberClass" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-aksara-ink/40" @click="closeMembers" />
-            <div class="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-aksara-line bg-white p-6 shadow-lg">
-                <div class="flex justify-between">
-                    <h3 class="font-display text-lg font-semibold">Anggota — {{ memberClass.name }}</h3>
-                    <button type="button" class="text-sm text-aksara-muted" @click="closeMembers">Tutup</button>
-                </div>
-                <ul class="mt-4 space-y-2 text-sm">
+        <Modal
+            :open="!!memberClass"
+            :title="memberClass ? `Anggota — ${memberClass.name}` : 'Anggota'"
+            max-width="md"
+            @close="closeMembers"
+        >
+            <template v-if="memberClass">
+                <ul class="space-y-2 text-sm">
                     <li v-for="s in memberClass.students" :key="s.id" class="flex justify-between">
                         <span>{{ s.name }}</span>
-                        <button type="button" class="text-xs text-red-600" @click="detachStudent(s.id)">Lepas</button>
+                        <button type="button" class="text-xs text-aksara-danger" @click="detachStudent(s.id)">Lepas</button>
                     </li>
                 </ul>
                 <div class="mt-4 flex gap-2">
@@ -746,44 +741,44 @@ const formTitle = computed(() => {
                         <option value="">Pilih siswa</option>
                         <option v-for="s in availableStudents" :key="s.id" :value="String(s.id)">{{ s.name }}</option>
                     </select>
-                    <Btn type="button" class="!px-3 !py-2 text-xs" @click="attachStudent">Tambah</Btn>
+                    <Btn type="button" size="sm" @click="attachStudent">Tambah</Btn>
                 </div>
-            </div>
-        </div>
+            </template>
+        </Modal>
 
-        <!-- Subject teachers modal -->
-        <div v-if="showTeachersModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-aksara-ink/40" @click="showTeachersModal = false" />
-            <div class="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-aksara-line bg-white p-6 shadow-lg">
-                <h3 class="font-display text-lg font-semibold">Plotting guru pengampu</h3>
-                <div class="mt-4 max-h-64 space-y-2 overflow-y-auto">
-                    <label v-for="t in allTeachers" :key="t.id" class="flex items-center gap-2 text-sm">
-                        <input v-model="teachersForm.teacher_ids" type="checkbox" :value="String(t.id)" class="rounded" />
-                        {{ t.name }}
-                    </label>
-                </div>
-                <div class="mt-4 flex justify-end gap-2">
-                    <Btn type="button" variant="secondary" @click="showTeachersModal = false">Batal</Btn>
-                    <Btn type="button" @click="saveTeachers">Simpan</Btn>
-                </div>
+        <Modal
+            :open="showTeachersModal"
+            title="Plotting guru pengampu"
+            max-width="md"
+            @close="showTeachersModal = false"
+        >
+            <div class="max-h-64 space-y-2 overflow-y-auto">
+                <label v-for="t in allTeachers" :key="t.id" class="flex items-center gap-2 text-sm">
+                    <input v-model="teachersForm.teacher_ids" type="checkbox" :value="String(t.id)" class="rounded" />
+                    {{ t.name }}
+                </label>
             </div>
-        </div>
+            <template #footer>
+                <Btn type="button" variant="secondary" size="sm" @click="showTeachersModal = false">Batal</Btn>
+                <Btn type="button" size="sm" @click="saveTeachers">Simpan</Btn>
+            </template>
+        </Modal>
 
-        <!-- Import modal -->
-        <div v-if="showImport" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-aksara-ink/40" @click="showImport = null" />
-            <div class="relative z-10 w-full max-w-md rounded-2xl border border-aksara-line bg-white p-6 shadow-lg">
-                <h3 class="font-display text-lg font-semibold">Impor {{ showImport === 'atp' ? 'ATP' : 'CP/TP' }}</h3>
-                <form class="mt-4 space-y-3" @submit.prevent="submitImport">
-                    <Field label="File" required for-id="import_file">
-                        <input id="import_file" type="file" class="aksara-input" @change="importForm.importFile = $event.target.files?.[0] ?? null" />
-                    </Field>
-                    <div class="flex justify-end gap-2">
-                        <Btn type="button" variant="secondary" @click="showImport = null">Batal</Btn>
-                        <Btn type="submit" :disabled="importForm.processing">Impor</Btn>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <Modal
+            :open="!!showImport"
+            :title="showImport === 'atp' ? 'Impor ATP' : 'Impor CP/TP'"
+            max-width="md"
+            @close="showImport = null"
+        >
+            <form id="refs-import-form" class="space-y-3" @submit.prevent="submitImport">
+                <Field label="File" required for-id="import_file">
+                    <input id="import_file" type="file" class="aksara-input" @change="importForm.importFile = $event.target.files?.[0] ?? null" />
+                </Field>
+            </form>
+            <template #footer>
+                <Btn type="button" variant="secondary" size="sm" @click="showImport = null">Batal</Btn>
+                <Btn type="submit" form="refs-import-form" size="sm" :disabled="importForm.processing">Impor</Btn>
+            </template>
+        </Modal>
     </AppLayout>
 </template>

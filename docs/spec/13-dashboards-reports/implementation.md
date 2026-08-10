@@ -13,3 +13,4 @@
 
 - Dashboard: session auth (isi tergantung role)
 - Laporan: `permission:reports.teacher`
+- Wali kelas: ringkasan kelas homeroom (kehadiran, materi terbit, kuis, siswa perlu perhatian) — mode baca; deep-link ke `attendance.summary?classId=`

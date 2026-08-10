@@ -9,5 +9,5 @@
 | T05 | Skor otomatis dari `correct_answer` | P0 | done | |
 | T06 | Unique (quiz_id, student_id) | P0 | done | ADR-005 |
 | T07 | Coverage di `LearningPipelineTest` | P1 | done | |
-| T08 | Simpan kuis by id (bukan updateOrCreate title) | P2 | todo | debt handover |
-| T09 | Feature test Quiz khusus | P2 | todo | |
+| T08 | Simpan kuis by id (bukan updateOrCreate title) | P2 | done | |
+| T09 | Feature test Quiz khusus | P2 | done | `PlanQuizTest` |

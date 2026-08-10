@@ -88,5 +88,6 @@ php artisan route:list          # Daftar semua routes
 ## Dokumentasi
 
 - Steering (aturan tetap): `docs/steering/`
+- Deploy / env / rollback: `docs/steering/deployment.md`
 - Spek bertahap: `docs/spec/`
 - Handover status: `docs/steering/handover.md`
