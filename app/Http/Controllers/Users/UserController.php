@@ -123,6 +123,7 @@ class UserController extends Controller
             'password' => Hash::make($data['password']),
             'role' => UserRole::from($data['role']),
         ]);
+        $user->forceFill(['email_verified_at' => now()])->save();
         $user->syncAppRole();
 
         return redirect()->route('users.index')->with('message', 'Pengguna ditambahkan.');

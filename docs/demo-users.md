@@ -4,6 +4,16 @@ Berikut adalah daftar pengguna (user) demo yang dihasilkan oleh `DemoDataSeeder`
 
 Semua akun menggunakan kata sandi (password) default yang sama yaitu: **`password`**
 
+Semua akun demo `@aksara.test` **sudah terverifikasi email** (siap lewat middleware `verified`). Tidak perlu klik tautan verifikasi.
+
+Jika login mengarah ke halaman “Verify Email”, seed ulang:
+
+```bash
+php artisan aksara:seed-demo
+# atau hanya verifikasi akun demo yang sudah ada:
+php artisan tinker --execute="App\Models\User::where('email','like','%@aksara.test')->update(['email_verified_at'=>now()]);"
+```
+
 ## 1. Administrator
 Akun untuk mengelola seluruh sistem, fitur, pengguna, dan konfigurasi master data.
 - **Nama**: Admin Aksara
@@ -48,4 +58,4 @@ Akun khusus untuk orang tua yang dihubungkan dengan data siswa untuk memantau pe
   - **Email**: `ortu.bunga@aksara.test`
 
 ---
-*Dokumentasi ini otomatis dihasilkan berdasarkan data seeder awal (DemoDataSeeder).*
+*Dokumentasi ini mengikuti `DemoDataSeeder`.*

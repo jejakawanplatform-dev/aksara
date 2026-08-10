@@ -231,6 +231,12 @@ class DemoDataSeeder extends Seeder
                 ],
             ],
         );
+        // email_verified_at tidak fillable — tandai semua akun demo @aksara.test terverifikasi
+        // agar middleware `verified` tidak memblokir login workshop.
+        User::query()
+            ->where('email', 'like', '%@aksara.test')
+            ->update(['email_verified_at' => now()]);
+
         $this->command->newLine();
         $this->command->info('Demo siap: Tahun ajaran '.$year->name.', semester '.$semester->name.', rombel VII-A/VIII-A/IX-A, mapel Informatika, CP BK + materi/kuis.');
         $this->command->table(
