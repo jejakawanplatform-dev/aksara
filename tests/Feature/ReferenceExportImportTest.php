@@ -1,21 +1,34 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace Tests\Feature;
 
 use App\Models\Subject;
 use App\Models\User;
 use App\Services\CurriculumExportImportService;
+use Database\Seeders\DemoDataSeeder;
+use Database\Seeders\SystemSettingSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
-class ReferenceExportImportTest extends \Tests\TestCase
+class ReferenceExportImportTest extends TestCase
 {
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\DemoDataSeeder::class);
-        $this->seed(\Database\Seeders\SystemSettingSeeder::class);
+        $this->seed(DemoDataSeeder::class);
+        $this->seed(SystemSettingSeeder::class);
     }
 
     public function test_export_cp_tp_excel_and_word(): void

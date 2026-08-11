@@ -1,16 +1,26 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Http\Controllers\References;
 
 use App\Http\Controllers\Controller;
+use App\Models\LearningPlan;
+use App\Models\Subject;
 use App\Services\CurriculumExportImportService;
 use App\Support\Access\PermissionCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\LearningPlan;
-use App\Models\Subject;
 
 class ReferenceImportController extends Controller
 {

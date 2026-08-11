@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Http\Controllers\Materials;
 
 use App\Enums\MaterialStatus;
@@ -79,6 +89,7 @@ class MaterialEditController extends Controller
             'isStem' => SubjectContext::isStem($material->plan->subject),
             'canGenerateImages' => $canGenerateImages,
             'activeModelLabel' => $aiService->resolveActiveModelLabel(AiDraftService::FEATURE_MATERIAL),
+            'modelChoices' => $aiService->listMaterialModelChoices(),
             'endpoints' => [
                 'update' => route('materials.update', $material),
                 'publish' => route('materials.publish', $material),
@@ -216,6 +227,7 @@ class MaterialEditController extends Controller
             'history.*.role' => 'required|string|in:user,assistant',
             'history.*.content' => 'required|string',
             'templates' => 'nullable|array',
+            'preferredModel' => 'nullable|string|max:120',
             'title' => 'nullable|string|max:255',
             'sections' => 'nullable|array',
             'sections.*.heading' => 'nullable|string',
@@ -241,6 +253,12 @@ class MaterialEditController extends Controller
             $templates['illustrations'] = false;
         }
 
+        $allowedModels = collect($aiService->listMaterialModelChoices())->pluck('id')->all();
+        $preferredModel = trim((string) ($validated['preferredModel'] ?? ''));
+        if ($preferredModel !== '' && ! in_array($preferredModel, $allowedModels, true)) {
+            $preferredModel = '';
+        }
+
         $intent = $this->detectCopilotIntent($input, $sections);
         $editorContext = $this->buildEditorContext($intent, $title, $sections, $reflectionsText);
 
@@ -256,12 +274,25 @@ class MaterialEditController extends Controller
             $history,
             $input,
             $templates,
-            $editorContext
+            $editorContext,
+            $preferredModel !== '' ? $preferredModel : null
         );
 
         $materialData = $res['materialData'] ?? null;
-        if (is_array($materialData) && isset($materialData['sections'])) {
-            $materialData['sections'] = MaterialContentHtml::sanitizeSections($materialData['sections']);
+        $illustrationTips = is_array($res['illustrationTips'] ?? null) ? $res['illustrationTips'] : [];
+
+        if (is_array($materialData) && isset($materialData['sections']) && is_array($materialData['sections'])) {
+            $extracted = MaterialContentHtml::extractIllustrationTipsFromSections($materialData['sections']);
+            $materialData['sections'] = $extracted['sections'];
+            foreach ($extracted['tips'] as $tip) {
+                $illustrationTips[] = [
+                    'sectionHeading' => $tip['sectionHeading'],
+                    'description' => $tip['description'],
+                    'prompt' => $tip['prompt'],
+                    'unsplashUrl' => $tip['unsplashUrl'],
+                    'commonsUrl' => $tip['commonsUrl'],
+                ];
+            }
         }
 
         $applyMode = $res['applyMode'] ?? $intent;
@@ -273,6 +304,7 @@ class MaterialEditController extends Controller
             'replyMessage' => $res['replyMessage'] ?? 'Bahan ajar telah disesuaikan.',
             'materialData' => $materialData,
             'proposedOutline' => $res['proposedOutline'] ?? null,
+            'illustrationTips' => array_values($illustrationTips),
             'applyMode' => $applyMode,
             'intent' => $intent,
             'modelLabel' => $res['modelLabel'] ?? $aiService->resolveActiveModelLabel(AiDraftService::FEATURE_MATERIAL),

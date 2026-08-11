@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Http\Controllers;
 
 use App\Models\LearningPlan;
@@ -39,7 +49,7 @@ class LearningPlanExportController extends Controller
         }
 
         $plans = $query->latest()->get();
-        $filename = "Modul_Ajar_Rekap_" . now()->format('Ymd_His');
+        $filename = 'Modul_Ajar_Rekap_'.now()->format('Ymd_His');
 
         if ($format === 'excel') {
             $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
@@ -76,13 +86,13 @@ class LearningPlanExportController extends Controller
     public function exportSingle(LearningPlan $plan, string $format)
     {
         $user = Auth::user();
-        if (!$user->isAdmin() && $plan->teacher_id !== $user->id) {
+        if (! $user->isAdmin() && $plan->teacher_id !== $user->id) {
             abort(403);
         }
 
         $plan->load(['teacher', 'class', 'subject', 'academicYear', 'semester', 'material']);
         $safeTopic = preg_replace('/[^A-Za-z0-9_-]/', '', str_replace(' ', '_', $plan->topic));
-        $filename = "Modul_Ajar_{$safeTopic}_" . now()->format('Ymd');
+        $filename = "Modul_Ajar_{$safeTopic}_".now()->format('Ymd');
 
         if ($format === 'excel') {
             $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
@@ -121,7 +131,7 @@ class LearningPlanExportController extends Controller
         $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
         file_put_contents($tempFile, $this->exportService->downloadTemplate());
 
-        return response()->download($tempFile, "Template_Import_Modul_Ajar.xlsx", [
+        return response()->download($tempFile, 'Template_Import_Modul_Ajar.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ])->deleteFileAfterSend(true);
     }

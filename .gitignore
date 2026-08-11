@@ -21,6 +21,11 @@
 /storage/*.key
 /storage/pail
 /vendor
+
+# Cloudflare / TLS private material (jangan commit)
+docs/ssl/*.key
+docs/ssl/*.pem
+/etc/nginx/ssl/
 _ide_helper.php
 Homestead.json
 Homestead.yaml

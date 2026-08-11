@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
@@ -80,7 +90,9 @@ class SettingsController extends Controller
                 'totalCallsToday' => $todayLogs->count(),
                 'failoverCallsToday' => $todayLogs->where('status', 'failover')->count(),
             ],
-            'featureModelOptions' => AiVendorProviderCatalog::allCatalogModelIds(),
+            'featureModelOptions' => AiVendorProviderCatalog::modelIdsFromProviders(
+                AiProvider::active()->ordered()->get()
+            ),
             'featureRecs' => $recs,
             'urls' => [
                 'index' => route('settings.index'),

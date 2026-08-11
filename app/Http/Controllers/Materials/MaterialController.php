@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Http\Controllers\Materials;
 
 use App\Enums\MaterialStatus;
@@ -106,7 +116,7 @@ class MaterialController extends Controller
         foreach ($rawSections as $section) {
             $heading = is_array($section) ? ($section['heading'] ?? '') : (string) $section;
             $body = is_array($section) ? (string) ($section['body'] ?? '') : '';
-            if ($isStudent && $body !== '') {
+            if ($body !== '') {
                 $body = MaterialContentHtml::forStudent($body);
             }
             $sections[] = ['heading' => $heading, 'body' => $body];

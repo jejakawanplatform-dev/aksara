@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Http\Controllers\Attendance;
 
 use App\Enums\AttendanceStatus;
@@ -9,6 +19,7 @@ use App\Models\SchoolClass;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -106,7 +117,7 @@ class AttendanceSummaryController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, int>
+     * @return Collection<int, int>
      */
     private function allowedClassIds(User $user)
     {

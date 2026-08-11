@@ -42,8 +42,6 @@ Referensi perilaku stack UI lama (Livewire/Alpine, read-only): `/home/jejakawan/
 | Siswa | adit@aksara.test | password |
 | Wali Murid | ortu.adit@aksara.test | password |
 
-Lihat juga: `docs/demo-users.md`.
-
 ---
 
 ## Instalasi Lokal

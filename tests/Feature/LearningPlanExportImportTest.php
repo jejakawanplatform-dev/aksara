@@ -1,13 +1,20 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace Tests\Feature;
 
-use App\Models\AcademicYear;
 use App\Models\LearningPlan;
-use App\Models\SchoolClass;
-use App\Models\Semester;
-use App\Models\Subject;
 use App\Models\User;
+use App\Services\LearningPlanExportImportService;
 use Database\Seeders\DemoDataSeeder;
 use Database\Seeders\SystemSettingSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -96,7 +103,7 @@ class LearningPlanExportImportTest extends TestCase
     public function test_guru_bisa_mengimpor_file_rencana_pembelajaran(): void
     {
         $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
-        $service = app(\App\Services\LearningPlanExportImportService::class);
+        $service = app(LearningPlanExportImportService::class);
 
         $templateContent = $service->downloadTemplate();
         $file = UploadedFile::fake()->createWithContent('import.xlsx', $templateContent);

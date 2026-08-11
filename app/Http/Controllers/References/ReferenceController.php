@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Http\Controllers\References;
 
 use App\Enums\PlanStatus;
@@ -30,6 +40,25 @@ class ReferenceController extends Controller
     /** @var list<string> */
     private const TABS = ['profil', 'operasional', 'tahun', 'semester', 'rombel', 'mapel', 'cp', 'atp'];
 
+    /** Tab yang diizinkan per section sub-menu. */
+    private const SECTION_CONFIG = [
+        'references.section.school' => [
+            'tabs'       => ['profil', 'operasional'],
+            'defaultTab' => 'profil',
+            'pageTitle'  => 'Profil Sekolah',
+        ],
+        'references.section.academic' => [
+            'tabs'       => ['tahun', 'semester', 'rombel', 'mapel'],
+            'defaultTab' => 'tahun',
+            'pageTitle'  => 'Data Akademik',
+        ],
+        'references.section.curriculum' => [
+            'tabs'       => ['cp', 'atp'],
+            'defaultTab' => 'cp',
+            'pageTitle'  => 'Kurikulum',
+        ],
+    ];
+
     public function index(Request $request, SettingService $service): Response
     {
         $user = Auth::user();
@@ -37,12 +66,21 @@ class ReferenceController extends Controller
 
         $canManage = $user->can(PermissionCatalog::REFERENCES_MANAGE);
 
-        $tab = (string) $request->query('tab', $canManage ? 'profil' : 'tahun');
-        if (! in_array($tab, self::TABS, true)) {
-            $tab = $canManage ? 'profil' : 'tahun';
+        $routeName   = $request->route()?->getName() ?? 'references.index';
+        $sectionConf = self::SECTION_CONFIG[$routeName] ?? null;
+        $allowedTabs = $sectionConf ? $sectionConf['tabs'] : self::TABS;
+        $pageTitle   = $sectionConf ? $sectionConf['pageTitle'] : 'Referensi Master';
+
+        $sectionDefaultTab = $sectionConf
+            ? ($canManage ? $sectionConf['defaultTab'] : ($sectionConf['defaultTab'] === 'profil' ? 'operasional' : $sectionConf['defaultTab']))
+            : ($canManage ? 'profil' : 'tahun');
+
+        $tab = (string) $request->query('tab', $sectionDefaultTab);
+        if (! in_array($tab, $allowedTabs, true)) {
+            $tab = $sectionDefaultTab;
         }
         if (in_array($tab, ['profil', 'operasional'], true) && ! $canManage) {
-            $tab = 'tahun';
+            $tab = $allowedTabs[array_key_first(array_filter($allowedTabs, fn ($t) => ! in_array($t, ['profil', 'operasional'], true)))] ?? 'tahun';
         }
 
         $defaultMapelScope = $canManage ? 'all' : 'my';
@@ -237,19 +275,20 @@ class ReferenceController extends Controller
             ? LearningPlan::where('teacher_id', Auth::id())->pluck('class_id')->unique()->values()->all()
             : [];
 
-        $tabs = [
-            ['key' => 'profil', 'label' => 'Profil Sekolah', 'adminOnly' => true],
-            ['key' => 'operasional', 'label' => 'Operasional', 'adminOnly' => true],
-            ['key' => 'tahun', 'label' => 'Tahun Ajaran', 'adminOnly' => false],
-            ['key' => 'semester', 'label' => 'Semester', 'adminOnly' => false],
-            ['key' => 'rombel', 'label' => 'Rombel', 'adminOnly' => false],
-            ['key' => 'mapel', 'label' => 'Mata Pelajaran', 'adminOnly' => false],
-            ['key' => 'cp', 'label' => 'CP & TP', 'adminOnly' => false],
-            ['key' => 'atp', 'label' => 'ATP', 'adminOnly' => false],
+        $allTabs = [
+            ['key' => 'profil',     'label' => 'Profil Sekolah',  'adminOnly' => true],
+            ['key' => 'operasional','label' => 'Operasional',     'adminOnly' => true],
+            ['key' => 'tahun',     'label' => 'Tahun Ajaran',     'adminOnly' => false],
+            ['key' => 'semester',  'label' => 'Semester',         'adminOnly' => false],
+            ['key' => 'rombel',    'label' => 'Rombel',           'adminOnly' => false],
+            ['key' => 'mapel',     'label' => 'Mata Pelajaran',   'adminOnly' => false],
+            ['key' => 'cp',        'label' => 'CP & TP',          'adminOnly' => false],
+            ['key' => 'atp',       'label' => 'ATP',              'adminOnly' => false],
         ];
+        $tabs = array_values(array_filter($allTabs, fn ($t) => in_array($t['key'], $allowedTabs, true)));
 
         return Inertia::render('References/Index', [
-            'pageTitle' => 'Referensi Kurikulum',
+            'pageTitle' => $pageTitle,
             'tab' => $tab,
             'tabs' => $tabs,
             'canManage' => $canManage,
@@ -295,7 +334,7 @@ class ReferenceController extends Controller
             'mySubjectIds' => $mySubjectIds,
             'isTeacher' => $user->isTeacher() || $user->isHomeroomTeacher(),
             'urls' => [
-                'index' => route('references.index'),
+                'index' => route($routeName),
                 'school' => route('references.school'),
                 'academic' => route('references.academic'),
                 'yearsStore' => route('references.years.store'),

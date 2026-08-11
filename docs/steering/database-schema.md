@@ -222,7 +222,7 @@ Pivot guru pengampu ↔ mapel (referensi / plotting).
 ## Data demo
 
 Perintah: `php artisan migrate:fresh --seed` atau `php artisan aksara:seed-demo`.  
-Detail akun: `docs/demo-users.md`.
+Detail akun: tabel demo di `README.md`.
 
 | Role | Email | Password |
 |---|---|---|

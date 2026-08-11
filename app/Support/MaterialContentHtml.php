@@ -1,27 +1,36 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Support;
 
 /**
- * Normalizes material section HTML so TipTap never receives broken AI-hallucinated images,
- * and plain-text illustration tips are upgraded to readable HTML blocks.
+ * Normalizes material section HTML so TipTap never receives broken AI-hallucinated images.
  *
- * Illustration "saran + Prompt AI Image" blocks are teacher authoring aids.
- * Use forStudent() when rendering materi untuk siswa.
+ * Blok "Saran Ilustrasi / Prompt AI Image" adalah bantuan authoring guru —
+ * tidak disimpan di body seksi (tampil di chat Asisten saja). Use forStudent()
+ * saat render materi untuk siswa (cadangan untuk konten lama).
  */
 final class MaterialContentHtml
 {
     /**
-     * Sanitize + normalize one section body for TipTap.
-     * Idempotent: running twice must not nest or duplicate illustration blocks.
+     * Sanitize + normalize one section body for TipTap / persist.
+     * Menghapus tip ilustrasi guru dan <img> tidak tepercaya.
      */
     public static function sanitizeSectionBody(string $html): string
     {
         $html = self::stripUntrustedImages($html);
-        $html = self::normalizeIllustrationSuggestions($html);
-        $html = self::ensureIllustrationPrompts($html);
+        $html = self::forStudent($html);
 
-        return $html;
+        return trim($html);
     }
 
     /**
@@ -50,7 +59,145 @@ final class MaterialContentHtml
     }
 
     /**
-     * Replace untrusted <img> tags with a TipTap-safe illustration blockquote.
+     * Extract teacher illustration tips from section bodies, then return cleaned sections.
+     *
+     * @param  array<int, array{heading?: string, body?: string}>  $sections
+     * @return array{sections: array<int, array{heading: string, body: string}>, tips: list<array{sectionIndex: int, sectionHeading: string, description: string, prompt: string, unsplashUrl: ?string, commonsUrl: ?string}>}
+     */
+    public static function extractIllustrationTipsFromSections(array $sections): array
+    {
+        $tips = [];
+        $cleaned = [];
+
+        foreach (array_values($sections) as $index => $section) {
+            if (! is_array($section)) {
+                continue;
+            }
+
+            $heading = (string) ($section['heading'] ?? '');
+            $body = (string) ($section['body'] ?? '');
+
+            $body = self::mapBalancedBlockquotes($body, static function (string $full, string $inner) use (&$tips, $heading, $index): string {
+                if (! preg_match('/Saran\s+Ilustrasi|Prompt\s+AI\s+Image|Cari\s*&(?:amp;)?\s*unduh\s+di\s+Unsplash/iu', $inner)) {
+                    return $full;
+                }
+
+                $tips[] = self::tipFromIllustrationInnerHtml($inner, $heading, $index);
+
+                return '';
+            });
+
+            $body = (string) preg_replace_callback(
+                '/<p[^>]*>\s*Saran\s+ilustrasi\s*:\s*(.*?)<\/p>/isu',
+                static function (array $m) use (&$tips, $heading, $index): string {
+                    $blob = html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $blob = trim(preg_replace('/\s+/u', ' ', $blob) ?? $blob);
+                    if ($blob !== '') {
+                        $parsed = self::parsePlainIllustrationBlobToTip($blob, $heading, $index);
+                        if ($parsed !== null) {
+                            $tips[] = $parsed;
+                        }
+                    }
+
+                    return '';
+                },
+                $body
+            );
+
+            $cleaned[] = [
+                'heading' => $heading,
+                'body' => self::sanitizeSectionBody($body),
+            ];
+        }
+
+        return ['sections' => $cleaned, 'tips' => $tips];
+    }
+
+    /**
+     * @return array{sectionIndex: int, sectionHeading: string, description: string, prompt: string, unsplashUrl: ?string, commonsUrl: ?string}
+     */
+    private static function tipFromIllustrationInnerHtml(string $inner, string $heading, int $index): array
+    {
+        $desc = '';
+        if (preg_match('/Saran\s+Ilustrasi:\s*<\/strong>\s*([^<]+)/iu', $inner, $m)
+            || preg_match('/Saran\s+Ilustrasi:\s*([^<]+)/iu', $inner, $m)) {
+            $desc = trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        }
+
+        $prompt = '';
+        if (preg_match('/Prompt\s+AI\s+Image:\s*<\/strong>\s*<code>(.*?)<\/code>/isu', $inner, $m)
+            || preg_match('/<code>(.*?)<\/code>/isu', $inner, $m)) {
+            $prompt = trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        }
+
+        $unsplash = null;
+        $commons = null;
+        if (preg_match('/href="(https:\/\/unsplash\.com[^"]+)"/i', $inner, $m)) {
+            $unsplash = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+        if (preg_match('/href="(https:\/\/commons\.wikimedia\.org[^"]+)"/i', $inner, $m)) {
+            $commons = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+
+        if ($desc === '') {
+            $desc = 'Ilustrasi materi';
+        }
+        if ($prompt === '') {
+            $prompt = self::defaultImagePrompt($desc);
+        }
+
+        return [
+            'sectionIndex' => $index,
+            'sectionHeading' => $heading !== '' ? $heading : 'Seksi '.($index + 1),
+            'description' => $desc,
+            'prompt' => $prompt,
+            'unsplashUrl' => $unsplash,
+            'commonsUrl' => $commons,
+        ];
+    }
+
+    /**
+     * @return array{sectionIndex: int, sectionHeading: string, description: string, prompt: string, unsplashUrl: ?string, commonsUrl: ?string}|null
+     */
+    private static function parsePlainIllustrationBlobToTip(string $blob, string $heading, int $index): ?array
+    {
+        if ($blob === '') {
+            return null;
+        }
+
+        $desc = $blob;
+        $prompt = null;
+        $unsplash = null;
+
+        if (preg_match('/Prompt\s+AI\s+Image\s*EN?\s*:\s*(.+?)(?:,\s*Link|\s*$)/iu', $blob, $m)) {
+            $prompt = trim($m[1]);
+        }
+        if (preg_match('/(?:ID|deskripsi)\s*:\s*([^,]+)/iu', $blob, $m)) {
+            $desc = trim($m[1]);
+        } elseif (preg_match('/^(.+?)(?:,\s*Prompt|$)/u', $blob, $m)) {
+            $desc = trim($m[1]);
+        }
+        if (preg_match('/https:\/\/unsplash\.com\/\S+/i', $blob, $m)) {
+            $unsplash = rtrim($m[0], '.,;)');
+        }
+
+        $desc = trim(preg_replace('/^(ID|deskripsi)\s*:\s*/iu', '', $desc) ?? $desc);
+        if ($desc === '') {
+            $desc = 'Ilustrasi materi';
+        }
+
+        return [
+            'sectionIndex' => $index,
+            'sectionHeading' => $heading !== '' ? $heading : 'Seksi '.($index + 1),
+            'description' => $desc,
+            'prompt' => $prompt ?: self::defaultImagePrompt($desc),
+            'unsplashUrl' => $unsplash,
+            'commonsUrl' => null,
+        ];
+    }
+
+    /**
+     * Replace untrusted <img> tags (remove — tips go to Asisten chat, not body).
      */
     public static function stripUntrustedImages(string $html): string
     {
@@ -63,13 +210,12 @@ final class MaterialContentHtml
             static function (array $matches): string {
                 $attrs = $matches[1];
                 $src = self::attributeValue($attrs, 'src');
-                $alt = self::attributeValue($attrs, 'alt') ?: 'Ilustrasi materi';
 
                 if (self::isTrustedImageSrc($src)) {
                     return $matches[0];
                 }
 
-                return self::illustrationBlockHtml($alt, null, null, null);
+                return '';
             },
             $html
         );

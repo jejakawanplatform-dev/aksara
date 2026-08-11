@@ -1,7 +1,19 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace Tests\Feature;
 
+use App\Enums\PlanStatus;
+use App\Enums\UserRole;
 use App\Models\LearningPlan;
 use App\Models\Quiz;
 use App\Models\User;
@@ -122,7 +134,7 @@ class PlanQuizTest extends TestCase
         $plan = LearningPlan::where('teacher_id', $guru->id)->firstOrFail();
 
         $otherTeacher = User::factory()->create([
-            'role' => \App\Enums\UserRole::Teacher,
+            'role' => UserRole::Teacher,
             'email_verified_at' => now(),
         ]);
         $otherTeacher->syncAppRole();
@@ -139,7 +151,7 @@ class PlanQuizTest extends TestCase
             'duration_minutes' => 40,
             'learning_objectives' => 'Demo isolasi',
             'curriculum_reference' => 'Demo',
-            'status' => \App\Enums\PlanStatus::Draft,
+            'status' => PlanStatus::Draft,
         ]);
 
         $foreignQuiz = Quiz::query()->create([

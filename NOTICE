@@ -1,0 +1,40 @@
+Aksara
+======
+
+Product: Aksara — platform manajemen pembelajaran berbantuan AI (workshop / bimtek).
+Developer: jejakawan
+Web: https://jejakawan.com
+
+License
+-------
+This project is licensed under the MIT License. See the LICENSE file in the
+project root.
+
+Policy
+------
+- Clone, fork, and modification are permitted under MIT terms.
+- Retain the copyright notice and LICENSE text in copies and substantial portions.
+- No warranty is provided (see LICENSE).
+- Do not present Aksara outputs as official national curriculum documents.
+- Do not commit secrets (API keys, .env). AI keys stay on the server only.
+
+Source file headers
+-------------------
+Application source files carry a short copyright header. Templates and rules
+for agents (any tool): docs/steering/file-header.md and docs/steering/handover.md.
+
+UI brand footer
+---------------
+Canonical component: resources/js/Components/brand/BrandCopyright.vue
+Backend constants: app/Support/BrandAttribution.php
+Do not remove product/owner attribution from sidebar or landing without owner authorization.
+Encrypting Vue footers or hiding folders with DB keys is not supported (ineffective DRM).
+Legal protection is the MIT LICENSE + NOTICE retention, plus project process for agents.
+
+Owner (jejakawan) logo / favicon
+--------------------------------
+Runtime assets: public/brand/jejakawan/{logo.png,favicon.ico,apple-touch-icon.png}
+Default browser favicon: public/favicon.ico (copy of jejakawan)
+School/custom override (optional): public/brand/custom/favicon.ico (+ logo.png)
+If custom is absent, app.blade.php falls back to jejakawan assets.
+Source drop folder (not served): docs/logo/

@@ -1,3 +1,12 @@
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -200,6 +209,15 @@
     /* Toolbar aksi (card kecil) — header tab / section */
     .aksara-toolbar {
         @apply inline-flex shrink-0 flex-wrap items-center gap-1 rounded-xl border border-aksara-line bg-white p-1 shadow-sm;
+    }
+
+    /* Materials Edit: konten scroll + Co-Pilot full-height di bawah topbar */
+    .aksara-material-edit {
+        height: calc(100dvh - 4rem); /* topbar h-16 */
+    }
+
+    .aksara-copilot-rail {
+        @apply min-h-0;
     }
 
     .aksara-popover {

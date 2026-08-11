@@ -1,7 +1,18 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace Tests\Feature;
 
+use App\Models\AiProvider;
 use App\Models\User;
 use Database\Seeders\DemoDataSeeder;
 use Database\Seeders\SystemSettingSeeder;
@@ -27,6 +38,29 @@ class SystemSettingsTest extends TestCase
             ->get(route('settings.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('Settings/Index'));
+    }
+
+    public function test_opsi_model_per_fitur_hanya_dari_vendor_aktif(): void
+    {
+        $admin = User::where('email', 'admin@aksara.test')->firstOrFail();
+
+        AiProvider::query()->update(['is_active' => false]);
+        AiProvider::where('vendor_key', 'groq')->update([
+            'is_active' => true,
+            'api_key' => 'gsk_test',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('settings.index', ['tab' => 'ai']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Settings/Index')
+                ->has('featureModelOptions')
+                ->where('featureModelOptions', fn ($opts) => collect($opts)->contains('llama-3.3-70b-versatile')
+                    && ! collect($opts)->contains('gpt-4o')
+                    && ! collect($opts)->contains('gemini-1.5-flash')
+                )
+            );
     }
 
     public function test_guru_ditolak_mengakses_halaman_pengaturan_sistem(): void

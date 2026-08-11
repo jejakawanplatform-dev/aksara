@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Services;
 
 use App\Enums\PlanStatus;
@@ -11,12 +21,12 @@ use App\Models\Subject;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-
 use PhpOffice\PhpSpreadsheet\IOFactory as SpreadsheetIOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\SimpleType\Jc;
 
 class LearningPlanExportImportService
 {
@@ -25,13 +35,13 @@ class LearningPlanExportImportService
      */
     public function exportPlansExcel(Collection $plans): string
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Rencana Pembelajaran');
 
         // Header Metadata
         $sheet->setCellValue('A1', 'REKAP RENCANA PEMBELAJARAN (MODUL AJAR)');
-        $sheet->setCellValue('A2', 'Dibuat pada: ' . now()->translatedFormat('d F Y H:i'));
+        $sheet->setCellValue('A2', 'Dibuat pada: '.now()->translatedFormat('d F Y H:i'));
 
         $headers = [
             'No',
@@ -90,7 +100,7 @@ class LearningPlanExportImportService
      */
     public function exportPlansWord(Collection $plans, ?string $title = null): string
     {
-        $phpWord = new PhpWord();
+        $phpWord = new PhpWord;
         $phpWord->setDefaultFontName('Calibri');
         $phpWord->setDefaultFontSize(10);
 
@@ -103,25 +113,25 @@ class LearningPlanExportImportService
 
         $docTitle = $title ?: 'DAFTAR RENCANA PEMBELAJARAN (MODUL AJAR)';
         $section->addText($docTitle, ['bold' => true, 'size' => 16, 'color' => '0F766E']);
-        $section->addText('Tanggal Cetak: ' . now()->translatedFormat('d F Y H:i'), ['size' => 10, 'color' => '475569']);
+        $section->addText('Tanggal Cetak: '.now()->translatedFormat('d F Y H:i'), ['size' => 10, 'color' => '475569']);
         $section->addTextBreak(1);
 
         foreach ($plans as $index => $plan) {
-            $section->addText(($index + 1) . '. TOPIK: ' . mb_strtoupper($plan->topic), ['bold' => true, 'size' => 12, 'color' => '0D9488']);
-            
+            $section->addText(($index + 1).'. TOPIK: '.mb_strtoupper($plan->topic), ['bold' => true, 'size' => 12, 'color' => '0D9488']);
+
             $table = $section->addTable(['borderSize' => 6, 'borderColor' => 'CBD5E1', 'cellMargin' => 100]);
-            
+
             $table->addRow();
             $table->addCell(2500, ['noWrap' => false, 'bgColor' => 'F1F5F9'])->addText('Mata Pelajaran', ['bold' => true, 'size' => 9]);
-            $table->addCell(6500, ['noWrap' => false])->addText(($plan->subject->name ?? '—') . ' (' . ($plan->subject->code ?? '—') . ')', ['size' => 9]);
+            $table->addCell(6500, ['noWrap' => false])->addText(($plan->subject->name ?? '—').' ('.($plan->subject->code ?? '—').')', ['size' => 9]);
 
             $table->addRow();
             $table->addCell(2500, ['noWrap' => false, 'bgColor' => 'F1F5F9'])->addText('Kelas / Fase / Durasi', ['bold' => true, 'size' => 9]);
-            $table->addCell(6500, ['noWrap' => false])->addText('Kelas ' . ($plan->class->name ?? $plan->grade) . ' | Fase ' . $plan->phase . ' | ' . $plan->duration_minutes . ' menit', ['size' => 9]);
+            $table->addCell(6500, ['noWrap' => false])->addText('Kelas '.($plan->class->name ?? $plan->grade).' | Fase '.$plan->phase.' | '.$plan->duration_minutes.' menit', ['size' => 9]);
 
             $table->addRow();
             $table->addCell(2500, ['noWrap' => false, 'bgColor' => 'F1F5F9'])->addText('Guru / Status', ['bold' => true, 'size' => 9]);
-            $table->addCell(6500, ['noWrap' => false])->addText(($plan->teacher->name ?? '—') . ' (' . $plan->status->label() . ')', ['size' => 9]);
+            $table->addCell(6500, ['noWrap' => false])->addText(($plan->teacher->name ?? '—').' ('.$plan->status->label().')', ['size' => 9]);
 
             $table->addRow();
             $table->addCell(2500, ['noWrap' => false, 'bgColor' => 'F1F5F9'])->addText('Tujuan Pembelajaran', ['bold' => true, 'size' => 9]);
@@ -149,7 +159,7 @@ class LearningPlanExportImportService
      */
     public function exportSinglePlanWord(LearningPlan $plan): string
     {
-        $phpWord = new PhpWord();
+        $phpWord = new PhpWord;
         $phpWord->setDefaultFontName('Calibri');
         $phpWord->setDefaultFontSize(10);
 
@@ -161,8 +171,8 @@ class LearningPlanExportImportService
         ]);
 
         // Header Title
-        $section->addText('MODUL AJAR / RENCANA PEMBELAJARAN', ['bold' => true, 'size' => 16, 'color' => '0F766E'], ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
-        $section->addText(mb_strtoupper($plan->topic), ['bold' => true, 'size' => 14, 'color' => '0D9488'], ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
+        $section->addText('MODUL AJAR / RENCANA PEMBELAJARAN', ['bold' => true, 'size' => 16, 'color' => '0F766E'], ['alignment' => Jc::CENTER]);
+        $section->addText(mb_strtoupper($plan->topic), ['bold' => true, 'size' => 14, 'color' => '0D9488'], ['alignment' => Jc::CENTER]);
         $section->addTextBreak(1);
 
         // Identitas Modul Table
@@ -170,11 +180,11 @@ class LearningPlanExportImportService
         $table1 = $section->addTable(['borderSize' => 6, 'borderColor' => 'CBD5E1', 'cellMargin' => 100]);
 
         $rows = [
-            ['Mata Pelajaran', ($plan->subject->name ?? '—') . ' (' . ($plan->subject->code ?? '—') . ')'],
+            ['Mata Pelajaran', ($plan->subject->name ?? '—').' ('.($plan->subject->code ?? '—').')'],
             ['Guru Pengampu', $plan->teacher->name ?? '—'],
-            ['Kelas / Fase', 'Kelas ' . ($plan->class->name ?? $plan->grade) . ' / Fase ' . $plan->phase],
-            ['Tahun Ajaran / Semester', ($plan->academicYear->name ?? '—') . ' / ' . ($plan->semester->name ?? '—')],
-            ['Alokasi Waktu', $plan->duration_minutes . ' Menit'],
+            ['Kelas / Fase', 'Kelas '.($plan->class->name ?? $plan->grade).' / Fase '.$plan->phase],
+            ['Tahun Ajaran / Semester', ($plan->academicYear->name ?? '—').' / '.($plan->semester->name ?? '—')],
+            ['Alokasi Waktu', $plan->duration_minutes.' Menit'],
             ['Status Modul', $plan->status->label()],
         ];
 
@@ -212,24 +222,24 @@ class LearningPlanExportImportService
             $mat = $plan->material;
             $content = $mat->content ?? [];
 
-            $section->addText('Judul Materi: ' . ($content['title'] ?? $plan->topic), ['bold' => true, 'size' => 10]);
+            $section->addText('Judul Materi: '.($content['title'] ?? $plan->topic), ['bold' => true, 'size' => 10]);
 
-            if (!empty($content['sections']) && is_array($content['sections'])) {
+            if (! empty($content['sections']) && is_array($content['sections'])) {
                 foreach ($content['sections'] as $sec) {
-                    if (!empty($sec['heading'])) {
+                    if (! empty($sec['heading'])) {
                         $heading = is_array($sec['heading']) ? implode(' ', array_map('strval', $sec['heading'])) : (string) $sec['heading'];
                         $section->addText($heading, ['bold' => true, 'size' => 10, 'color' => '0D9488']);
                     }
-                    if (!empty($sec['body'])) {
+                    if (! empty($sec['body'])) {
                         $body = is_array($sec['body']) ? implode("\n", array_map('strval', $sec['body'])) : (string) $sec['body'];
                         $section->addText(strip_tags($body), ['size' => 10]);
                     }
                 }
             }
 
-            if (!empty($content['reflectionQuestion'])) {
-                $refQ = is_array($content['reflectionQuestion']) 
-                    ? implode('; ', array_map('strval', $content['reflectionQuestion'])) 
+            if (! empty($content['reflectionQuestion'])) {
+                $refQ = is_array($content['reflectionQuestion'])
+                    ? implode('; ', array_map('strval', $content['reflectionQuestion']))
                     : (string) $content['reflectionQuestion'];
 
                 $section->addTextBreak(1);
@@ -253,7 +263,7 @@ class LearningPlanExportImportService
      */
     public function downloadTemplate(): string
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Import Modul Ajar');
 
@@ -348,7 +358,7 @@ class LearningPlanExportImportService
         $activeYear = AcademicYear::active() ?? AcademicYear::query()->first();
         $activeSemester = Semester::active() ?? Semester::query()->first();
 
-        if (!$activeYear || !$activeSemester) {
+        if (! $activeYear || ! $activeSemester) {
             return [
                 'success' => false,
                 'imported' => 0,
@@ -378,7 +388,8 @@ class LearningPlanExportImportService
                 $needs = trim((string) ($row[7] ?? ''));
 
                 if (empty($objectives)) {
-                    $errors[] = "Baris " . ($i + 1) . ": Tujuan Pembelajaran wajib diisi.";
+                    $errors[] = 'Baris '.($i + 1).': Tujuan Pembelajaran wajib diisi.';
+
                     continue;
                 }
 
@@ -388,12 +399,13 @@ class LearningPlanExportImportService
                     ->orWhere('name', 'like', "%{$subjectCode}%")
                     ->first();
 
-                if (!$subject) {
+                if (! $subject) {
                     $subject = Subject::query()->first();
                 }
 
-                if (!$subject) {
-                    $errors[] = "Baris " . ($i + 1) . ": Mata pelajaran '{$subjectCode}' tidak ditemukan.";
+                if (! $subject) {
+                    $errors[] = 'Baris '.($i + 1).": Mata pelajaran '{$subjectCode}' tidak ditemukan.";
+
                     continue;
                 }
 
@@ -434,7 +446,7 @@ class LearningPlanExportImportService
             return [
                 'success' => false,
                 'imported' => 0,
-                'errors' => ['Gagal memproses impor file: ' . $e->getMessage()],
+                'errors' => ['Gagal memproses impor file: '.$e->getMessage()],
             ];
         }
     }

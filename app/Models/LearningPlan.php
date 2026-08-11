@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Models;
 
 use App\Enums\PlanStatus;
@@ -44,7 +54,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class LearningPlan extends Model
 {
-    use HasFactory, SoftDeletes, ScopesTeacherOrAdmin;
+    use HasFactory, ScopesTeacherOrAdmin, SoftDeletes;
 
     protected $fillable = [
         'teacher_id', 'academic_year_id', 'semester_id', 'class_id', 'subject_id',

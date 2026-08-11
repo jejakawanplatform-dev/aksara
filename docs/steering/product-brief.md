@@ -90,4 +90,4 @@ Keputusan UI: **ADR-010** (Inertia + Vue sebagai stack resmi).
 - `docs/steering/api-contract.md` — route dan kontrak AI
 - `docs/steering/coding-standards.md` — konvensi kode & struktur Vue
 - `docs/steering/handover.md` — status kerja terkini
-- `docs/demo-users.md` — akun demo
+- `README.md` — akun demo (tabel login)

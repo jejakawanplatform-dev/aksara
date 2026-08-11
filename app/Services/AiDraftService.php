@@ -6,6 +6,7 @@ use App\Models\AiProvider;
 use App\Models\AiUsageLog;
 use App\Models\LearningPlan;
 use App\Support\Ai\AiVendorProviderCatalog;
+use App\Support\MaterialContentHtml;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -23,12 +24,18 @@ class AiDraftService
     /**
      * Resolve model for a feature against a specific provider.
      * Uses feature setting only when the model is in that provider's catalog list (or custom vendor).
+     * Optional preferredModel wins when it is allowed for this provider.
      */
-    public function resolveModelFor(string $feature, AiProvider $provider, ?array $vendorMeta = null): string
+    public function resolveModelFor(string $feature, AiProvider $provider, ?array $vendorMeta = null, ?string $preferredModel = null): string
     {
         $vendorMeta ??= $provider->catalogMeta() ?? AiVendorProviderCatalog::get($provider->vendor_key) ?? [];
         $catalogModels = $vendorMeta['models'] ?? [];
         $providerDefault = trim((string) ($provider->model ?: ($vendorMeta['default_model'] ?? 'gpt-4o-mini')));
+
+        $preferred = trim((string) $preferredModel);
+        if ($preferred !== '' && ($provider->is_custom || empty($catalogModels) || in_array($preferred, $catalogModels, true))) {
+            return $preferred;
+        }
 
         $recs = AiVendorProviderCatalog::featureModelRecommendations();
         $settingKey = $recs[$feature]['key'] ?? null;
@@ -43,6 +50,70 @@ class AiDraftService
         }
 
         return $providerDefault !== '' ? $providerDefault : 'gpt-4o-mini';
+    }
+
+    /**
+     * Models guru may pick for Asisten Aksara — only from active configured providers.
+     *
+     * @return list<array{id: string, label: string, provider: string, recommend: string, limit: string, tag: string, isDefault: bool}>
+     */
+    public function listMaterialModelChoices(): array
+    {
+        $recs = AiVendorProviderCatalog::featureModelRecommendations();
+        $defaultId = trim((string) setting($recs['material']['key'], $recs['material']['default'] ?? ''));
+        $choices = [];
+        $seen = [];
+
+        foreach (AiProvider::active()->ordered()->get() as $provider) {
+            if ($provider->vendor_key === 'mock' || ! $provider->isConfigured()) {
+                continue;
+            }
+
+            $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($provider->vendor_key) ?? [];
+            $models = $vendorMeta['models'] ?? [];
+            if ($provider->is_custom || $models === []) {
+                $fallback = trim((string) ($provider->model ?: ($vendorMeta['default_model'] ?? '')));
+                $models = $fallback !== '' ? [$fallback] : [];
+            }
+
+            foreach ($models as $modelId) {
+                $modelId = trim((string) $modelId);
+                if ($modelId === '' || isset($seen[$modelId])) {
+                    continue;
+                }
+                $seen[$modelId] = true;
+                $guide = AiVendorProviderCatalog::guideForModel($modelId);
+                $choices[] = [
+                    'id' => $modelId,
+                    'label' => $modelId,
+                    'provider' => $provider->name,
+                    'recommend' => $guide['recommend'],
+                    'limit' => $guide['limit'],
+                    'tag' => $guide['tag'],
+                    'isDefault' => $defaultId !== '' && $modelId === $defaultId,
+                ];
+            }
+        }
+
+        if ($choices === []) {
+            $guide = AiVendorProviderCatalog::guideForModel('mock-model');
+
+            return [[
+                'id' => 'mock-model',
+                'label' => 'mock-model',
+                'provider' => 'Simulasi',
+                'recommend' => $guide['recommend'],
+                'limit' => $guide['limit'],
+                'tag' => $guide['tag'],
+                'isDefault' => true,
+            ]];
+        }
+
+        if (! collect($choices)->contains(fn ($c) => $c['isDefault'])) {
+            $choices[0]['isDefault'] = true;
+        }
+
+        return $choices;
     }
 
     /**
@@ -379,11 +450,11 @@ class AiDraftService
     }
 
     /**
-     * Obrolan 2-Arah AI Co-Pilot untuk Refinement Bahan Ajar.
+     * Obrolan 2-arah Asisten Aksara untuk refinement bahan ajar.
      *
      * @param  array{intent?: string, title?: string, sectionCount?: int, sections?: array, reflections?: string}  $editorContext
      */
-    public function chatRefineMaterial(LearningPlan $plan, array $chatHistory, string $userMessage, array $selectedTemplates = [], array $editorContext = []): array
+    public function chatRefineMaterial(LearningPlan $plan, array $chatHistory, string $userMessage, array $selectedTemplates = [], array $editorContext = [], ?string $preferredModel = null): array
     {
         $providers = AiProvider::active()->ordered()->get();
 
@@ -399,20 +470,13 @@ class AiDraftService
 
         $presetDirectives = [];
         if (! empty($selectedTemplates['illustrations'])) {
-            $presetDirectives[] = '- Sertakan rekomendasi ilustrasi visual di setiap seksi sebagai blok HTML berikut (bukan tag img): <blockquote><p><strong>Ilustrasi:</strong> deskripsi visual terperinci...</p></blockquote>. DILARANG memakai tag <img> atau URL file fiktif.';
+            $presetDirectives[] = '- Jika relevan, sebutkan ide ilustrasi di replyMessage saja. JANGAN sisipkan saran ilustrasi ke body HTML seksi. DILARANG tag <img> atau URL gambar fiktif.';
         }
         if (! empty($selectedTemplates['illustration_links'])) {
-            $presetDirectives[] = '- Di SETIAP seksi yang diubah/dihasilkan, sisipkan PERSIS 1 blok HTML berikut (bukan plain text, bukan tag img). '
-                .'Blok ini HANYA untuk guru (bantuan authoring), WAJIB berisi Prompt AI Image dalam tag <code> agar mudah disalin: '
-                .'<blockquote>'
-                .'<p><strong>🖼️ Saran Ilustrasi:</strong> deskripsi singkat bahasa Indonesia.</p>'
-                .'<p><strong>🎯 Prompt AI Image:</strong> <code>detailed English prompt ready to paste into an external AI image generator</code></p>'
-                .'<p><a href="https://unsplash.com/s/photos/kata-kunci">Cari &amp; unduh di Unsplash</a> · '
-                .'<a href="https://commons.wikimedia.org/w/index.php?search=kata+kunci&amp;title=Special:MediaSearch&amp;type=image">Cari di Wikimedia Commons</a></p>'
-                .'<p><em>Sumber: Unsplash / Wikimedia Commons (lisensi bebas). Salin prompt atau unduh, lalu unggah lewat tombol Gambar.</em></p>'
-                .'</blockquote>. '
-                .'WAJIB ada baris Prompt AI Image (bahasa Inggris, spesifik, di dalam <code>). '
-                .'DILARANG menulis "Saran ilustrasi: ID: ..., Prompt AI Image EN: ..." sebagai teks polos. '
+            $presetDirectives[] = '- Sediakan saran ilustrasi di field JSON illustrationTips (bukan di body seksi). '
+                .'Setiap item: {"sectionHeading":"judul seksi terkait","description":"deskripsi singkat ID","promptEn":"English prompt for AI image generator","keywords":"kata kunci pencarian"}. '
+                .'Di replyMessage, sebutkan singkat tip per seksi (contoh: Seksi 1 — prompt siap salin). '
+                .'JANGAN menyisipkan blockquote Saran Ilustrasi / Prompt AI Image ke materialData.sections[].body. '
                 .'DILARANG tag <img> atau hotlink file .jpg/.png.';
         }
         if (! empty($selectedTemplates['references'])) {
@@ -438,12 +502,12 @@ class AiDraftService
             default => 'Mode INTENT=create: Materi kosong/placeholder. Usulkan proposedOutline dulu bila perlu. Bila guru setuju, hasilkan materialData lengkap dengan applyMode="create". Jika belum setuju, materialData boleh null.',
         };
 
-        $systemPrompt = "Anda adalah Asisten AI Pedagogical Co-Pilot untuk guru Indonesia.\n"
+        $systemPrompt = "Anda adalah Asisten Aksara — pendamping AI untuk guru Indonesia.\n"
             ."Bersikaplah seperti agen percakapan: klarifikasi, usulkan rencana, baru menghasilkan draf siap terapkan.\n"
             .$intentRules."\n"
             .'HTML body: tag aman (p, strong, em, ul, ol, li, h2, h3, blockquote, table, code, pre, a). JANGAN tag <img>.'."\n"
             ."Kembalikan HANYA JSON:\n"
-            .'{"replyMessage":"...","applyMode":"create|patch|rewrite","proposedOutline":["..."],"materialData":{"title":"...","sections":[{"heading":"...","body":"<p>...</p>"}],"reflectionQuestion":["..."]}}'
+            .'{"replyMessage":"...","applyMode":"create|patch|rewrite","proposedOutline":["..."],"illustrationTips":[{"sectionHeading":"...","description":"...","promptEn":"...","keywords":"..."}],"materialData":{"title":"...","sections":[{"heading":"...","body":"<p>...</p>"}],"reflectionQuestion":["..."]}}'
             ."\n".$directivesStr;
 
         $editorSummary = $this->formatEditorContextForPrompt($editorContext);
@@ -464,7 +528,22 @@ class AiDraftService
 
         $messages[] = ['role' => 'user', 'content' => "Instruksi Guru: {$userMessage}"];
 
-        foreach ($providers as $provider) {
+        $preferred = trim((string) $preferredModel);
+        $providerQueue = $providers;
+        if ($preferred !== '') {
+            $preferredFirst = $providers->filter(function (AiProvider $provider) use ($preferred) {
+                if ($provider->vendor_key === 'mock' || ! $provider->isConfigured()) {
+                    return false;
+                }
+                $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($provider->vendor_key) ?? [];
+                $catalogModels = $vendorMeta['models'] ?? [];
+
+                return $provider->is_custom || empty($catalogModels) || in_array($preferred, $catalogModels, true);
+            });
+            $providerQueue = $preferredFirst->concat($providers->reject(fn (AiProvider $p) => $preferredFirst->contains($p)))->values();
+        }
+
+        foreach ($providerQueue as $provider) {
             $vendorId = $provider->vendor_key;
             if ($vendorId === 'mock') {
                 continue;
@@ -472,7 +551,12 @@ class AiDraftService
             $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($vendorId);
             $apiKey = trim((string) $provider->api_key);
             $baseUrl = trim((string) ($provider->base_url ?: ($vendorMeta['base_url'] ?? '')));
-            $model = $this->resolveModelFor(self::FEATURE_MATERIAL, $provider, $vendorMeta);
+            $model = $this->resolveModelFor(
+                self::FEATURE_MATERIAL,
+                $provider,
+                $vendorMeta,
+                $preferred !== '' ? $preferred : null
+            );
             $timeout = (int) ($provider->timeout_seconds ?: 30);
 
             if (($vendorMeta['requires_key'] ?? true) && empty($apiKey)) {
@@ -510,6 +594,7 @@ class AiDraftService
                             'replyMessage' => $data['replyMessage'] ?? 'Bahan Ajar telah disesuaikan berdasarkan instruksi Anda.',
                             'materialData' => $materialData,
                             'proposedOutline' => is_array($data['proposedOutline'] ?? null) ? $data['proposedOutline'] : null,
+                            'illustrationTips' => self::normalizeIllustrationTips($data['illustrationTips'] ?? null),
                             'applyMode' => $applyMode,
                             'modelLabel' => $provider->name.' · '.$model,
                         ];
@@ -521,6 +606,47 @@ class AiDraftService
         }
 
         return $this->fallbackCopilotResponse($plan, $userMessage, $subjectName, $intent, $editorContext);
+    }
+
+    /**
+     * @return list<array{sectionHeading: string, description: string, prompt: string, unsplashUrl: ?string, commonsUrl: ?string}>
+     */
+    private static function normalizeIllustrationTips(mixed $raw): array
+    {
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $tips = [];
+        foreach ($raw as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $desc = trim((string) ($item['description'] ?? ''));
+            $prompt = trim((string) ($item['promptEn'] ?? $item['prompt'] ?? ''));
+            $heading = trim((string) ($item['sectionHeading'] ?? $item['heading'] ?? ''));
+            $keywords = trim((string) ($item['keywords'] ?? $desc));
+            if ($desc === '' && $prompt === '') {
+                continue;
+            }
+            if ($desc === '') {
+                $desc = 'Ilustrasi materi';
+            }
+            if ($prompt === '') {
+                $prompt = MaterialContentHtml::defaultImagePrompt($desc);
+            }
+            $slug = rawurlencode(strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $keywords !== '' ? $keywords : $desc) ?? 'illustration'));
+            $q = rawurlencode($keywords !== '' ? $keywords : $desc);
+            $tips[] = [
+                'sectionHeading' => $heading !== '' ? $heading : 'Seksi terkait',
+                'description' => $desc,
+                'prompt' => $prompt,
+                'unsplashUrl' => 'https://unsplash.com/s/photos/'.$slug,
+                'commonsUrl' => 'https://commons.wikimedia.org/w/index.php?search='.$q.'&title=Special:MediaSearch&type=image',
+            ];
+        }
+
+        return $tips;
     }
 
     /**

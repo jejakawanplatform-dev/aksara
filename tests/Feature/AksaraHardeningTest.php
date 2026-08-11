@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace Tests\Feature;
 
 use App\Enums\MaterialStatus;
@@ -57,20 +67,17 @@ class AksaraHardeningTest extends TestCase
 
         $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
 
-        $this->actingAs($guru)
-            ->get(route('materials.show', $material))
-            ->assertOk()
-            ->assertSee('Prompt AI Image', false)
-            ->assertSee('decomposition flowchart textbook', false);
-
-        $this->actingAs($siswa)
-            ->get(route('materials.show', $material))
-            ->assertOk()
-            ->assertSee('Isi bacaan siswa tentang dekomposisi.', false)
-            ->assertDontSee('Saran Ilustrasi', false)
-            ->assertDontSee('Prompt AI Image', false)
-            ->assertDontSee('decomposition flowchart textbook', false)
-            ->assertDontSee('Cari & unduh di Unsplash', false);
+        // Preview guru & view siswa sama-sama tanpa tip authoring (tip hanya di chat Asisten).
+        foreach ([$guru, $siswa] as $viewer) {
+            $this->actingAs($viewer)
+                ->get(route('materials.show', $material))
+                ->assertOk()
+                ->assertSee('Isi bacaan siswa tentang dekomposisi.', false)
+                ->assertDontSee('Saran Ilustrasi', false)
+                ->assertDontSee('Prompt AI Image', false)
+                ->assertDontSee('decomposition flowchart textbook', false)
+                ->assertDontSee('Cari & unduh di Unsplash', false);
+        }
     }
 
     public function test_siswa_tidak_bisa_buka_materi_draft(): void

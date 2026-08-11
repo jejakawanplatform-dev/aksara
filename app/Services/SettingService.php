@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Services;
 
 use App\Models\SystemSetting;
@@ -16,7 +26,7 @@ class SettingService
     {
         $settings = $this->allCached();
 
-        if (!array_key_exists($key, $settings)) {
+        if (! array_key_exists($key, $settings)) {
             return $default;
         }
 
@@ -44,8 +54,12 @@ class SettingService
             $setting->type = $type ?? 'string';
         }
 
-        if ($group) $setting->group = $group;
-        if ($label) $setting->label = $label;
+        if ($group) {
+            $setting->group = $group;
+        }
+        if ($label) {
+            $setting->label = $label;
+        }
 
         $setting->save();
 

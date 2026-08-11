@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Support\Navigation;
 
 use App\Support\Access\PermissionCatalog;
@@ -31,40 +41,35 @@ final class SidebarNav
                 'title' => 'PEMBELAJARAN',
                 'items' => [
                     [
-                        'label' => '1. Rencana Pembelajaran',
+                        'label' => 'Rencana Pembelajaran',
                         'href' => route('plans.index'),
                         'active' => $routeIs('plans.*'),
                         'permission' => PermissionCatalog::PLANS_MANAGE,
                         'icon' => 'plan',
                     ],
                     [
-                        'label' => '2. Materi Pembelajaran',
+                        'label' => 'Materi Pembelajaran',
                         'href' => route('materials.index'),
                         'active' => $routeIs('materials.*'),
                         'permission' => PermissionCatalog::PLANS_MANAGE,
                         'icon' => 'material',
                     ],
                     [
-                        'label' => '3. Rekap Kehadiran',
+                        'label' => 'Rekap Kehadiran',
                         'href' => route('attendance.summary'),
                         'active' => $routeIs('attendance.summary'),
                         'permission' => PermissionCatalog::ATTENDANCE_SUMMARY,
                         'icon' => 'attendance',
                     ],
-                ],
-            ],
-            [
-                'title' => 'SUPERVISI & LAPORAN',
-                'items' => [
                     [
-                        'label' => '4. Laporan Guru',
+                        'label' => 'Laporan Guru',
                         'href' => route('reports.guru'),
                         'active' => $routeIs('reports.guru'),
                         'permission' => PermissionCatalog::REPORTS_TEACHER,
                         'icon' => 'report',
                     ],
                     [
-                        'label' => '5. Evaluasi & Refleksi',
+                        'label' => 'Evaluasi & Refleksi',
                         'href' => route('evaluations.monitoring'),
                         'active' => $routeIs('evaluations.monitoring'),
                         'permission' => PermissionCatalog::EVALUATION_MANAGE,
@@ -76,11 +81,31 @@ final class SidebarNav
                 'title' => 'MASTER DATA',
                 'items' => [
                     [
-                        'label' => 'Referensi Master',
-                        'href' => route('references.index'),
-                        'active' => $routeIs('references.*'),
+                        'label'    => 'Referensi Master',
+                        'href'     => null,
+                        'active'   => $routeIs('references.*'),
                         'permission' => PermissionCatalog::REFERENCES_VIEW,
-                        'icon' => 'references',
+                        'icon'     => 'references',
+                        'children' => [
+                            [
+                                'label'      => 'Profil Sekolah',
+                                'href'       => route('references.section.school'),
+                                'active'     => $routeIs('references.section.school'),
+                                'permission' => PermissionCatalog::REFERENCES_MANAGE,
+                            ],
+                            [
+                                'label'      => 'Data Akademik',
+                                'href'       => route('references.section.academic'),
+                                'active'     => $routeIs('references.section.academic'),
+                                'permission' => PermissionCatalog::REFERENCES_VIEW,
+                            ],
+                            [
+                                'label'      => 'Kurikulum',
+                                'href'       => route('references.section.curriculum'),
+                                'active'     => $routeIs('references.section.curriculum'),
+                                'permission' => PermissionCatalog::REFERENCES_VIEW,
+                            ],
+                        ],
                     ],
                 ],
             ],

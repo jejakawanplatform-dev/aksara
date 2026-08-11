@@ -1,10 +1,21 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
 use App\Models\CurriculumCp;
 use App\Models\CurriculumTp;
+use App\Models\LearningPlan;
 use App\Models\SchoolClass;
 use App\Models\Semester;
 use App\Models\Subject;
@@ -219,14 +230,14 @@ class ReferenceCrudTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('message', 'Berhasil mendaftarkan (enrol) kelas ajar baru!');
 
-        $this->assertTrue(\App\Models\LearningPlan::where('teacher_id', $guru->id)->where('class_id', $ixClass->id)->exists());
+        $this->assertTrue(LearningPlan::where('teacher_id', $guru->id)->where('class_id', $ixClass->id)->exists());
 
         $this->actingAs($guru)
             ->post(route('references.rombels.enrol', $ixClass))
             ->assertRedirect()
             ->assertSessionHas('message', 'Berhasil membatalkan enrolment kelas ajar.');
 
-        $this->assertFalse(\App\Models\LearningPlan::where('teacher_id', $guru->id)->where('class_id', $ixClass->id)->exists());
+        $this->assertFalse(LearningPlan::where('teacher_id', $guru->id)->where('class_id', $ixClass->id)->exists());
     }
 
     public function test_admin_bisa_plotting_guru_pengampu_mapel(): void

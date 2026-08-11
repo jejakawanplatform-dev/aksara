@@ -1,3 +1,10 @@
+{{--
+  Aksara — platform pembelajaran berbantuan AI.
+  @copyright 2026 jejakawan (https://jejakawan.com)
+  @license   MIT
+  Clone, fork, and modification are permitted under the MIT License.
+  See the LICENSE file in the project root.
+--}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -5,6 +12,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title inertia>{{ config('app.name', 'Aksara') }}</title>
+        @php
+            $brandAssets = \App\Support\BrandAttribution::assetUrls();
+        @endphp
+        <link rel="icon" href="{{ $brandAssets['faviconUrl'] }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ $brandAssets['faviconUrl'] }}" type="image/x-icon">
+        <link rel="apple-touch-icon" href="{{ $brandAssets['appleTouchUrl'] }}">
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=literata:500,600,700|plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet" />
 

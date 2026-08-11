@@ -49,7 +49,7 @@ draft → reviewed → published
 3. Membuka materi mencatat `learning_events` (`material_opened` / `material_read`).
 4. Konten teks seksi disimpan di JSON `learning_materials.content` (`title`, `sections[].heading/body`, `reflectionQuestion`).
 5. File gambar materi (jika ada) disimpan di disk `public` (`materials/{material_id}/`); HTML body hanya boleh mereferensikan `/storage/...` atau `data:image/...` tepercaya (ADR-008).
-6. Hasil AI Co-Pilot/teks **tidak** boleh memasukkan URL file gambar fiktif; untuk teks-only gunakan blok saran + link sumber + prompt AI Image.
+6. Hasil Asisten Aksara **tidak** boleh memasukkan URL file gambar fiktif ke body seksi. Saran ilustrasi + prompt AI Image tampil **di chat saja** (`illustrationTips`), bukan di konten siswa/export.
 
 ## 4. Generasi AI
 

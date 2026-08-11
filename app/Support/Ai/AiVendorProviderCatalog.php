@@ -1,6 +1,18 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Support\Ai;
+
+use App\Models\AiProvider;
 
 class AiVendorProviderCatalog
 {
@@ -184,9 +196,9 @@ class AiVendorProviderCatalog
             ],
             'material' => [
                 'key' => 'ai.model_material',
-                'label' => 'Bahan Ajar / Co-Pilot',
+                'label' => 'Bahan Ajar / Asisten Aksara',
                 'default' => 'llama-3.3-70b-versatile',
-                'hint' => 'Obrolan Co-Pilot & penyusunan teks bacaan materi siswa.',
+                'hint' => 'Obrolan Asisten Aksara & penyusunan teks bacaan materi siswa.',
                 'enabled' => true,
             ],
             'improve' => [
@@ -221,5 +233,160 @@ class AiVendorProviderCatalog
         }
 
         return array_values($ids);
+    }
+
+    /**
+     * Model IDs available from the given AI provider rows (active vendor context).
+     *
+     * @param  iterable<AiProvider>  $providers
+     * @return list<string>
+     */
+    public static function modelIdsFromProviders(iterable $providers): array
+    {
+        $ids = [];
+
+        foreach ($providers as $provider) {
+            $vendorMeta = $provider->catalogMeta() ?? static::get($provider->vendor_key) ?? [];
+            $models = $vendorMeta['models'] ?? [];
+
+            if ($provider->is_custom || $models === []) {
+                $fallback = trim((string) ($provider->model ?: ($vendorMeta['default_model'] ?? '')));
+                $models = $fallback !== '' ? [$fallback] : [];
+            }
+
+            foreach ($models as $model) {
+                $model = trim((string) $model);
+                if ($model !== '') {
+                    $ids[$model] = $model;
+                }
+            }
+        }
+
+        return array_values($ids);
+    }
+
+    /**
+     * Per-model guidance shown to guru when choosing Asisten Aksara model.
+     *
+     * @return array<string, array{recommend: string, limit: string, tag: string}>
+     */
+    public static function modelGuides(): array
+    {
+        return [
+            'llama-3.3-70b-versatile' => [
+                'recommend' => 'Rekomendasi default: kualitas teks bacaan & patch materi seimbang.',
+                'limit' => 'Kuota free Groq terbatas (RPM/RPD); cocok workshop, bukan beban tinggi.',
+                'tag' => 'Direkomendasikan',
+            ],
+            'llama-3.1-8b-instant' => [
+                'recommend' => 'Cepat untuk perbaikan singkat / klarifikasi chat.',
+                'limit' => 'Kurang kuat untuk materi panjang atau STEM mendalam.',
+                'tag' => 'Cepat',
+            ],
+            'deepseek-r1-distill-llama-70b' => [
+                'recommend' => 'Baik untuk penalaran / langkah penyelesaian soal.',
+                'limit' => 'Respons bisa lebih lambat; output reasoning kadang verbose.',
+                'tag' => 'Penalaran',
+            ],
+            'mixtral-8x7b-32768' => [
+                'recommend' => 'Konteks panjang — outline multi-seksi.',
+                'limit' => 'Kualitas narasi bisa di bawah Llama 3.3 70B.',
+                'tag' => 'Konteks panjang',
+            ],
+            'gemini-1.5-flash' => [
+                'recommend' => 'Cepat & hemat untuk draf materi umum.',
+                'limit' => 'Free tier Google punya kuota harian ketat.',
+                'tag' => 'Hemat',
+            ],
+            'gemini-1.5-pro' => [
+                'recommend' => 'Lebih kuat untuk materi padat / multi-seksi.',
+                'limit' => 'Lebih mahal & kuota lebih ketat dari Flash.',
+                'tag' => 'Kuat',
+            ],
+            'gemini-2.0-flash-exp' => [
+                'recommend' => 'Eksperimental — coba fitur baru Gemini.',
+                'limit' => 'Model eksperimen; perilaku bisa berubah.',
+                'tag' => 'Eksperimen',
+            ],
+            'gpt-4o-mini' => [
+                'recommend' => 'Stabil untuk draf materi & patch seksi.',
+                'limit' => 'Berbayar; butuh saldo OpenAI Platform.',
+                'tag' => 'Stabil',
+            ],
+            'gpt-4o' => [
+                'recommend' => 'Kualitas tinggi untuk materi STEM / bahasa rumit.',
+                'limit' => 'Biaya per token lebih tinggi dari mini.',
+                'tag' => 'Premium',
+            ],
+            'gpt-3.5-turbo' => [
+                'recommend' => 'Cadangan hemat bila kuota 4o habis.',
+                'limit' => 'Kualitas & kepatuhan format JSON lebih lemah.',
+                'tag' => 'Cadangan',
+            ],
+            'deepseek-chat' => [
+                'recommend' => 'Hemat untuk teks bacaan panjang.',
+                'limit' => 'Tidak mendukung generasi gambar; butuh saldo DeepSeek.',
+                'tag' => 'Hemat',
+            ],
+            'deepseek-reasoner' => [
+                'recommend' => 'Bagus untuk penjelasan langkah & STEM.',
+                'limit' => 'Lebih lambat; biaya lebih tinggi dari chat.',
+                'tag' => 'Penalaran',
+            ],
+            'claude-3-5-haiku-20241022' => [
+                'recommend' => 'Cepat & rapi untuk prosa materi siswa.',
+                'limit' => 'Berbayar Anthropic; konteks lebih kecil dari Sonnet.',
+                'tag' => 'Cepat',
+            ],
+            'claude-3-5-sonnet-20241022' => [
+                'recommend' => 'Kuat untuk materi mendalam & struktur seksi.',
+                'limit' => 'Biaya tinggi; pantau kuota kredit.',
+                'tag' => 'Premium',
+            ],
+            'llama3.2' => [
+                'recommend' => 'Lokal via Ollama — tanpa biaya API.',
+                'limit' => 'Tergantung hardware server; kualitas bervariasi.',
+                'tag' => 'Lokal',
+            ],
+            'qwen2.5' => [
+                'recommend' => 'Lokal; cukup baik untuk bahasa Indonesia.',
+                'limit' => 'Perlu model terunduh di Ollama.',
+                'tag' => 'Lokal',
+            ],
+            'mistral' => [
+                'recommend' => 'Lokal ringan untuk draf singkat.',
+                'limit' => 'Kurang ideal untuk materi multi-seksi panjang.',
+                'tag' => 'Lokal',
+            ],
+            'deepseek-r1' => [
+                'recommend' => 'Lokal untuk penalaran / STEM.',
+                'limit' => 'Butuh RAM besar; latency tinggi.',
+                'tag' => 'Lokal',
+            ],
+            'mock-model' => [
+                'recommend' => 'Simulasi offline untuk uji UI.',
+                'limit' => 'Bukan AI nyata — jangan dipakai workshop live.',
+                'tag' => 'Simulasi',
+            ],
+            'custom-model' => [
+                'recommend' => 'Endpoint kustom OpenAI-compatible.',
+                'limit' => 'Kualitas & kuota sepenuhnya di infrastruktur Anda.',
+                'tag' => 'Kustom',
+            ],
+        ];
+    }
+
+    /**
+     * @return array{recommend: string, limit: string, tag: string}
+     */
+    public static function guideForModel(string $modelId): array
+    {
+        $guides = static::modelGuides();
+
+        return $guides[$modelId] ?? [
+            'recommend' => 'Model dari katalog provider aktif.',
+            'limit' => 'Ikuti kuota & kebijakan vendor yang dikonfigurasi admin.',
+            'tag' => 'Tersedia',
+        ];
     }
 }

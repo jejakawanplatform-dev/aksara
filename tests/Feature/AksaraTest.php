@@ -1,13 +1,27 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\CurriculumAtpItem;
+use App\Models\CurriculumCp;
+use App\Models\CurriculumTp;
 use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\User;
 use Database\Seeders\DemoDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class AksaraTest extends TestCase
@@ -56,22 +70,22 @@ class AksaraTest extends TestCase
 
     public function test_tabel_users_punya_kolom_role(): void
     {
-        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('users', 'role'));
+        $this->assertTrue(Schema::hasColumn('users', 'role'));
     }
 
     public function test_tabel_school_classes_ada(): void
     {
-        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('school_classes'));
+        $this->assertTrue(Schema::hasTable('school_classes'));
     }
 
     public function test_tabel_learning_plans_ada(): void
     {
-        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('learning_plans'));
+        $this->assertTrue(Schema::hasTable('learning_plans'));
     }
 
     public function test_tabel_quizzes_ada(): void
     {
-        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('quizzes'));
+        $this->assertTrue(Schema::hasTable('quizzes'));
     }
 
     public function test_guru_ibu_naya_terseed(): void
@@ -93,11 +107,11 @@ class AksaraTest extends TestCase
     {
         $this->assertGreaterThanOrEqual(4, Subject::count());
         $this->assertDatabaseHas('subjects', ['code' => 'INF']);
-        $this->assertSame(8, \App\Models\CurriculumCp::where('phase', 'D')->count());
+        $this->assertSame(8, CurriculumCp::where('phase', 'D')->count());
         $this->assertDatabaseHas('curriculum_tps', ['code' => 'BK-VIII-01', 'grade' => 8]);
         $this->assertDatabaseHas('curriculum_tps', ['code' => 'BK-IX-01', 'grade' => 9]);
-        $this->assertTrue(\App\Models\CurriculumAtpItem::where('grade', 8)->exists());
-        $this->assertTrue(\App\Models\CurriculumAtpItem::where('grade', 9)->exists());
+        $this->assertTrue(CurriculumAtpItem::where('grade', 8)->exists());
+        $this->assertTrue(CurriculumAtpItem::where('grade', 9)->exists());
         $this->assertDatabaseHas('school_classes', ['rombel_code' => 'VIII-A', 'grade' => 8]);
         $this->assertDatabaseHas('school_classes', ['rombel_code' => 'IX-A', 'grade' => 9]);
     }
@@ -114,7 +128,7 @@ class AksaraTest extends TestCase
         $this->assertDatabaseHas('curriculum_cps', ['element_code' => 'BK', 'phase' => 'D']);
         $this->assertDatabaseHas('learning_plans', [
             'topic' => 'Berpikir Komputasional: Dekomposisi Masalah',
-            'curriculum_tp_id' => \App\Models\CurriculumTp::where('code', 'BK-VII-01')->value('id'),
+            'curriculum_tp_id' => CurriculumTp::where('code', 'BK-VII-01')->value('id'),
         ]);
         $this->assertDatabaseHas('learning_materials', ['status' => 'published']);
         $this->assertDatabaseHas('quizzes', ['status' => 'published']);

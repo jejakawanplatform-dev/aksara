@@ -14,6 +14,18 @@
 | Media context | Spec **16** — list/upload/delete `materials/{id}/` |
 | Tests | `MaterialAuthoringTest`, `MaterialAiCopilotTest`, `Unit/MaterialContentHtmlTest`, `Unit/MaterialCopilotPatchTest`, `AiModelResolutionTest` |
 
+## UI Edit (2026-08-11)
+
+- Layout split: kolom editor scroll + rail Asisten Aksara full-height (`.aksara-material-edit` / `.aksara-copilot-rail`).
+- Asisten tidak ikut scroll konten; toggle di PageHeader (+ `localStorage aksara_copilot_open`).
+- Mobile/tablet: drawer dari kanan.
+- Lebar editor fleksibel saat menu kiri / Asisten buka-tutup.
+- Naming UI: **Asisten Aksara** (bukan "AI Co-Pilot").
+- Guru boleh pilih model dari daftar provider aktif (+ rekomendasi/batasan); preferensi `localStorage aksara_asisten_model`.
+- Ceklis pengayaan: grid 2 kolom.
+- Seksi editor + panel Editor Bahan Ajar: accordion collapsible.
+- Saran ilustrasi / Prompt AI Image: **hanya di chat** (`illustrationTips`), tidak di body TipTap; sanitize + `forStudent` membersihkan blok lama.
+
 ## Alur
 
 ```text

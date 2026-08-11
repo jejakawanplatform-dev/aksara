@@ -17,7 +17,7 @@
 
 - [x] Vite input hanya `resources/css/app.css` + `resources/js/inertia-app.js`
 - [x] `createInertiaApp` resolve `Pages/**/*.vue`
-- [x] Seed demo sesuai `docs/demo-users.md`
+- [x] Seed demo sesuai tabel akun di `README.md`
 - [x] `AksaraTest` hijau
 
 ## Perintah

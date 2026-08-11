@@ -3,7 +3,6 @@
 ```text
 docs/
 ├── README.md
-├── demo-users.md
 ├── steering/          ← aturan tetap
 └── spec/              ← kemampuan produk (piramida terbalik dari codebase)
     ├── README.md

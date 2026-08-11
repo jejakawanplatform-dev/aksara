@@ -1,3 +1,10 @@
+<!--
+  Aksara — platform pembelajaran berbantuan AI.
+  @copyright 2026 jejakawan (https://jejakawan.com)
+  @license   MIT
+  Clone, fork, and modification are permitted under the MIT License.
+  See the LICENSE file in the project root.
+-->
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
@@ -241,8 +248,49 @@ async function testConnection() {
 function recHint(key) {
     const rec = props.featureRecs?.[key];
     if (!rec?.default) return '';
+    const available = featureModelOptions.value.map((m) => modelId(m));
+    if (available.length && !available.includes(rec.default)) {
+        return `Rekomendasi: ${rec.default} (belum ada di vendor aktif)`;
+    }
     return `Rekomendasi: ${rec.default}`;
 }
+
+/**
+ * Model dari vendor aktif saja.
+ * Nilai tersimpan yang di luar katalog vendor aktif tetap ditampilkan agar select tidak blank.
+ */
+const featureModelOptions = computed(() => {
+    const byId = new Map();
+
+    for (const p of props.providers.filter((x) => x.is_active)) {
+        const fromCatalog = Array.isArray(p.catalogModels) ? p.catalogModels : [];
+        const models = fromCatalog.length ? [...fromCatalog] : [];
+        if (p.model && !models.includes(p.model)) {
+            models.push(p.model);
+        }
+        if (p.is_custom && p.model && !models.includes(p.model)) {
+            models.push(p.model);
+        }
+        for (const m of models) {
+            if (!m || byId.has(m)) continue;
+            byId.set(m, { id: m, label: m, provider: p.name, orphan: false });
+        }
+    }
+
+    for (const key of ['ai_model_plan', 'ai_model_material', 'ai_model_improve', 'ai_model_quiz']) {
+        const current = settingsForm[key];
+        if (current && !byId.has(current)) {
+            byId.set(current, {
+                id: current,
+                label: current,
+                provider: 'Tidak di vendor aktif',
+                orphan: true,
+            });
+        }
+    }
+
+    return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
+});
 
 function modelId(entry) {
     return typeof entry === 'string' ? entry : entry?.id || entry?.model || '';
@@ -250,6 +298,9 @@ function modelId(entry) {
 
 function modelLabel(entry) {
     if (typeof entry === 'string') return entry;
+    if (entry?.provider) {
+        return `${entry.label || entry.id} · ${entry.provider}`;
+    }
     return entry?.label || entry?.name || entry?.id || '';
 }
 </script>
@@ -505,27 +556,59 @@ function modelLabel(entry) {
                         <section class="space-y-3 border-t border-aksara-line pt-5">
                             <div>
                                 <h3 class="text-sm font-semibold text-aksara-ink">Model per fitur</h3>
-                                <p class="mt-0.5 text-xs text-aksara-muted">Pilih model default untuk setiap alur generasi.</p>
+                                <p class="mt-0.5 text-xs text-aksara-muted">
+                                    Hanya model dari vendor AI yang aktif. Nonaktifkan/aktifkan vendor di tabel di atas.
+                                </p>
                             </div>
+                            <p
+                                v-if="!providers.some((p) => p.is_active)"
+                                class="rounded-lg border border-aksara-line bg-aksara-mist/40 px-3 py-2 text-xs text-aksara-muted"
+                            >
+                                Belum ada vendor aktif — aktifkan minimal satu provider sebelum memilih model per fitur.
+                            </p>
                             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                                 <Field label="Rencana pembelajaran" for-id="ai_model_plan" :hint="recHint('plan')">
                                     <select id="ai_model_plan" v-model="settingsForm.ai_model_plan" class="aksara-select">
-                                        <option v-for="m in featureModelOptions" :key="`plan-${m}`" :value="m">{{ m }}</option>
+                                        <option
+                                            v-for="m in featureModelOptions"
+                                            :key="`plan-${modelId(m)}`"
+                                            :value="modelId(m)"
+                                        >
+                                            {{ modelLabel(m) }}
+                                        </option>
                                     </select>
                                 </Field>
-                                <Field label="Bahan ajar / Co-Pilot" for-id="ai_model_material" :hint="recHint('material')">
+                                <Field label="Bahan ajar / Asisten Aksara" for-id="ai_model_material" :hint="recHint('material')">
                                     <select id="ai_model_material" v-model="settingsForm.ai_model_material" class="aksara-select">
-                                        <option v-for="m in featureModelOptions" :key="`mat-${m}`" :value="m">{{ m }}</option>
+                                        <option
+                                            v-for="m in featureModelOptions"
+                                            :key="`mat-${modelId(m)}`"
+                                            :value="modelId(m)"
+                                        >
+                                            {{ modelLabel(m) }}
+                                        </option>
                                     </select>
                                 </Field>
                                 <Field label="Perbaiki teks" for-id="ai_model_improve" :hint="recHint('improve')">
                                     <select id="ai_model_improve" v-model="settingsForm.ai_model_improve" class="aksara-select">
-                                        <option v-for="m in featureModelOptions" :key="`imp-${m}`" :value="m">{{ m }}</option>
+                                        <option
+                                            v-for="m in featureModelOptions"
+                                            :key="`imp-${modelId(m)}`"
+                                            :value="modelId(m)"
+                                        >
+                                            {{ modelLabel(m) }}
+                                        </option>
                                     </select>
                                 </Field>
                                 <Field label="Soal / kuis" for-id="ai_model_quiz" :hint="recHint('quiz')">
                                     <select id="ai_model_quiz" v-model="settingsForm.ai_model_quiz" class="aksara-select">
-                                        <option v-for="m in featureModelOptions" :key="`quiz-${m}`" :value="m">{{ m }}</option>
+                                        <option
+                                            v-for="m in featureModelOptions"
+                                            :key="`quiz-${modelId(m)}`"
+                                            :value="modelId(m)"
+                                        >
+                                            {{ modelLabel(m) }}
+                                        </option>
                                     </select>
                                 </Field>
                             </div>

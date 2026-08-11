@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace Tests\Feature;
 
 use App\Models\AiProvider;
@@ -42,6 +52,7 @@ class MaterialAiCopilotTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Materials/Edit')
                 ->where('canGenerateImages', false)
+                ->has('modelChoices')
             );
     }
 
@@ -154,8 +165,8 @@ class MaterialAiCopilotTest extends TestCase
         ]);
 
         $this->assertStringNotContainsString('<img', $sections[0]['body']);
-        $this->assertStringContainsString('Ilustrasi Konten Digital', $sections[0]['body']);
-        $this->assertStringContainsString('Saran Ilustrasi', $sections[0]['body']);
+        $this->assertStringContainsString('Teks', $sections[0]['body']);
+        $this->assertStringNotContainsString('Saran Ilustrasi', $sections[0]['body']);
     }
 
     public function test_guru_dapat_menyimpan_gambar_materi_ke_storage_public(): void

@@ -1,11 +1,18 @@
+<!--
+  Aksara — platform pembelajaran berbantuan AI.
+  @copyright 2026 jejakawan (https://jejakawan.com)
+  @license   MIT
+  Clone, fork, and modification are permitted under the MIT License.
+  See the LICENSE file in the project root.
+-->
 <script setup>
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import BrandCopyright from '@/Components/brand/BrandCopyright.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const appName = computed(() => page.props.appName || 'Aksara');
-const year = new Date().getFullYear();
 
 const scrolled = ref(false);
 function onScroll() {
@@ -279,8 +286,7 @@ const steps = [
                         <span class="font-display text-base font-semibold">Aksara</span>
                     </div>
                     <p class="mt-3 text-sm leading-relaxed text-aksara-muted">
-                        Platform manajemen pembelajaran berbasis AI untuk sekolah — output workshop Bimtek AI dalam
-                        Pembelajaran.
+                        Platform manajemen pembelajaran berbasis AI untuk sekolah.
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-10 text-sm">
@@ -308,10 +314,9 @@ const steps = [
             </div>
             <div class="border-t border-aksara-line">
                 <div
-                    class="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4 text-xs text-aksara-muted sm:flex-row sm:items-center sm:justify-between sm:px-6"
+                    class="mx-auto max-w-6xl px-4 py-4 text-xs text-aksara-muted sm:px-6"
                 >
-                    <p>© {{ year }} Aksara. Semua hak dilindungi.</p>
-                    <p>Laravel · Inertia · Vue</p>
+                    <BrandCopyright variant="landing" />
                 </div>
             </div>
         </footer>

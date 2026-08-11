@@ -1,7 +1,15 @@
+<!--
+  Aksara — platform pembelajaran berbantuan AI.
+  @copyright 2026 jejakawan (https://jejakawan.com)
+  @license   MIT
+  Clone, fork, and modification are permitted under the MIT License.
+  See the LICENSE file in the project root.
+-->
 <script setup>
 import { computed, ref } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import NavIcon from '@/Components/ui/NavIcon.vue';
+import BrandCopyright from '@/Components/brand/BrandCopyright.vue';
 
 defineProps({
     collapsed: { type: Boolean, default: false },
@@ -9,10 +17,10 @@ defineProps({
 
 const page = usePage();
 const openGroups = ref({});
+const openItems = ref({});
 
 const permissions = computed(() => page.props.auth?.permissions ?? []);
 const dashboardUrl = computed(() => page.props.urls?.dashboard || '/dashboard');
-const copyrightYear = new Date().getFullYear();
 
 const groups = computed(() => {
     const raw = page.props.nav ?? [];
@@ -21,7 +29,14 @@ const groups = computed(() => {
             ...group,
             items: (group.items || []).filter(
                 (item) => !item.permission || permissions.value.includes(item.permission),
-            ),
+            ).map((item) => ({
+                ...item,
+                children: item.children
+                    ? item.children.filter(
+                        (child) => !child.permission || permissions.value.includes(child.permission),
+                    )
+                    : undefined,
+            })),
         }))
         .filter((group) => group.items.length > 0);
 });
@@ -37,6 +52,23 @@ function toggleGroup(title) {
     openGroups.value = {
         ...openGroups.value,
         [title]: !isOpen(title),
+    };
+}
+
+function isItemOpen(label, item) {
+    if (openItems.value[label] !== undefined) {
+        return openItems.value[label];
+    }
+    return item.children?.some((c) => c.active) ?? false;
+}
+
+function toggleItem(label, item) {
+    if (document.documentElement.classList.contains('sidebar-collapsed')) {
+        return;
+    }
+    openItems.value = {
+        ...openItems.value,
+        [label]: !isItemOpen(label, item),
     };
 }
 </script>
@@ -55,7 +87,7 @@ function toggleGroup(title) {
 
         <nav class="flex-1 space-y-3 overflow-x-hidden overflow-y-auto p-3">
             <template v-for="group in groups" :key="group.title">
-                <div v-if="group.items.length === 1" class="sb-group">
+                <div v-if="group.items.length === 1 && !group.items[0].children" class="sb-group">
                     <a
                         :href="group.items[0].href"
                         :title="group.items[0].label"
@@ -81,6 +113,58 @@ function toggleGroup(title) {
                     </div>
                 </div>
 
+                <!-- Item tunggal yang punya children (expandable tanpa group header) -->
+                <div v-else-if="group.items.length === 1 && group.items[0].children" class="sb-group space-y-0.5">
+                    <button
+                        type="button"
+                        :title="group.items[0].label"
+                        class="aksara-sidebar-link sb-link w-full"
+                        :class="{ 'aksara-sidebar-link-active': group.items[0].active && !isItemOpen(group.items[0].label, group.items[0]) }"
+                        @click="toggleItem(group.items[0].label, group.items[0])"
+                    >
+                        <span
+                            class="shrink-0 text-aksara-muted"
+                            :class="{ 'font-semibold text-aksara-teal-dark': group.items[0].active }"
+                        >
+                            <NavIcon :name="group.items[0].icon" />
+                        </span>
+                        <span class="sb-label flex-1 truncate text-left">{{ group.items[0].label }}</span>
+                        <NavIcon
+                            name="chevron-down"
+                            class="sb-label h-3.5 w-3.5 shrink-0 text-aksara-muted transition-transform duration-200"
+                            :class="{ '-rotate-90': !isItemOpen(group.items[0].label, group.items[0]) }"
+                        />
+                    </button>
+                    <div v-show="isItemOpen(group.items[0].label, group.items[0])" class="space-y-0.5 pl-4">
+                        <a
+                            v-for="child in group.items[0].children"
+                            :key="child.href"
+                            :href="child.href"
+                            :title="child.label"
+                            class="aksara-sidebar-link sb-link pl-2 text-sm"
+                            :class="{ 'aksara-sidebar-link-active': child.active }"
+                        >
+                            <span class="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />
+                            <span class="sb-label truncate">{{ child.label }}</span>
+                        </a>
+                    </div>
+                    <div class="sb-popup">
+                        <p class="px-3 pb-0.5 pt-1 text-[10px] font-semibold text-aksara-muted/60">
+                            {{ group.items[0].label }}
+                        </p>
+                        <a
+                            v-for="child in group.items[0].children"
+                            :key="`popup-${child.href}`"
+                            :href="child.href"
+                            class="aksara-sidebar-link pl-5"
+                            :class="{ 'aksara-sidebar-link-active': child.active }"
+                        >
+                            <span class="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />
+                            <span>{{ child.label }}</span>
+                        </a>
+                    </div>
+                </div>
+
                 <div v-else class="sb-group space-y-1">
                     <div
                         class="sb-divider flex cursor-pointer select-none items-center justify-between px-3 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-wider text-aksara-muted/70 transition hover:text-aksara-ink"
@@ -97,22 +181,61 @@ function toggleGroup(title) {
                     </div>
 
                     <div v-show="isOpen(group.title)" class="sb-divider space-y-1">
-                        <a
-                            v-for="item in group.items"
-                            :key="item.href"
-                            :href="item.href"
-                            :title="item.label"
-                            class="aksara-sidebar-link sb-link"
-                            :class="{ 'aksara-sidebar-link-active': item.active }"
-                        >
-                            <span
-                                class="shrink-0 text-aksara-muted"
-                                :class="{ 'font-semibold text-aksara-teal-dark': item.active }"
+                        <template v-for="item in group.items" :key="item.href ?? item.label">
+                            <!-- Item tanpa children -->
+                            <a
+                                v-if="!item.children"
+                                :href="item.href"
+                                :title="item.label"
+                                class="aksara-sidebar-link sb-link"
+                                :class="{ 'aksara-sidebar-link-active': item.active }"
                             >
-                                <NavIcon :name="item.icon" />
-                            </span>
-                            <span class="sb-label truncate">{{ item.label }}</span>
-                        </a>
+                                <span
+                                    class="shrink-0 text-aksara-muted"
+                                    :class="{ 'font-semibold text-aksara-teal-dark': item.active }"
+                                >
+                                    <NavIcon :name="item.icon" />
+                                </span>
+                                <span class="sb-label truncate">{{ item.label }}</span>
+                            </a>
+
+                            <!-- Item dengan children (expandable) -->
+                            <div v-else>
+                                <button
+                                    type="button"
+                                    :title="item.label"
+                                    class="aksara-sidebar-link sb-link w-full"
+                                    :class="{ 'aksara-sidebar-link-active': item.active && !isItemOpen(item.label, item) }"
+                                    @click="toggleItem(item.label, item)"
+                                >
+                                    <span
+                                        class="shrink-0 text-aksara-muted"
+                                        :class="{ 'font-semibold text-aksara-teal-dark': item.active }"
+                                    >
+                                        <NavIcon :name="item.icon" />
+                                    </span>
+                                    <span class="sb-label flex-1 truncate text-left">{{ item.label }}</span>
+                                    <NavIcon
+                                        name="chevron-down"
+                                        class="sb-label h-3.5 w-3.5 shrink-0 text-aksara-muted transition-transform duration-200"
+                                        :class="{ '-rotate-90': !isItemOpen(item.label, item) }"
+                                    />
+                                </button>
+                                <div v-show="isItemOpen(item.label, item)" class="mt-0.5 space-y-0.5 pl-4">
+                                    <a
+                                        v-for="child in item.children"
+                                        :key="child.href"
+                                        :href="child.href"
+                                        :title="child.label"
+                                        class="aksara-sidebar-link sb-link pl-2 text-sm"
+                                        :class="{ 'aksara-sidebar-link-active': child.active }"
+                                    >
+                                        <span class="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />
+                                        <span class="sb-label truncate">{{ child.label }}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <div class="sb-strip hidden">
@@ -134,34 +257,41 @@ function toggleGroup(title) {
                         <p class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-aksara-muted/70">
                             {{ group.title }}
                         </p>
-                        <a
-                            v-for="item in group.items"
-                            :key="`popup-${item.href}`"
-                            :href="item.href"
-                            class="aksara-sidebar-link"
-                            :class="{ 'aksara-sidebar-link-active': item.active }"
-                        >
-                            <span class="shrink-0 text-aksara-muted">
-                                <NavIcon :name="item.icon" class="h-4 w-4" />
-                            </span>
-                            <span>{{ item.label }}</span>
-                        </a>
+                        <template v-for="item in group.items" :key="`popup-${item.href ?? item.label}`">
+                            <a
+                                v-if="!item.children"
+                                :href="item.href"
+                                class="aksara-sidebar-link"
+                                :class="{ 'aksara-sidebar-link-active': item.active }"
+                            >
+                                <span class="shrink-0 text-aksara-muted">
+                                    <NavIcon :name="item.icon" class="h-4 w-4" />
+                                </span>
+                                <span>{{ item.label }}</span>
+                            </a>
+                            <template v-else>
+                                <p class="px-3 pb-0.5 pt-2 text-[10px] font-semibold text-aksara-muted/60">
+                                    {{ item.label }}
+                                </p>
+                                <a
+                                    v-for="child in item.children"
+                                    :key="`popup-child-${child.href}`"
+                                    :href="child.href"
+                                    class="aksara-sidebar-link pl-5"
+                                    :class="{ 'aksara-sidebar-link-active': child.active }"
+                                >
+                                    <span class="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />
+                                    <span>{{ child.label }}</span>
+                                </a>
+                            </template>
+                        </template>
                     </div>
                 </div>
             </template>
         </nav>
 
-        <div class="sb-footer border-t border-aksara-line bg-aksara-mist/30 px-3 py-3 text-center">
-            <p class="sb-label text-[10px] leading-snug text-aksara-muted">
-                © {{ copyrightYear }} Aksara
-            </p>
-            <p class="sb-label mt-0.5 text-[10px] text-aksara-muted/70">Pembelajaran AI</p>
-            <p
-                class="sb-footer-mark hidden text-[10px] font-semibold tracking-wide text-aksara-muted"
-                title="Aksara"
-            >
-                ©
-            </p>
+        <div class="sb-footer border-t border-aksara-line bg-aksara-mist/30 px-3 py-3">
+            <BrandCopyright variant="sidebar" />
         </div>
     </aside>
 </template>

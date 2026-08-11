@@ -1,7 +1,18 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Http\Middleware;
 
+use App\Support\BrandAttribution;
 use App\Support\Navigation\SidebarNav;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -41,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                 'status' => fn () => $request->session()->get('status'),
             ],
             'appName' => config('app.name', 'Aksara'),
+            'brand' => BrandAttribution::forInertia(),
             'urls' => [
                 'profile' => route('profile.edit'),
                 'logout' => route('logout'),

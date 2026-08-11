@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Aksara — platform pembelajaran berbantuan AI.
+ *
+ * @copyright 2026 jejakawan (https://jejakawan.com)
+ * @license   MIT
+ *
+ * Clone, fork, and modification are permitted under the MIT License.
+ * See the LICENSE file in the project root.
+ */
+
 namespace App\Http\Controllers\Plans;
 
 use App\Enums\MaterialStatus;
@@ -21,6 +31,7 @@ use App\Services\LearningPlanExportImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -160,6 +171,7 @@ class PlanController extends Controller
 
         if ($mode === 'manual') {
             $this->createPlan($validated);
+
             return redirect()->route('plans.index')->with('message', 'Rencana pembelajaran draf berhasil dibuat.');
         }
 
@@ -470,7 +482,7 @@ class PlanController extends Controller
         }
 
         if (trim((string) ($validated['curriculum_reference'] ?? '')) === '') {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'curriculum_reference' => 'Referensi kurikulum wajib diisi.',
             ]);
         }

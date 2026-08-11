@@ -166,6 +166,23 @@ Catat keputusan arsitektur/produk yang mengubah arah kerja. Format mengikuti ADR
 
 ---
 
+## ADR-013: MIT License + short source file headers
+
+- **Tanggal:** 2026-08-11
+- **Status:** diterima
+- **Konteks:** Perlu identitas produk/pengembang yang jelas lintas agen (Cursor dan non-Cursor); kebijakan clone/fork/modifikasi; menghindari header lisensi penuh di setiap file.
+- **Keputusan:**
+  1. Root `LICENSE` = **MIT**, copyright **jejakawan** (https://jejakawan.com); produk **Aksara**.
+  2. `NOTICE` merangkum kebijakan clone/fork/modifikasi + pointer ke header.
+  3. Source app memakai **header ringkas** (`@copyright` / `@license MIT`) — template SoT: `docs/steering/file-header.md`.
+  4. Arahan agen-agnostik di `handover.md`; Cursor: `.cursor/rules/file-header.mdc`.
+  5. Scope header: `app/`, `bootstrap/*.php`, `config/`, `database/{migrations,seeders,factories}/`, `routes/`, `resources/{js,css,views}/`, `tests/`. Kecualikan vendor/build/storage.
+- **Alasan:** MIT selaras izin clone/fork/modifikasi; header pendek mengurangi noise diff; handover memastikan tool selain Cursor tetap patuh.
+- **Alternatif:** Proprietary “all rights reserved”; header teks LICENSE penuh di tiap file — ditolak.
+- **Dampak:** `LICENSE`, `NOTICE`, `file-header.md`, rule Cursor, mass-insert header pada source existing; UI atribusi via `BrandCopyright` + `BrandAttribution` (soft boot check).
+
+---
+
 ## Template entri baru
 
 ```markdown

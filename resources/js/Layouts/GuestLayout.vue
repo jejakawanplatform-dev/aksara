@@ -1,5 +1,13 @@
+<!--
+  Aksara — platform pembelajaran berbantuan AI.
+  @copyright 2026 jejakawan (https://jejakawan.com)
+  @license   MIT
+  Clone, fork, and modification are permitted under the MIT License.
+  See the LICENSE file in the project root.
+-->
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import BrandCopyright from '@/Components/brand/BrandCopyright.vue';
 
 defineProps({
     title: { type: String, default: '' },
@@ -64,9 +72,9 @@ defineProps({
                 </ul>
             </div>
 
-            <p class="relative z-10 text-xs text-aksara-muted">
-                Output workshop Bimtek AI dalam Pembelajaran
-            </p>
+            <div class="relative z-10">
+                <BrandCopyright variant="guest" />
+            </div>
         </aside>
 
         <!-- Form column -->

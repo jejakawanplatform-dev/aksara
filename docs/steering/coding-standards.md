@@ -9,6 +9,7 @@ Standar ini wajib dipatuhi manusia maupun AI agent.
 3. **Kecil dan teruji** — ubah modul sempit; sertakan bukti test.
 4. **Terbaca dan konsisten** — kode harus bisa dilanjutkan orang/agent lain.
 5. **Terdokumentasi** — keputusan penting masuk `decision-log.md` / `handover.md`.
+6. **Header & lisensi** — file source baru wajib header singkat per `file-header.md` (MIT / jejakawan).
 
 ## 2. Stack & tool
 
@@ -129,3 +130,5 @@ Setiap prompt ke agent harus memuat:
 7. ringkasan test + risiko setelahnya.
 
 Template lengkap: lihat `docs/steering/handover.md` dan spek kemampuan di `docs/spec/` (piramida terbalik).
+
+Header file & lisensi: `docs/steering/file-header.md` (wajib untuk semua agen).
