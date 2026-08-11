@@ -27,6 +27,10 @@ class UserController extends Controller
         $search = (string) $request->query('search', '');
         $roleFilter = (string) $request->query('role', '');
         $linksUserId = $request->query('linksUserId');
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
 
         $users = User::query()
             ->when($search !== '', function ($q) use ($search) {
@@ -37,8 +41,9 @@ class UserController extends Controller
             })
             ->when($roleFilter !== '', fn ($q) => $q->where('role', $roleFilter))
             ->orderBy('name')
-            ->get()
-            ->map(fn (User $user) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (User $user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
@@ -79,8 +84,9 @@ class UserController extends Controller
             'filters' => [
                 'search' => $search,
                 'role' => $roleFilter,
+                'per_page' => $perPage,
             ],
-            'roles' => collect(UserRole::assignable())->map(fn (UserRole $r) => [
+            'roles' => collect(UserRole::cases())->map(fn (UserRole $r) => [
                 'value' => $r->value,
                 'label' => $r->label(),
             ])->values(),

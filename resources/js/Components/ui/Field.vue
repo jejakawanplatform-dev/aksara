@@ -12,10 +12,10 @@ defineProps({
     <div class="space-y-1.5">
         <label v-if="label" :for="forId" class="aksara-label">
             {{ label }}
-            <span v-if="required" class="font-bold text-red-500">*</span>
+            <span v-if="required" class="font-bold text-aksara-danger">*</span>
         </label>
         <slot />
         <p v-if="hint && !error" class="text-xs text-aksara-muted">{{ hint }}</p>
-        <p v-if="error" class="text-xs font-medium text-red-600">{{ error }}</p>
+        <p v-if="error" class="text-xs font-medium text-aksara-danger" role="alert">{{ error }}</p>
     </div>
 </template>

@@ -66,6 +66,11 @@ class ReferenceController extends Controller
             $atpGradeFilter = (int) $atpGradeFilter;
         }
 
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
+
         $membersClassId = $request->query('membersClassId')
             ? (int) $request->query('membersClassId')
             : null;
@@ -81,20 +86,26 @@ class ReferenceController extends Controller
             $mySubjectIds = [Subject::where('code', 'INF')->value('id')];
         }
 
+        /** Opsi mapel untuk filter/dropdown (selalu penuh, ringan) */
+        $subjectOptions = Subject::query()->orderBy('name')->get(['id', 'name', 'code']);
+
         $subjectsQuery = Subject::query()->with('teachers')->orderBy('name');
         if (! $canManage && $mapelScopeFilter === 'my' && ! empty($mySubjectIds)) {
             $subjectsQuery->whereIn('id', $mySubjectIds);
         }
-        $subjects = $subjectsQuery->get()->map(fn (Subject $s) => [
-            'id' => $s->id,
-            'name' => $s->name,
-            'code' => $s->code,
-            'phase' => $s->phase,
-            'jenjang' => $s->jenjang,
-            'description' => $s->description,
-            'teacherIds' => $s->teachers->pluck('id')->values(),
-            'teacherNames' => $s->teachers->pluck('name')->values(),
-        ]);
+        $subjects = $subjectsQuery
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (Subject $s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'code' => $s->code,
+                'phase' => $s->phase,
+                'jenjang' => $s->jenjang,
+                'description' => $s->description,
+                'teacherIds' => $s->teachers->pluck('id')->values(),
+                'teacherNames' => $s->teachers->pluck('name')->values(),
+            ]);
 
         $years = AcademicYear::query()->with('semesters')->orderByDesc('starts_on')->get()->map(fn (AcademicYear $y) => [
             'id' => $y->id,
@@ -127,8 +138,9 @@ class ReferenceController extends Controller
             ->withCount('students')
             ->orderBy('grade')
             ->orderBy('name')
-            ->get()
-            ->map(fn (SchoolClass $c) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (SchoolClass $c) => [
                 'id' => $c->id,
                 'academic_year_id' => $c->academic_year_id,
                 'yearName' => $c->academicYear?->name,
@@ -170,8 +182,9 @@ class ReferenceController extends Controller
             ->when($atpGradeFilter !== null, fn ($q) => $q->where('grade', $atpGradeFilter))
             ->orderBy('grade')
             ->orderBy('sequence')
-            ->get()
-            ->map(fn (CurriculumAtpItem $item) => [
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (CurriculumAtpItem $item) => [
                 'id' => $item->id,
                 'subject_id' => $item->subject_id,
                 'academic_year_id' => $item->academic_year_id,
@@ -246,6 +259,7 @@ class ReferenceController extends Controller
                 'atpGradeFilter' => $atpGradeFilter,
                 'mapelScope' => $mapelScopeFilter,
                 'membersClassId' => $membersClassId,
+                'per_page' => $perPage,
             ],
             'school' => [
                 'name' => (string) $service->get('school.name', 'SMP Negeri 1 Aksara'),
@@ -263,6 +277,7 @@ class ReferenceController extends Controller
             'semesters' => $semesters,
             'rombels' => $rombels,
             'subjects' => $subjects,
+            'subjectOptions' => $subjectOptions,
             'cps' => $cps,
             'atp' => $atp,
             'tpOptions' => $tpOptions,
@@ -311,8 +326,8 @@ class ReferenceController extends Controller
                 'atpDestroy' => route('references.atp.destroy', ['atp' => '__ID__']),
                 'importCpTp' => route('references.import.cp-tp'),
                 'importAtp' => route('references.import.atp'),
-                'exportCpTpExcel' => route('references.export.cp-tp', ['subject' => '__ID__', 'format' => 'excel']),
-                'exportAtpExcel' => route('references.export.atp', ['subject' => '__ID__', 'format' => 'excel']),
+                'exportCpTp' => route('references.export.cp-tp', ['subject' => '__ID__', 'format' => '__FMT__']),
+                'exportAtp' => route('references.export.atp', ['subject' => '__ID__', 'format' => '__FMT__']),
             ],
         ]);
     }

@@ -16,3 +16,5 @@
 - Jangan menambah Blade page UI baru; PDF-only exception.
 - Permission mengikuti group plans/references.
 - Kop sekolah membaca `school.name` / `npsn` / `address` / `phone` / `headmaster` via `setting()`.
+- Single plan export: `excel` | `word` | `pdf` (`plans.export.single`); UI baris Plans memakai `ExportMenu`.
+- Curriculum export CP/TP & ATP: format sama; UI Refs memakai `ExportMenu` + template URL `__ID__` / `__FMT__`.

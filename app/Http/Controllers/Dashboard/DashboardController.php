@@ -28,7 +28,7 @@ class DashboardController extends Controller
         $user = $request->user();
 
         if ($user->isAdmin()) {
-            return $this->admin();
+            return $this->admin($user);
         }
 
         if ($user->isTeacher()) {
@@ -52,7 +52,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function admin(): Response
+    private function admin(User $user): Response
     {
         $counts = [
             'admin' => User::where('role', UserRole::Admin)->count(),
@@ -65,13 +65,21 @@ class DashboardController extends Controller
         $year = AcademicYear::active();
 
         return Inertia::render('Dashboard/Admin', [
+            'userName' => $user->name,
             'activeYear' => $year?->name,
             'rombelCount' => SchoolClass::count(),
             'counts' => $counts,
+            'content' => [
+                'plansTotal' => LearningPlan::count(),
+                'plansPublished' => LearningPlan::where('status', PlanStatus::Published)->count(),
+                'materialsPublished' => LearningMaterial::where('status', MaterialStatus::Published)->count(),
+                'aiToday' => AiGeneration::whereDate('created_at', now()->today())->count(),
+            ],
             'urls' => [
                 'users' => route('users.index'),
                 'access' => route('access.index'),
                 'references' => route('references.index'),
+                'settings' => route('settings.index'),
             ],
         ]);
     }

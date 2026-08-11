@@ -2,9 +2,11 @@
 import { computed, ref } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 import Card from '@/Components/ui/Card.vue';
 import Field from '@/Components/ui/Field.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Alert from '@/Components/ui/Alert.vue';
 import Modal from '@/Components/ui/Modal.vue';
 
 const props = defineProps({
@@ -65,7 +67,12 @@ function destroyAccount() {
     <AppLayout title="Profil">
         <template #header>Profil</template>
 
-        <div class="mx-auto max-w-3xl space-y-6">
+        <div class="mx-auto max-w-3xl space-y-5">
+            <PageHeader
+                title="Profil"
+                description="Perbarui informasi akun, password, dan preferensi keamanan Anda."
+            />
+
             <Card title="Informasi profil" description="Perbarui nama dan alamat email akun Anda.">
                 <form class="space-y-4" @submit.prevent="updateProfile">
                     <Field label="Nama" for-id="name" required :error="profileForm.errors.name">
@@ -91,10 +98,7 @@ function destroyAccount() {
                         />
                     </Field>
 
-                    <div
-                        v-if="mustVerifyEmail && !user.email_verified_at"
-                        class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
-                    >
+                    <Alert v-if="mustVerifyEmail && !user.email_verified_at" tone="warn">
                         <p>Email Anda belum diverifikasi.</p>
                         <button
                             type="button"
@@ -103,22 +107,19 @@ function destroyAccount() {
                         >
                             Kirim ulang email verifikasi
                         </button>
-                        <p
-                            v-if="flashStatus === 'verification-link-sent'"
-                            class="mt-2 font-medium text-green-700"
-                        >
+                        <p v-if="flashStatus === 'verification-link-sent'" class="mt-2 font-medium text-aksara-ok">
                             Tautan verifikasi baru telah dikirim.
                         </p>
-                    </div>
+                    </Alert>
 
-                    <div class="flex items-center gap-3">
-                        <Btn type="submit" :disabled="profileForm.processing">Simpan</Btn>
+                    <div class="flex items-center justify-end gap-3">
                         <p
                             v-if="flashStatus === 'profile-updated'"
                             class="text-sm text-aksara-muted"
                         >
                             Tersimpan.
                         </p>
+                        <Btn type="submit" size="sm" :disabled="profileForm.processing">Simpan</Btn>
                     </div>
                 </form>
             </Card>
@@ -173,14 +174,14 @@ function destroyAccount() {
                         />
                     </Field>
 
-                    <div class="flex items-center gap-3">
-                        <Btn type="submit" :disabled="passwordForm.processing">Simpan</Btn>
+                    <div class="flex items-center justify-end gap-3">
                         <p
                             v-if="flashStatus === 'password-updated'"
                             class="text-sm text-aksara-muted"
                         >
                             Tersimpan.
                         </p>
+                        <Btn type="submit" size="sm" :disabled="passwordForm.processing">Simpan</Btn>
                     </div>
                 </form>
             </Card>
@@ -192,6 +193,7 @@ function destroyAccount() {
                 <Btn
                     type="button"
                     variant="danger"
+                    size="sm"
                     @click="showDeleteConfirm = true"
                 >
                     Hapus akun

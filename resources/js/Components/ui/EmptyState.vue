@@ -7,8 +7,8 @@ defineProps({
 </script>
 
 <template>
-    <div class="rounded-2xl border border-dashed border-aksara-line bg-white px-6 py-12 text-center">
-        <p class="font-display text-lg text-aksara-ink">{{ title }}</p>
+    <div class="aksara-surface-dashed px-6 py-12 text-center">
+        <p class="text-lg font-semibold text-aksara-ink">{{ title }}</p>
         <div class="mt-2 text-sm text-aksara-muted">
             <slot />
         </div>

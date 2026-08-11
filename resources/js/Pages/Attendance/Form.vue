@@ -1,8 +1,10 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Card from '@/Components/ui/Card.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
+import Alert from '@/Components/ui/Alert.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Icon from '@/Components/ui/Icon.vue';
 
 const props = defineProps({
     plan: { type: Object, required: true },
@@ -25,48 +27,53 @@ function submit() {
 
 <template>
     <AppLayout :title="`Input Kehadiran — ${plan.topic}`">
-        <template #header>
-            <div class="flex items-center gap-3">
-                <a :href="plansUrl" class="text-aksara-muted hover:text-aksara-ink">← Rencana</a>
-                <span class="text-aksara-line">/</span>
-                <span>Input Kehadiran — {{ plan.topic }}</span>
+        <template #header>Input Kehadiran</template>
+
+        <div class="space-y-5">
+            <PageHeader
+                title="Input Kehadiran"
+                :description="`${plan.topic} · Kelas ${plan.className || '—'}`"
+            >
+                <template #actions>
+                    <Btn :href="plansUrl" variant="secondary" size="sm" class="gap-1.5">
+                        <Icon name="arrow-left" class="h-3.5 w-3.5" />
+                        Rencana
+                    </Btn>
+                </template>
+            </PageHeader>
+
+            <Alert tone="warning" title="Catatan kehadiran">
+                Input kehadiran untuk <strong>{{ plan.topic }}</strong> — Kelas {{ plan.className || '—' }}.
+            </Alert>
+
+            <div v-if="!students.length" class="aksara-surface-dashed p-10 text-center">
+                <h3 class="text-lg font-semibold text-aksara-ink">Tidak ada siswa</h3>
+                <p class="mt-2 text-sm text-aksara-muted">Tidak ada siswa terdaftar di kelas ini.</p>
             </div>
-        </template>
 
-        <Card>
-            <div class="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-                <span>
-                    Input kehadiran untuk: <strong>{{ plan.topic }}</strong> — Kelas {{ plan.className || '-' }}
-                </span>
-            </div>
-
-            <p v-if="!students.length" class="py-8 text-center text-sm text-aksara-muted">
-                Tidak ada siswa terdaftar di kelas ini.
-            </p>
-
-            <form v-else class="space-y-4" @submit.prevent="submit">
+            <form v-else class="aksara-surface" @submit.prevent="submit">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                    <table class="aksara-table w-full min-w-[640px]">
                         <thead>
-                            <tr class="border-b border-aksara-line text-left text-xs uppercase tracking-wide text-aksara-muted">
-                                <th class="pb-3 pr-4">Nama Siswa</th>
+                            <tr>
+                                <th class="aksara-th">Nama Siswa</th>
                                 <th
                                     v-for="(label, val) in statuses"
                                     :key="val"
-                                    class="pb-3 pr-3 text-center"
+                                    class="aksara-th text-center"
                                 >
                                     {{ label }}
                                 </th>
-                                <th class="pb-3">Keterangan</th>
+                                <th class="aksara-th">Keterangan</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-aksara-line/60">
-                            <tr v-for="student in students" :key="student.id" class="hover:bg-aksara-mist/30">
-                                <td class="py-3 pr-4 font-medium text-aksara-ink">{{ student.name }}</td>
+                        <tbody>
+                            <tr v-for="student in students" :key="student.id" class="hover:bg-aksara-mist/40">
+                                <td class="aksara-td font-medium text-aksara-ink">{{ student.name }}</td>
                                 <td
                                     v-for="(label, val) in statuses"
                                     :key="val"
-                                    class="py-3 pr-3 text-center"
+                                    class="aksara-td text-center"
                                 >
                                     <input
                                         v-model="form.attendance[student.id].status"
@@ -76,11 +83,11 @@ function submit() {
                                         class="h-4 w-4 accent-aksara-teal"
                                     />
                                 </td>
-                                <td class="py-3">
+                                <td class="aksara-td">
                                     <input
                                         v-model="form.attendance[student.id].notes"
                                         type="text"
-                                        placeholder="opsional..."
+                                        placeholder="Opsional…"
                                         class="aksara-input text-xs"
                                     />
                                 </td>
@@ -89,12 +96,12 @@ function submit() {
                     </table>
                 </div>
 
-                <div class="flex justify-end border-t border-aksara-line pt-4">
+                <div class="aksara-form-actions border-t border-aksara-line px-4 py-4 sm:px-5">
                     <Btn type="submit" id="btn-save-attendance" :disabled="form.processing">
-                        {{ form.processing ? 'Menyimpan...' : 'Simpan Kehadiran' }}
+                        {{ form.processing ? 'Menyimpan…' : 'Simpan Kehadiran' }}
                     </Btn>
                 </div>
             </form>
-        </Card>
+        </div>
     </AppLayout>
 </template>

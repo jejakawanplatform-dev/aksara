@@ -6,6 +6,7 @@
 |---|---|
 | Controllers | `Materials/MaterialController`, `MaterialEditController` |
 | Pages | `Pages/Materials/{Index,Show,Edit}.vue` |
+| UI Index | Pagination + filter search/status; IconButton aksi baris |
 | Services | `AiDraftService`, `MaterialImageService` (media → spec 16) |
 | Support | `MaterialContentHtml`, `MaterialCopilotPatch`, `SubjectContext` |
 | Models | `LearningMaterial`, `LearningEvent`, `AiProvider` |

@@ -108,7 +108,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick));
                 </a>
                 <button
                     type="button"
-                    class="aksara-profile-menu__item w-full text-left text-red-600 hover:bg-red-50"
+                    class="aksara-profile-menu__item w-full text-left text-aksara-danger hover:bg-aksara-danger/5"
                     role="menuitem"
                     @click="logout"
                 >

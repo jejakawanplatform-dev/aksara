@@ -6,6 +6,7 @@
 |---|---|
 | Controller | `app/Http/Controllers/Users/UserController.php` |
 | Page | `resources/js/Pages/Users/Index.vue` |
+| UI | Pagination + filter role (semua `UserRole`); IconButton aksi |
 | Model | `app/Models/User.php` (+ relasi classes/children/parents) |
 | Routes | `users.*` |
 | Test | `tests/Feature/UserManagementTest.php` |

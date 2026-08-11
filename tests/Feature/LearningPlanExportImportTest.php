@@ -69,6 +69,11 @@ class LearningPlanExportImportTest extends TestCase
             ->get(route('plans.export.single', [$plan, 'word']));
         $wordResponse->assertOk();
 
+        $excelResponse = $this->actingAs($guru)
+            ->get(route('plans.export.single', [$plan, 'excel']));
+        $excelResponse->assertOk();
+        $excelResponse->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
         $pdfResponse = $this->actingAs($guru)
             ->get(route('plans.export.single', [$plan, 'pdf']));
         $pdfResponse->assertOk();

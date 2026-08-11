@@ -2,6 +2,8 @@
 import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Icon from '@/Components/ui/Icon.vue';
+import IconButton from '@/Components/ui/IconButton.vue';
 import PageHeader from '@/Components/ui/PageHeader.vue';
 
 const props = defineProps({
@@ -36,43 +38,51 @@ function resetDefaults() {
     <AppLayout :title="pageTitle">
         <template #header>{{ pageTitle }}</template>
 
-        <div class="space-y-6">
+        <div class="space-y-5">
             <PageHeader
                 title="Hak Akses (RBAC)"
                 description="Matrix permission per role. Role tetap (enum); permission wajib admin terkunci."
             >
                 <template #actions>
-                    <Btn type="button" size="sm" :disabled="form.processing" @click="save">Simpan matrix</Btn>
-                    <Btn type="button" variant="secondary" size="sm" :disabled="form.processing" @click="resetDefaults">
-                        Reset default
-                    </Btn>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <Btn type="button" size="sm" class="gap-1.5" :disabled="form.processing" @click="save">
+                            <Icon name="save" class="h-3.5 w-3.5" />
+                            Simpan matrix
+                        </Btn>
+                        <IconButton
+                            icon="x-mark"
+                            label="Reset default"
+                            :disabled="form.processing"
+                            @click="resetDefaults"
+                        />
+                    </div>
                 </template>
             </PageHeader>
 
-            <div class="overflow-x-auto rounded-2xl border border-aksara-line bg-white">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-aksara-mist text-left text-xs uppercase text-aksara-muted">
+            <div class="aksara-surface overflow-x-auto">
+                <table class="aksara-table min-w-full">
+                    <thead>
                         <tr>
-                            <th class="sticky left-0 z-10 bg-aksara-mist px-4 py-3">Permission</th>
+                            <th class="aksara-th sticky left-0 z-10 bg-aksara-mist/50">Permission</th>
                             <th
                                 v-for="role in roles"
                                 :key="role.value"
-                                class="px-4 py-3 text-center whitespace-nowrap"
+                                class="aksara-th text-center whitespace-nowrap"
                             >
                                 {{ role.label }}
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-aksara-line">
-                        <tr v-for="perm in permissions" :key="perm.name">
-                            <td class="sticky left-0 z-10 bg-white px-4 py-3">
+                    <tbody>
+                        <tr v-for="perm in permissions" :key="perm.name" class="hover:bg-aksara-mist/40">
+                            <td class="aksara-td sticky left-0 z-10 bg-white">
                                 <p class="font-medium text-aksara-ink">{{ perm.label }}</p>
                                 <p class="text-xs text-aksara-muted">{{ perm.name }}</p>
                             </td>
                             <td
                                 v-for="role in roles"
                                 :key="`${role.value}-${perm.wireKey}`"
-                                class="px-4 py-3 text-center"
+                                class="aksara-td text-center"
                             >
                                 <input
                                     v-model="form.matrix[role.value][perm.wireKey]"

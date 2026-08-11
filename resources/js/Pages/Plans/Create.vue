@@ -1,10 +1,11 @@
 <script setup>
 import { computed, watch } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Card from '@/Components/ui/Card.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 import Field from '@/Components/ui/Field.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Icon from '@/Components/ui/Icon.vue';
 
 const props = defineProps({
     mode: { type: String, default: 'ai' },
@@ -143,98 +144,111 @@ function submit() {
     <AppLayout title="Buat Rencana Pembelajaran">
         <template #header>Buat Rencana Pembelajaran</template>
 
-        <div class="mb-4">
-            <a :href="indexUrl" class="text-sm text-aksara-muted hover:text-aksara-ink">← Rencana Pembelajaran</a>
-        </div>
+        <div class="space-y-5">
+            <PageHeader
+                title="Buat Rencana Pembelajaran"
+                description="Pilih mode AI atau isi manual."
+            >
+                <template #meta>
+                    <Link :href="indexUrl" class="inline-flex items-center gap-1 text-sm text-aksara-muted hover:text-aksara-ink">
+                        <Icon name="arrow-left" class="h-3.5 w-3.5" />
+                        Rencana Pembelajaran
+                    </Link>
+                </template>
+            </PageHeader>
 
-        <Card title="Form Rencana" description="Pilih mode AI atau isi manual.">
-            <div class="mb-4 flex flex-wrap gap-2">
-                <button
-                    type="button"
-                    class="rounded-lg px-3 py-2 text-xs font-semibold"
-                    :class="form.mode === 'ai' ? 'bg-aksara-teal text-white' : 'bg-aksara-mist text-aksara-ink'"
-                    @click="setMode('ai')"
-                >
-                    Mode AI ({{ dailyAiQuota.used }}/{{ dailyAiQuota.limit }})
-                </button>
-                <button
-                    type="button"
-                    class="rounded-lg px-3 py-2 text-xs font-semibold"
-                    :class="form.mode === 'manual' ? 'bg-aksara-teal text-white' : 'bg-aksara-mist text-aksara-ink'"
-                    @click="setMode('manual')"
-                >
-                    Mode Manual
-                </button>
-            </div>
-
-            <form class="grid grid-cols-1 gap-4 md:grid-cols-2" @submit.prevent="submit">
-                <Field label="Tahun Ajaran" required :error="form.errors.academic_year_id">
-                    <select v-model="form.academic_year_id" class="aksara-select">
-                        <option value="">Pilih…</option>
-                        <option v-for="y in options.academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
-                    </select>
-                </Field>
-                <Field label="Semester" required :error="form.errors.semester_id">
-                    <select v-model="form.semester_id" class="aksara-select">
-                        <option value="">Pilih…</option>
-                        <option v-for="s in filteredSemesters" :key="s.id" :value="s.id">{{ s.name }}</option>
-                    </select>
-                </Field>
-                <Field label="Kelas" required :error="form.errors.class_id">
-                    <select v-model="form.class_id" class="aksara-select">
-                        <option value="">Pilih…</option>
-                        <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.name }}</option>
-                    </select>
-                </Field>
-                <Field label="Mata Pelajaran" required :error="form.errors.subject_id">
-                    <select v-model="form.subject_id" class="aksara-select">
-                        <option value="">Pilih…</option>
-                        <option v-for="s in options.subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
-                    </select>
-                </Field>
-                <Field label="CP" :error="form.errors.curriculum_cp_id">
-                    <select v-model="form.curriculum_cp_id" class="aksara-select">
-                        <option value="">Opsional</option>
-                        <option v-for="cp in filteredCps" :key="cp.id" :value="cp.id">{{ cp.label }}</option>
-                    </select>
-                </Field>
-                <Field label="TP" :error="form.errors.curriculum_tp_id">
-                    <select v-model="form.curriculum_tp_id" class="aksara-select">
-                        <option value="">Opsional</option>
-                        <option v-for="tp in filteredTps" :key="tp.id" :value="tp.id">{{ tp.label }}</option>
-                    </select>
-                </Field>
-                <Field label="Fase" required :error="form.errors.phase">
-                    <select v-model="form.phase" class="aksara-select">
-                        <option v-for="p in options.phases" :key="p" :value="p">{{ p }}</option>
-                    </select>
-                </Field>
-                <Field label="Kelas (angka)" required :error="form.errors.grade">
-                    <input v-model.number="form.grade" type="number" min="1" max="12" class="aksara-input" />
-                </Field>
-                <Field label="Topik" required class="md:col-span-2" :error="form.errors.topic">
-                    <input v-model="form.topic" type="text" class="aksara-input" maxlength="255" />
-                </Field>
-                <Field label="Durasi (menit)" required :error="form.errors.duration_minutes">
-                    <input v-model.number="form.duration_minutes" type="number" min="10" max="480" class="aksara-input" />
-                </Field>
-                <Field label="Kebutuhan Siswa" :error="form.errors.student_needs">
-                    <input v-model="form.student_needs" type="text" class="aksara-input" maxlength="500" />
-                </Field>
-                <Field label="Tujuan Pembelajaran" required class="md:col-span-2" :error="form.errors.learning_objectives">
-                    <textarea v-model="form.learning_objectives" rows="3" class="aksara-input" maxlength="1000" />
-                </Field>
-                <Field label="Referensi Kurikulum" required class="md:col-span-2" :error="form.errors.curriculum_reference">
-                    <textarea v-model="form.curriculum_reference" rows="2" class="aksara-input" maxlength="2000" />
-                </Field>
-
-                <div class="md:col-span-2 flex flex-wrap gap-2">
-                    <Btn type="submit" :disabled="form.processing">
-                        {{ form.mode === 'ai' ? 'Generate Draf AI' : 'Simpan Draf Manual' }}
-                    </Btn>
-                    <Btn :href="indexUrl" variant="secondary">Batal</Btn>
+            <div class="aksara-surface p-4 sm:p-5">
+                <div class="aksara-form-actions mb-5">
+                    <button
+                        type="button"
+                        class="rounded-lg px-3 py-2 text-xs font-semibold transition"
+                        :class="form.mode === 'ai' ? 'bg-aksara-teal text-white' : 'bg-aksara-mist text-aksara-ink hover:bg-aksara-line/40'"
+                        @click="setMode('ai')"
+                    >
+                        <span class="inline-flex items-center gap-1.5">
+                            <Icon name="sparkles" class="h-3.5 w-3.5" />
+                            Mode AI ({{ dailyAiQuota.used }}/{{ dailyAiQuota.limit }})
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg px-3 py-2 text-xs font-semibold transition"
+                        :class="form.mode === 'manual' ? 'bg-aksara-teal text-white' : 'bg-aksara-mist text-aksara-ink hover:bg-aksara-line/40'"
+                        @click="setMode('manual')"
+                    >
+                        Mode Manual
+                    </button>
                 </div>
-            </form>
-        </Card>
+
+                <form class="grid grid-cols-1 gap-4 md:grid-cols-2" @submit.prevent="submit">
+                    <Field label="Tahun Ajaran" required :error="form.errors.academic_year_id">
+                        <select v-model="form.academic_year_id" class="aksara-select">
+                            <option value="">Pilih…</option>
+                            <option v-for="y in options.academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Semester" required :error="form.errors.semester_id">
+                        <select v-model="form.semester_id" class="aksara-select">
+                            <option value="">Pilih…</option>
+                            <option v-for="s in filteredSemesters" :key="s.id" :value="s.id">{{ s.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Kelas" required :error="form.errors.class_id">
+                        <select v-model="form.class_id" class="aksara-select">
+                            <option value="">Pilih…</option>
+                            <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Mata Pelajaran" required :error="form.errors.subject_id">
+                        <select v-model="form.subject_id" class="aksara-select">
+                            <option value="">Pilih…</option>
+                            <option v-for="s in options.subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="CP" :error="form.errors.curriculum_cp_id">
+                        <select v-model="form.curriculum_cp_id" class="aksara-select">
+                            <option value="">Opsional</option>
+                            <option v-for="cp in filteredCps" :key="cp.id" :value="cp.id">{{ cp.label }}</option>
+                        </select>
+                    </Field>
+                    <Field label="TP" :error="form.errors.curriculum_tp_id">
+                        <select v-model="form.curriculum_tp_id" class="aksara-select">
+                            <option value="">Opsional</option>
+                            <option v-for="tp in filteredTps" :key="tp.id" :value="tp.id">{{ tp.label }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Fase" required :error="form.errors.phase">
+                        <select v-model="form.phase" class="aksara-select">
+                            <option v-for="p in options.phases" :key="p" :value="p">{{ p }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Kelas (angka)" required :error="form.errors.grade">
+                        <input v-model.number="form.grade" type="number" min="1" max="12" class="aksara-input" />
+                    </Field>
+                    <Field label="Topik" required class="md:col-span-2" :error="form.errors.topic">
+                        <input v-model="form.topic" type="text" class="aksara-input" maxlength="255" />
+                    </Field>
+                    <Field label="Durasi (menit)" required :error="form.errors.duration_minutes">
+                        <input v-model.number="form.duration_minutes" type="number" min="10" max="480" class="aksara-input" />
+                    </Field>
+                    <Field label="Kebutuhan Siswa" :error="form.errors.student_needs">
+                        <input v-model="form.student_needs" type="text" class="aksara-input" maxlength="500" />
+                    </Field>
+                    <Field label="Tujuan Pembelajaran" required class="md:col-span-2" :error="form.errors.learning_objectives">
+                        <textarea v-model="form.learning_objectives" rows="3" class="aksara-input" maxlength="1000" />
+                    </Field>
+                    <Field label="Referensi Kurikulum" required class="md:col-span-2" :error="form.errors.curriculum_reference">
+                        <textarea v-model="form.curriculum_reference" rows="2" class="aksara-input" maxlength="2000" />
+                    </Field>
+
+                    <div class="aksara-form-actions md:col-span-2 border-t border-aksara-line pt-4">
+                        <Btn :href="indexUrl" variant="secondary">Batal</Btn>
+                        <Btn type="submit" :disabled="form.processing">
+                            {{ form.mode === 'ai' ? 'Generate Draf AI' : 'Simpan Draf Manual' }}
+                        </Btn>
+                    </div>
+                </form>
+            </div>
+        </div>
     </AppLayout>
 </template>

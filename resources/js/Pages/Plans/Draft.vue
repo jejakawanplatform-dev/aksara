@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/ui/Card.vue';
@@ -26,17 +27,51 @@ const approveForm = useForm({
 
 const publishForm = useForm({});
 
-function formatList(items) {
-    if (!Array.isArray(items) || !items.length) return '—';
-    return items
-        .map((item) => {
-            if (typeof item === 'string') return item;
-            if (item?.statement) return item.statement;
-            if (item?.title) return item.title;
-            return JSON.stringify(item);
-        })
-        .join('\n');
+/** Normalisasi item draf AI jadi teks yang bisa dibaca (bukan JSON mentah). */
+function itemText(item) {
+    if (item == null) return '';
+    if (typeof item === 'string' || typeof item === 'number') return String(item);
+    if (typeof item !== 'object') return String(item);
+
+    if (item.statement) return String(item.statement);
+    if (item.activity) return String(item.activity);
+    if (item.title && item.description) return `${item.title}: ${item.description}`;
+    if (item.title) return String(item.title);
+    if (item.description) return String(item.description);
+    if (item.text) return String(item.text);
+    if (item.content) return String(item.content);
+    if (item.note) return String(item.note);
+    if (item.label) return String(item.label);
+
+    // Hindari dump JSON penuh — ambil nilai string pertama yang berguna
+    const skip = new Set(['sequence', 'order', 'id', 'index', 'step']);
+    for (const [key, value] of Object.entries(item)) {
+        if (skip.has(key)) continue;
+        if (typeof value === 'string' && value.trim()) return value;
+    }
+
+    return '';
 }
+
+function toLines(items) {
+    if (!Array.isArray(items) || !items.length) return [];
+    return items
+        .map((item, index) => {
+            const text = itemText(item).trim();
+            if (!text) return null;
+            const seq =
+                typeof item === 'object' && item !== null
+                    ? Number(item.sequence ?? item.order ?? item.step ?? index + 1)
+                    : index + 1;
+            return { seq: Number.isFinite(seq) && seq > 0 ? seq : index + 1, text };
+        })
+        .filter(Boolean);
+}
+
+const tpLines = computed(() => toLines(approveForm.tpDraft));
+const atpLines = computed(() => toLines(approveForm.atpDraft));
+const noteLines = computed(() => toLines(approveForm.reviewNotes));
+const lessonLines = computed(() => toLines(approveForm.lessonPlan));
 
 function approve() {
     approveForm.post(props.urls.approve, { preserveScroll: true });
@@ -58,7 +93,7 @@ function publish() {
         </div>
 
         <div v-if="!generation" class="aksara-panel p-8 text-center">
-            <h3 class="font-display text-lg font-semibold text-aksara-ink">Belum ada generasi AI</h3>
+            <h3 class="text-lg font-semibold text-aksara-ink">Belum ada generasi AI</h3>
             <p class="mt-2 text-sm text-aksara-muted">Buat draf baru dari halaman create dengan mode AI.</p>
             <Btn :href="urls.index" class="mt-4">Kembali</Btn>
         </div>
@@ -71,21 +106,34 @@ function publish() {
             </Card>
 
             <Card title="Tujuan Pembelajaran (TP)">
-                <pre class="whitespace-pre-wrap rounded-xl bg-aksara-mist/50 p-4 text-sm text-aksara-ink">{{
-                    formatList(approveForm.tpDraft)
-                }}</pre>
+                <ol v-if="tpLines.length" class="list-decimal space-y-2 pl-5 text-sm text-aksara-ink">
+                    <li v-for="(line, i) in tpLines" :key="`tp-${i}`">{{ line.text }}</li>
+                </ol>
+                <p v-else class="text-sm text-aksara-muted">—</p>
             </Card>
 
             <Card title="Alur Tujuan Pembelajaran (ATP)">
-                <pre class="whitespace-pre-wrap rounded-xl bg-aksara-mist/50 p-4 text-sm text-aksara-ink">{{
-                    formatList(approveForm.atpDraft)
-                }}</pre>
+                <ol v-if="atpLines.length" class="list-decimal space-y-2 pl-5 text-sm text-aksara-ink">
+                    <li v-for="(line, i) in atpLines" :key="`atp-${i}`" :value="line.seq">
+                        {{ line.text }}
+                    </li>
+                </ol>
+                <p v-else class="text-sm text-aksara-muted">—</p>
+            </Card>
+
+            <Card v-if="lessonLines.length" title="Langkah pembelajaran">
+                <ol class="list-decimal space-y-2 pl-5 text-sm text-aksara-ink">
+                    <li v-for="(line, i) in lessonLines" :key="`lp-${i}`" :value="line.seq">
+                        {{ line.text }}
+                    </li>
+                </ol>
             </Card>
 
             <Card title="Catatan Review">
-                <pre class="whitespace-pre-wrap rounded-xl bg-aksara-mist/50 p-4 text-sm text-aksara-ink">{{
-                    formatList(approveForm.reviewNotes)
-                }}</pre>
+                <ul v-if="noteLines.length" class="list-disc space-y-2 pl-5 text-sm text-aksara-ink">
+                    <li v-for="(line, i) in noteLines" :key="`note-${i}`">{{ line.text }}</li>
+                </ul>
+                <p v-else class="text-sm text-aksara-muted">—</p>
             </Card>
 
             <Card title="Materi (ringkas)">
@@ -97,8 +145,8 @@ function publish() {
                 </p>
             </Card>
 
-            <div class="flex flex-wrap gap-2">
-                <Btn :disabled="!canApprove || approveForm.processing" @click="approve">Setujui Draf</Btn>
+            <div class="aksara-form-actions">
+                <Btn :href="urls.index" variant="secondary">Kembali</Btn>
                 <Btn
                     variant="secondary"
                     :disabled="!canPublish || publishForm.processing"
@@ -106,7 +154,7 @@ function publish() {
                 >
                     Terbitkan
                 </Btn>
-                <Btn :href="urls.index" variant="secondary">Kembali</Btn>
+                <Btn :disabled="!canApprove || approveForm.processing" @click="approve">Setujui Draf</Btn>
             </div>
         </div>
     </AppLayout>

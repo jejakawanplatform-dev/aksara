@@ -19,25 +19,42 @@ class MaterialController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $search = (string) $request->query('search', '');
+        $status = (string) $request->query('status', '');
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
+
         $query = LearningMaterial::query()->with(['plan.subject', 'plan.class']);
 
         if ($user->isStudent()) {
             $classIds = $user->classIds();
-            $materials = $query
+            $query
                 ->where('status', MaterialStatus::Published)
-                ->whereHas('plan', fn ($q) => $q->whereIn('class_id', $classIds))
-                ->latest('published_at')
-                ->get();
+                ->whereHas('plan', fn ($q) => $q->whereIn('class_id', $classIds));
         } else {
             $planIds = LearningPlan::query()->forCurrentUser()->pluck('id');
-            $materials = $query
-                ->whereIn('plan_id', $planIds)
-                ->latest()
-                ->get();
+            $query->whereIn('plan_id', $planIds);
+            if ($status !== '') {
+                $query->where('status', $status);
+            }
         }
 
-        return Inertia::render('Materials/Index', [
-            'materials' => $materials->map(fn (LearningMaterial $m) => [
+        $query->when(
+            $search !== '',
+            fn ($q) => $q->whereHas('plan', fn ($p) => $p->where('topic', 'like', "%{$search}%"))
+        );
+
+        $materials = $query
+            ->when(
+                $user->isStudent(),
+                fn ($q) => $q->latest('published_at'),
+                fn ($q) => $q->latest()
+            )
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(fn (LearningMaterial $m) => [
                 'id' => $m->id,
                 'title' => $m->content['title'] ?? $m->plan->topic,
                 'status' => $m->status->value ?? 'draft',
@@ -46,7 +63,17 @@ class MaterialController extends Controller
                 'className' => $m->plan->class->name ?? $m->plan->grade,
                 'durationMinutes' => $m->plan->duration_minutes,
                 'showUrl' => route('materials.show', $m),
-            ]),
+                'editUrl' => route('materials.edit', $m),
+            ]);
+
+        return Inertia::render('Materials/Index', [
+            'materials' => $materials,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'per_page' => $perPage,
+            ],
+            'indexUrl' => route('materials.index'),
             'isStudent' => $user->isStudent(),
         ]);
     }

@@ -370,11 +370,11 @@ function insertMath() {
         <Teleport to="body">
             <div
                 v-if="showMath"
-                class="fixed inset-0 z-[80] flex items-center justify-center bg-aksara-ink/40 p-4"
+                class="aksara-overlay z-[80]"
                 @click.self="showMath = false"
             >
-                <div class="w-full max-w-lg rounded-2xl border border-aksara-line bg-white p-4 shadow-xl">
-                    <h3 class="font-display text-base font-semibold text-aksara-ink">Sisipkan rumus</h3>
+                <div class="aksara-dialog max-w-lg p-4">
+                    <h3 class="text-base font-semibold text-aksara-ink">Sisipkan rumus</h3>
                     <p class="mt-1 text-xs text-aksara-muted">KaTeX — contoh: <code>E = mc^2</code> atau <code>\frac{a}{b}</code></p>
                     <label class="mt-3 block text-xs font-semibold text-aksara-muted">
                         Formula
@@ -386,11 +386,11 @@ function insertMath() {
                         />
                     </label>
                     <label class="mt-2 flex items-center gap-2 text-xs text-aksara-ink">
-                        <input v-model="mathDisplay" type="checkbox" class="rounded border-aksara-line" />
+                        <input v-model="mathDisplay" type="checkbox" class="rounded border-aksara-line text-aksara-teal focus:ring-aksara-teal" />
                         Mode blok ($$…$$)
                     </label>
-                    <div class="mt-3 min-h-[3rem] rounded-lg border border-aksara-line bg-aksara-mist/30 px-3 py-2 text-sm">
-                        <p v-if="mathError" class="text-xs text-red-600">{{ mathError }}</p>
+                    <div class="mt-3 min-h-[3rem] rounded-lg border border-aksara-line bg-aksara-mist/40 px-3 py-2 text-sm">
+                        <p v-if="mathError" class="text-xs text-aksara-danger">{{ mathError }}</p>
                         <div v-else-if="mathPreviewHtml" class="overflow-x-auto" v-html="mathPreviewHtml" />
                         <p v-else class="text-xs text-aksara-muted">Preview muncul di sini…</p>
                     </div>

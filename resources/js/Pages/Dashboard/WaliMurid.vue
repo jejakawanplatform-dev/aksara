@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Card from '@/Components/ui/Card.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 
 defineProps({
     parentName: { type: String, required: true },
@@ -8,9 +8,9 @@ defineProps({
 });
 
 function statusClass(status) {
-    if (status === 'Baik') return 'text-green-700';
-    if (status === 'Perlu Perhatian') return 'text-yellow-700';
-    return 'text-red-700';
+    if (status === 'Baik') return 'text-aksara-ok';
+    if (status === 'Perlu Perhatian') return 'text-aksara-warn';
+    return 'text-aksara-danger';
 }
 </script>
 
@@ -18,46 +18,53 @@ function statusClass(status) {
     <AppLayout title="Ringkasan Anak Saya">
         <template #header>Ringkasan Anak Saya</template>
 
-        <div class="mx-auto max-w-5xl space-y-6">
-            <Card>
-                <div class="mb-2">
-                    <h3 class="text-lg font-bold text-aksara-ink">Selamat datang, {{ parentName }}</h3>
-                    <p class="text-sm text-aksara-muted">Berikut ringkasan aktivitas belajar anak Anda.</p>
-                </div>
-            </Card>
+        <div class="space-y-5">
+            <PageHeader
+                :title="`Selamat datang, ${parentName}`"
+                description="Ringkasan aktivitas belajar anak Anda."
+            />
 
             <div
                 v-if="!childData.length"
-                class="rounded-xl border border-yellow-200 bg-yellow-50 p-6 text-center"
+                class="aksara-surface-dashed p-10 text-center"
             >
-                <p class="text-yellow-700">Belum ada data anak yang terhubung dengan akun Anda.</p>
+                <p class="font-medium text-aksara-ink">Belum ada data anak</p>
+                <p class="mt-2 text-sm text-aksara-muted">
+                    Belum ada data anak yang terhubung dengan akun Anda.
+                </p>
             </div>
 
-            <Card v-for="data in childData" :key="data.id">
-                <h3 class="mb-4 flex items-center gap-2 text-lg font-bold text-aksara-ink">
-                    <span
-                        class="flex h-8 w-8 items-center justify-center rounded-full bg-aksara-teal/10 text-sm font-bold text-aksara-teal"
-                    >
-                        {{ data.initial }}
-                    </span>
-                    {{ data.name }}
-                </h3>
+            <div
+                v-for="data in childData"
+                :key="data.id"
+                class="aksara-surface overflow-hidden"
+            >
+                <div class="border-b border-aksara-line px-4 py-3 sm:px-5">
+                    <h3 class="flex items-center gap-2 text-base font-semibold text-aksara-ink">
+                        <span
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-aksara-teal/10 text-sm font-bold text-aksara-teal"
+                        >
+                            {{ data.initial }}
+                        </span>
+                        {{ data.name }}
+                    </h3>
+                </div>
 
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div class="rounded-lg border border-green-100 bg-green-50 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-green-600">Kehadiran</p>
-                        <p class="mt-1 text-2xl font-bold text-green-700">{{ data.pctHadir }}%</p>
-                        <p class="mt-1 text-xs text-green-500">
+                <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3 sm:p-5">
+                    <div class="rounded-lg border border-aksara-line bg-aksara-ok/5 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-aksara-ok">Kehadiran</p>
+                        <p class="mt-1 text-2xl font-bold text-aksara-ok">{{ data.pctHadir }}%</p>
+                        <p class="mt-1 text-xs text-aksara-muted">
                             {{ data.hadirCount }}/{{ data.totalAttendance }} pertemuan hadir
                         </p>
                     </div>
 
-                    <div class="rounded-lg border border-blue-100 bg-blue-50 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-blue-600">Quiz Dikerjakan</p>
-                        <p class="mt-1 text-2xl font-bold text-blue-700">{{ data.quizCount }}</p>
-                        <p class="mt-1 text-xs text-blue-500">
+                    <div class="rounded-lg border border-aksara-line bg-aksara-info/5 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-aksara-info">Quiz Dikerjakan</p>
+                        <p class="mt-1 text-2xl font-bold text-aksara-info">{{ data.quizCount }}</p>
+                        <p class="mt-1 text-xs text-aksara-muted">
                             <template v-if="data.avgScore !== null">
-                                Rata-rata nilai: <strong>{{ data.avgScore }}</strong>
+                                Rata-rata nilai: <strong class="text-aksara-ink">{{ data.avgScore }}</strong>
                             </template>
                             <template v-else>Belum ada quiz</template>
                         </p>
@@ -69,7 +76,7 @@ function statusClass(status) {
                         <p class="mt-1 text-xs text-aksara-muted">Berdasarkan kehadiran & nilai</p>
                     </div>
                 </div>
-            </Card>
+            </div>
         </div>
     </AppLayout>
 </template>

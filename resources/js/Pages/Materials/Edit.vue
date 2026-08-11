@@ -7,6 +7,9 @@ import TipTapEditor from '@/Components/tiptap/TipTapEditor.vue';
 import PageHeader from '@/Components/ui/PageHeader.vue';
 import StatusBadge from '@/Components/ui/StatusBadge.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Field from '@/Components/ui/Field.vue';
+import Icon from '@/Components/ui/Icon.vue';
+import IconButton from '@/Components/ui/IconButton.vue';
 
 const props = defineProps({
     material: { type: Object, required: true },
@@ -245,7 +248,8 @@ const templateOptions = [
                     <StatusBadge :status="material.status" :label="statusLabel" />
                 </template>
                 <template #actions>
-                    <Btn type="button" variant="secondary" size="sm" @click="showCopilot = !showCopilot">
+                    <Btn type="button" variant="secondary" size="sm" class="gap-1.5" @click="showCopilot = !showCopilot">
+                        <Icon name="sparkles" class="h-3.5 w-3.5" />
                         {{ showCopilot ? 'Sembunyikan Co-Pilot' : 'Tampilkan Co-Pilot' }}
                     </Btn>
                 </template>
@@ -255,34 +259,32 @@ const templateOptions = [
                 class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]"
             >
                 <div class="min-w-0">
-                    <div class="rounded-2xl border border-aksara-line bg-white p-5 shadow-sm sm:p-6">
+                    <div class="aksara-surface p-5 sm:p-6">
                         <div class="mb-5">
-                            <h3 class="font-display text-lg font-semibold text-aksara-ink">Editor Bahan Ajar</h3>
+                            <h3 class="text-lg font-semibold text-aksara-ink">Editor Bahan Ajar</h3>
                             <p class="text-xs text-aksara-muted">Judul, seksi TipTap, dan pertanyaan refleksi.</p>
                         </div>
 
                         <form class="space-y-6" @submit.prevent="saveDraft">
-                            <label class="block space-y-1.5">
-                                <span class="text-sm font-semibold text-aksara-ink">Judul Bahan Ajar</span>
+                            <Field label="Judul Bahan Ajar" for-id="material-title" :error="editorForm.errors.title">
                                 <input
+                                    id="material-title"
                                     v-model="editorForm.title"
                                     type="text"
                                     class="aksara-input"
                                     required
                                 />
-                                <p v-if="editorForm.errors.title" class="text-xs text-red-600">
-                                    {{ editorForm.errors.title }}
-                                </p>
-                            </label>
+                            </Field>
 
                             <div class="space-y-6">
                                 <div class="flex items-center justify-between gap-3">
-                                    <h4 class="font-display text-base font-semibold text-aksara-ink">
+                                    <h4 class="text-base font-semibold text-aksara-ink">
                                         Bagian-Bagian Teks Bacaan
                                     </h4>
-                                    <button type="button" class="aksara-btn-secondary shrink-0 text-xs" @click="addSection">
-                                        + Tambah Seksi
-                                    </button>
+                                    <Btn type="button" variant="secondary" size="sm" class="shrink-0 gap-1.5" @click="addSection">
+                                        <Icon name="plus" class="h-3.5 w-3.5" />
+                                        Tambah Seksi
+                                    </Btn>
                                 </div>
 
                                 <div
@@ -291,31 +293,29 @@ const templateOptions = [
                                     class="relative space-y-4 overflow-visible rounded-xl border border-aksara-line bg-aksara-mist/30 p-5"
                                 >
                                     <div class="flex items-center justify-between gap-4">
-                                        <label class="text-xs font-semibold uppercase tracking-wider text-aksara-muted">
+                                        <span class="text-xs font-semibold uppercase tracking-wider text-aksara-muted">
                                             Seksi {{ index + 1 }}
-                                        </label>
-                                        <button
+                                        </span>
+                                        <IconButton
                                             v-if="editorForm.sections.length > 1"
-                                            type="button"
-                                            class="text-xs font-medium text-red-500 hover:text-red-700"
+                                            icon="trash"
+                                            label="Hapus seksi"
+                                            danger
                                             @click="removeSection(index)"
-                                        >
-                                            Hapus Seksi ×
-                                        </button>
+                                        />
                                     </div>
 
-                                    <label class="block space-y-1.5">
-                                        <span class="text-sm font-semibold text-aksara-ink">Judul Seksi</span>
+                                    <Field :label="`Judul Seksi ${index + 1}`" :for-id="`section-heading-${index}`">
                                         <input
+                                            :id="`section-heading-${index}`"
                                             v-model="section.heading"
                                             type="text"
                                             class="aksara-input font-medium"
                                             required
                                         />
-                                    </label>
+                                    </Field>
 
-                                    <div class="space-y-1.5">
-                                        <span class="text-sm font-semibold text-aksara-ink">Isi Penjelasan</span>
+                                    <Field label="Isi Penjelasan">
                                         <TipTapEditor
                                             v-model="section.body"
                                             :with-math="isStem"
@@ -325,38 +325,39 @@ const templateOptions = [
                                                 deleteUrl: api.mediaDestroyBase,
                                             }"
                                         />
-                                    </div>
+                                    </Field>
                                 </div>
                             </div>
 
-                            <label class="block space-y-1.5">
-                                <span class="text-sm font-semibold text-aksara-ink">
-                                    Pertanyaan Refleksi (satu baris per pertanyaan)
-                                </span>
+                            <Field
+                                label="Pertanyaan Refleksi (satu baris per pertanyaan)"
+                                for-id="material-reflections"
+                            >
                                 <textarea
+                                    id="material-reflections"
                                     v-model="editorForm.reflectionsText"
                                     rows="4"
                                     class="aksara-input font-mono text-sm"
                                 />
-                            </label>
+                            </Field>
 
-                            <div class="flex flex-wrap gap-3 border-t border-aksara-line pt-4">
-                                <button
-                                    type="submit"
-                                    class="aksara-btn-primary text-sm"
-                                    :disabled="editorForm.processing"
-                                >
-                                    Simpan Draf
-                                </button>
-                                <button
+                            <div class="aksara-form-actions border-t border-aksara-line pt-4">
+                                <Btn :href="api.show" variant="secondary" size="sm" class="gap-1.5">
+                                    <Icon name="eye" class="h-3.5 w-3.5" />
+                                    Lihat
+                                </Btn>
+                                <Btn
                                     type="button"
-                                    class="aksara-btn-secondary text-sm"
+                                    variant="secondary"
+                                    size="sm"
                                     :disabled="editorForm.processing"
                                     @click="publish"
                                 >
                                     Terbitkan
-                                </button>
-                                <a :href="api.show" class="aksara-btn-secondary text-sm">Lihat</a>
+                                </Btn>
+                                <Btn type="submit" size="sm" :disabled="editorForm.processing">
+                                    Simpan Draf
+                                </Btn>
                             </div>
                         </form>
                     </div>
@@ -366,9 +367,9 @@ const templateOptions = [
                     v-if="showCopilot"
                     class="min-w-0 xl:sticky xl:top-4 xl:self-start"
                 >
-                    <div class="rounded-2xl border border-aksara-line bg-white p-4 shadow-sm">
+                    <div class="aksara-surface p-4">
                         <div class="mb-3">
-                            <h3 class="font-display text-base font-semibold text-aksara-ink">AI Co-Pilot</h3>
+                            <h3 class="text-base font-semibold text-aksara-ink">AI Co-Pilot</h3>
                             <p class="text-xs text-aksara-muted">
                                 {{ modelLabel || 'Model aktif' }} · {{ intentHint }}
                             </p>
@@ -407,18 +408,19 @@ const templateOptions = [
                                     {{ msg.role === 'user' ? 'Anda' : 'Co-Pilot' }}
                                 </p>
                                 <p class="whitespace-pre-wrap text-aksara-ink">{{ msg.content }}</p>
-                                <button
+                                <Btn
                                     v-if="msg.materialData"
                                     type="button"
-                                    class="mt-2 aksara-btn-primary !px-2 !py-1 text-[11px]"
+                                    size="sm"
+                                    class="mt-2 !px-2 !py-1 text-[11px]"
                                     @click="applyCopilot(idx)"
                                 >
                                     Terapkan ke editor
-                                </button>
+                                </Btn>
                             </div>
                         </div>
 
-                        <p v-if="copilotError" class="mb-2 text-xs text-red-600">{{ copilotError }}</p>
+                        <p v-if="copilotError" class="mb-2 text-xs text-aksara-danger">{{ copilotError }}</p>
 
                         <textarea
                             v-model="copilotInput"
@@ -428,14 +430,15 @@ const templateOptions = [
                             :disabled="copilotBusy"
                             @keydown.ctrl.enter.prevent="sendCopilot"
                         />
-                        <button
+                        <Btn
                             type="button"
-                            class="aksara-btn-primary w-full text-sm"
+                            class="w-full"
+                            size="sm"
                             :disabled="copilotBusy || !copilotInput.trim()"
                             @click="sendCopilot"
                         >
                             {{ copilotBusy ? 'Menunggu AI…' : 'Kirim' }}
-                        </button>
+                        </Btn>
                     </div>
                 </aside>
             </div>

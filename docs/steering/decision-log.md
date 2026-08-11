@@ -117,19 +117,24 @@ Catat keputusan arsitektur/produk yang mengubah arah kerja. Format mengikuti ADR
 
 ---
 
-## ADR-012: Design system Vue SoT + light-only
+## ADR-012: Design system Vue SoT + light enterprise coastal (permanen)
 
-- **Tanggal:** 2026-08-10
+- **Tanggal:** 2026-08-10 (amandemen enterprise: 2026-08-11; coastal tipis: 2026-08-11; densitas UI & pola aksi: 2026-08-11)
 - **Status:** diterima
-- **Konteks:** Cutover Inertia+Vue; visual rules tersebar; aksen ungu/ad-hoc muncul di page; belum ada keputusan dark mode.
+- **Konteks:** Cutover Inertia+Vue; visual rules tersebar; aksen ungu/ad-hoc; kebutuhan workshop tanpa dark mode; ingin kesan admin/enterprise tanpa menghapus brand; tren 2026 quiet utility vs glassmorph; list panjang butuh pagination; aksi form kiri tidak konsisten.
 - **Keputusan:**
   1. Spec **17-design-system** = SoT visual (token, tipografi, ikon, kontrak `Components/ui`).
   2. Spec **03** hanya app shell / nav.
-  3. **Light-only** untuk v1 produk; dark mode ditunda (override CSS var nanti).
-  4. Larangan palette ad-hoc (ungu, dll.) dan library ikon kedua tanpa ADR.
-- **Alasan:** Konsistensi bimtek; dark mode = biaya QA besar tanpa kebutuhan workshop.
-- **Alternatif:** Perbesar 03; dark mode segera; shadcn/Storybook — ditolak sementara.
-- **Dampak:** `Modal.vue`, `Btn` danger; migrasi callout/dashboard ke token; coding-standards mengarah ke 17.
+  3. **Light-only permanen** — dark mode **tidak digarap** (bukan backlog).
+  4. Arah visual **enterprise-education + coastal tipis**: brand teal + netral sea-mist; surface border-first; tipografi UI sans-first.
+  5. **Bukan glassmorphism** (hindari blur/frosted penuh); depth = border + wash matte.
+  6. Larangan palette ad-hoc (ungu, cream/terracotta generik, dll.) dan library ikon kedua tanpa ADR.
+  7. List panjang: `Pagination` + `per_page` 10/25/50/100.
+  8. Aksi form/modal rata kanan; toolbar tab/section pakai `.aksara-toolbar`.
+  9. Ekspor multi-format: `ExportMenu` (satu tombol → popup).
+- **Alasan:** Coastal melunakkan slate tanpa menghapus identitas teal; glass penuh bentrok admin console & aksesibilitas; quiet utility 2026 lebih tahan lama untuk bimtek; densitas compact + aksi kanan mengurangi scroll dan inkonsistensi.
+- **Alternatif:** Dark mode; navy SaaS penuh; glassmorph penuh; shadcn/Storybook — ditolak.
+- **Dampak:** Token di `app.css` / `tailwind.config.js`; shell/landing/guest wash; coding-standards → 17; komponen `Pagination`/`IconButton`/`ExportMenu`.
 
 ---
 

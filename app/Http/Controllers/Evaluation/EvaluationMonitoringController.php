@@ -27,6 +27,10 @@ class EvaluationMonitoringController extends Controller
         $search = (string) $request->query('search', '');
         $teacherFilter = (string) $request->query('teacher', '');
         $subjectFilter = (string) $request->query('subject', '');
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
 
         $teachers = $isAdmin
             ? User::query()->orderBy('name')->get(['id', 'name'])
@@ -46,7 +50,7 @@ class EvaluationMonitoringController extends Controller
             }))
             ->with(['teacher', 'plan.subject', 'plan.class'])
             ->latest()
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(fn (TeacherEvaluation $eval) => [
                 'id' => $eval->id,
@@ -69,6 +73,7 @@ class EvaluationMonitoringController extends Controller
                 'search' => $search,
                 'teacher' => $teacherFilter,
                 'subject' => $subjectFilter,
+                'per_page' => $perPage,
             ],
             'indexUrl' => route('evaluations.monitoring'),
         ]);

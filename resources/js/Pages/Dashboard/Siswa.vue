@@ -1,8 +1,9 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Card from '@/Components/ui/Card.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 import StatusBadge from '@/Components/ui/StatusBadge.vue';
+import IconButton from '@/Components/ui/IconButton.vue';
 
 defineProps({
     userName: { type: String, required: true },
@@ -13,47 +14,56 @@ defineProps({
 
 <template>
     <AppLayout title="Dashboard Siswa">
-        <template #header>
-            <div class="flex w-full items-center justify-between gap-3">
-                <span>Dashboard Siswa — {{ userName }}</span>
-                <Link :href="materialsIndexUrl" class="text-sm text-aksara-teal hover:underline">
-                    Semua materi →
-                </Link>
-            </div>
-        </template>
+        <template #header>Dashboard Siswa — {{ userName }}</template>
 
-        <Card title="Materi Tersedia">
-            <div
-                v-if="!materials.length"
-                class="rounded-xl border border-dashed border-aksara-line bg-aksara-mist/30 p-6 text-center"
+        <div class="space-y-5">
+            <PageHeader
+                :title="`Halo, ${userName}`"
+                description="Materi pembelajaran yang tersedia untuk kelas Anda."
             >
-                <p class="font-medium text-aksara-ink">Belum ada materi</p>
-                <p class="mt-1 text-sm text-aksara-muted">
-                    Guru belum menerbitkan materi untuk kelas Anda.
-                </p>
-                <Link
-                    :href="materialsIndexUrl"
-                    class="mt-4 inline-block text-sm font-semibold text-aksara-teal hover:underline"
+                <template #actions>
+                    <IconButton icon="materials" label="Semua materi" :href="materialsIndexUrl" />
+                </template>
+            </PageHeader>
+
+            <div class="aksara-surface overflow-hidden">
+                <div class="border-b border-aksara-line px-4 py-3 sm:px-5">
+                    <h3 class="text-base font-semibold text-aksara-ink">Materi Tersedia</h3>
+                </div>
+
+                <div
+                    v-if="!materials.length"
+                    class="aksara-surface-dashed m-4 p-10 text-center sm:m-5"
                 >
-                    Cek daftar materi
-                </Link>
+                    <h3 class="text-lg font-semibold text-aksara-ink">Belum ada materi</h3>
+                    <p class="mt-2 text-sm text-aksara-muted">
+                        Guru belum menerbitkan materi untuk kelas Anda.
+                    </p>
+                    <Link
+                        :href="materialsIndexUrl"
+                        class="mt-4 inline-block text-sm font-semibold text-aksara-teal hover:underline"
+                    >
+                        Cek daftar materi
+                    </Link>
+                </div>
+
+                <div v-else class="divide-y divide-aksara-line">
+                    <Link
+                        v-for="material in materials"
+                        :key="material.id"
+                        :href="material.url"
+                        class="flex items-center justify-between px-4 py-3 transition hover:bg-aksara-mist/40 sm:px-5"
+                    >
+                        <div>
+                            <p class="font-semibold text-aksara-ink">{{ material.title }}</p>
+                            <p class="text-sm text-aksara-muted">
+                                {{ material.subject }} · Kelas {{ material.grade }}
+                            </p>
+                        </div>
+                        <StatusBadge status="published" />
+                    </Link>
+                </div>
             </div>
-            <div v-else>
-                <Link
-                    v-for="material in materials"
-                    :key="material.id"
-                    :href="material.url"
-                    class="-mx-2 flex items-center justify-between rounded-lg border-b border-aksara-line px-2 py-3 last:border-0 hover:bg-aksara-mist/50"
-                >
-                    <div>
-                        <p class="font-medium text-aksara-ink">{{ material.title }}</p>
-                        <p class="text-sm text-aksara-muted">
-                            {{ material.subject }} · Kelas {{ material.grade }}
-                        </p>
-                    </div>
-                    <StatusBadge status="published" />
-                </Link>
-            </div>
-        </Card>
+        </div>
     </AppLayout>
 </template>

@@ -1,6 +1,7 @@
 <script setup>
 /**
  * Page-level intro block (below Topbar). Spec 17 — title hierarchy SoT.
+ * Literata hanya brand/hero singkat; judul page pakai sans.
  */
 defineProps({
     title: { type: String, default: '' },
@@ -14,7 +15,7 @@ defineProps({
             <div v-if="$slots.meta" class="mb-2 flex flex-wrap items-center gap-2">
                 <slot name="meta" />
             </div>
-            <h2 v-if="title || $slots.title" class="font-display text-xl font-bold tracking-tight text-aksara-ink sm:text-2xl">
+            <h2 v-if="title || $slots.title" class="text-xl font-bold tracking-tight text-aksara-ink sm:text-2xl">
                 <slot name="title">{{ title }}</slot>
             </h2>
             <p v-if="description || $slots.description" class="mt-1 max-w-2xl text-sm text-aksara-muted">

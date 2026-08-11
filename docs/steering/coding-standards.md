@@ -56,10 +56,11 @@ resources/js/
   bootstrap.js
   Layouts/                     ← AppLayout, GuestLayout, Sidebar, Topbar
   Components/ui/               ← Btn, Card, Field, Flash, StatusBadge, PageHeader,
-                               ← Alert, EmptyState, Table, Loading, Icon, Modal
+                               ← Alert, EmptyState, Table, Loading, Icon, Modal,
+                               ← Pagination, IconButton, ExportMenu, PasswordInput
   Components/tiptap/           ← TipTapEditor.vue, TipTapToolbar.vue, aksara-image.js, MediaPicker.vue
   Pages/{Domain}/              ← satu page per layar
-  Composables/
+  Composables/                 ← authValidation.js, …
   lib/
 resources/views/
   app.blade.php                ← root Inertia (satu-satunya shell HTML app)
@@ -87,8 +88,9 @@ tests/Feature|Unit/
 - Layout authenticated: `Layouts/AppLayout.vue` + shared `auth` / `nav` / flash dari `HandleInertiaRequests`.
 - Layout guest: `Layouts/GuestLayout.vue`.
 - TipTap: `@tiptap/vue-3` + `Components/tiptap/*`; props `withMath` + `media` (list/upload/delete URL). KaTeX lazy hanya bila `withMath`.
-- Design system SoT: `docs/spec/17-design-system` + token `.aksara-*` / `aksara.*` Tailwind (ADR-012 light-only).
-- Design tokens / utility: class `.aksara-*` di CSS + komponen `Components/ui/*` (Btn/Modal/Card/…).
+- Design system SoT: `docs/spec/17-design-system` + token `.aksara-*` / `aksara.*` Tailwind (ADR-012 light enterprise + coastal tipis; bukan glassmorph).
+- Design tokens / utility: class `.aksara-*` di CSS + komponen `Components/ui/*` (Btn/Modal/Pagination/IconButton/ExportMenu/…).
+- List panjang: paginate di controller + `Pagination.vue`; form/modal aksi kanan (`.aksara-form-actions`); toolbar tab `.aksara-toolbar`.
 - Tailwind `content` wajib include `resources/js/**/*.{js,vue}`.
 - Config: `inertia.use_script_element_for_initial_page=true` (client Inertia v3).
 

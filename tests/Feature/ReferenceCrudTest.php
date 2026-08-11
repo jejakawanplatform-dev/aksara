@@ -177,14 +177,14 @@ class ReferenceCrudTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('tab', 'atp')
                 ->has('atp')
-                ->where('atp.0.tpCode', 'BK-VIII-01')
+                ->where('atp.data.0.tpCode', 'BK-VIII-01')
             );
 
         $this->actingAs($guru)
             ->get(route('references.index', ['tab' => 'atp', 'atpGradeFilter' => 9]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('atp.0.tpCode', 'BK-IX-01')
+                ->where('atp.data.0.tpCode', 'BK-IX-01')
             );
     }
 

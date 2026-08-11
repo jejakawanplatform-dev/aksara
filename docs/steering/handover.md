@@ -56,10 +56,11 @@ Seed berisi rencana/materi/kuis **Informatika — Dekomposisi Masalah** (publish
 
 ## Perubahan terakhir
 
-- Spek **17** design system SoT (light-only ADR-012); **15/16** TipTap + media; **09** materi & Co-Pilot.
-- UI: `Modal.vue`, `Btn` danger/size; Alert & dashboard bebas ungu ad-hoc.
+- Spek **17** design system SoT (light enterprise permanen ADR-012); **15/16** TipTap + media; **09** materi & Co-Pilot.
+- UI coastal rollout (2026-08-11): `Pagination`, `IconButton`, `ExportMenu`, densitas tabel, `.aksara-toolbar`, aksi form kanan; polish Plans/Materials/Users/Refs/Settings/Attendance/Quiz/Evaluation/Reports/Dashboard.
+- Auth/landing GuestLayout split-screen; PasswordInput + validasi auth.
 - Dashboard wali kelas diperkaya (13 T07); rekap absensi scope ketat (11 T08).
-- PDF export: kop sekolah bersama (`exports/partials/*`); sisa Livewire dihapus (ADR-010).
+- PDF export: kop sekolah bersama (`exports/partials/*`); single-plan Excel; Refs export via `ExportMenu`.
 - Larastan: model Eloquent bertipe (`@property` + generics relasi); `phpstan analyse` 0 error.
 
 ## Keputusan yang wajib dipatuhi
@@ -79,7 +80,7 @@ Seed berisi rencana/materi/kuis **Informatika — Dekomposisi Masalah** (publish
 13. Co-Pilot tunggal; patch tidak wipe seksi tak terkait (ADR-009).
 14. UI = Inertia + Vue; domain PHP dipertahankan (ADR-010).
 15. Preferensi model: `system_settings` (`ai.model_*`).
-16. Visual SoT = spec **17**; light-only v1 (ADR-012).
+16. Visual SoT = spec **17**; light enterprise permanen (ADR-012).
 
 ## Test
 
@@ -110,5 +111,5 @@ php artisan storage:link
 
 ## Langkah berikutnya
 
-1. Fitur produk baru sesuai spek (debt spek tersisa hanya deferred: dark mode ADR-012, Policy opsional).
+1. Fitur produk baru sesuai spek (debt spek tersisa: Policy Laravel opsional P3).
 2. Smoke browser TipTap MediaPicker/Co-Pilot di lingkungan deploy (opsional; API + Edit props sudah di-cover test).

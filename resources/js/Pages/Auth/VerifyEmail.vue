@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Alert from '@/Components/ui/Alert.vue';
 
 const props = defineProps({
     status: { type: String, default: null },
@@ -14,6 +15,8 @@ const flashStatus = computed(() => props.status || page.props.flash?.status || n
 const resendForm = useForm({});
 const logoutForm = useForm({});
 
+const canResend = computed(() => !resendForm.processing);
+
 function resend() {
     resendForm.post('/email/verification-notification');
 }
@@ -24,30 +27,26 @@ function logout() {
 </script>
 
 <template>
-    <GuestLayout title="Verifikasi email">
-        <p class="mb-4 text-sm text-aksara-muted">
-            Terima kasih sudah mendaftar. Silakan verifikasi email Anda melalui tautan yang kami
-            kirim. Jika belum menerima, Anda dapat meminta email baru.
-        </p>
-
-        <div
-            v-if="flashStatus === 'verification-link-sent'"
-            class="mb-4 text-sm font-medium text-green-600"
-        >
+    <GuestLayout
+        title="Verifikasi email"
+        heading="Cek email Anda"
+        description="Kami mengirim tautan verifikasi. Belum terima? Kirim ulang di bawah."
+    >
+        <Alert v-if="flashStatus === 'verification-link-sent'" tone="ok" class="mb-4">
             Tautan verifikasi baru telah dikirim ke email Anda.
-        </div>
+        </Alert>
 
-        <div class="mt-4 flex items-center justify-between gap-3">
-            <Btn type="button" :disabled="resendForm.processing" @click="resend">
-                Kirim ulang email
+        <div class="space-y-4">
+            <Btn type="button" class="w-full" :disabled="!canResend" @click="resend">
+                {{ resendForm.processing ? 'Mengirim…' : 'Kirim ulang email' }}
             </Btn>
             <button
                 type="button"
-                class="text-sm text-aksara-muted underline hover:text-aksara-ink"
+                class="w-full text-center text-sm font-medium text-aksara-muted transition hover:text-aksara-ink disabled:opacity-50"
                 :disabled="logoutForm.processing"
                 @click="logout"
             >
-                Keluar
+                {{ logoutForm.processing ? 'Keluar…' : 'Keluar' }}
             </button>
         </div>
     </GuestLayout>

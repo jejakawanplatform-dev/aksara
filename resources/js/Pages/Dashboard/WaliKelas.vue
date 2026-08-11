@@ -23,7 +23,7 @@ function pctTone(pct) {
     if (pct === null || pct === undefined) return 'text-aksara-muted';
     if (pct >= 80) return 'text-aksara-ok';
     if (pct >= 60) return 'text-aksara-warn';
-    return 'text-red-600';
+    return 'text-aksara-danger';
 }
 </script>
 
@@ -33,20 +33,20 @@ function pctTone(pct) {
 
         <div class="space-y-6">
             <div
-                class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-aksara-teal to-teal-800 p-6 text-white shadow-md"
+                class="rounded-xl border border-aksara-line bg-white p-5 shadow-sm border-l-4 border-l-aksara-teal"
             >
-                <div class="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                    <div class="max-w-2xl space-y-1.5">
-                        <h3 class="font-display text-2xl font-bold tracking-tight">
+                <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                    <div class="max-w-2xl space-y-1">
+                        <h3 class="text-xl font-bold tracking-tight text-aksara-ink">
                             Halo, {{ userName }}
                         </h3>
-                        <p class="text-xs leading-relaxed text-white/90">
+                        <p class="text-sm leading-relaxed text-aksara-muted">
                             Pantau kehadiran, materi terbit, dan siswa yang perlu perhatian di kelas yang Anda ampu.
                         </p>
                     </div>
                     <Link
                         :href="attendanceSummaryUrl"
-                        class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-aksara-teal shadow-sm hover:bg-aksara-mist"
+                        class="aksara-btn-primary shrink-0 !px-3.5 !py-2 text-xs"
                     >
                         Rekap kehadiran →
                     </Link>
@@ -56,32 +56,32 @@ function pctTone(pct) {
             <div class="grid grid-cols-2 gap-4 md:grid-cols-5">
                 <Card>
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">Kelas</p>
-                    <p class="mt-2 font-display text-2xl font-bold text-aksara-ink">
+                    <p class="mt-2 text-2xl font-bold text-aksara-ink">
                         {{ metrics.classesCount }}
                     </p>
                 </Card>
                 <Card>
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">Siswa</p>
-                    <p class="mt-2 font-display text-2xl font-bold text-aksara-ink">
+                    <p class="mt-2 text-2xl font-bold text-aksara-ink">
                         {{ metrics.studentsCount }}
                     </p>
                 </Card>
                 <Card>
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">Kehadiran</p>
-                    <p class="mt-2 font-display text-2xl font-bold" :class="pctTone(metrics.pctHadir)">
+                    <p class="mt-2 text-2xl font-bold" :class="pctTone(metrics.pctHadir)">
                         <template v-if="metrics.pctHadir !== null">{{ metrics.pctHadir }}%</template>
                         <template v-else>—</template>
                     </p>
                 </Card>
                 <Card>
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">Materi terbit</p>
-                    <p class="mt-2 font-display text-2xl font-bold text-aksara-info">
+                    <p class="mt-2 text-2xl font-bold text-aksara-info">
                         {{ metrics.publishedMaterials }}
                     </p>
                 </Card>
                 <Card>
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">Percobaan kuis</p>
-                    <p class="mt-2 font-display text-2xl font-bold text-aksara-teal-dark">
+                    <p class="mt-2 text-2xl font-bold text-aksara-teal-dark">
                         {{ metrics.quizAttempts }}
                     </p>
                 </Card>

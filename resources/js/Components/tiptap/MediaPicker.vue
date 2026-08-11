@@ -137,18 +137,18 @@ function onBackdrop(event) {
     <Teleport to="body">
         <div
             v-if="open"
-            class="fixed inset-0 z-[80] flex items-center justify-center bg-aksara-ink/40 p-4"
+            class="aksara-overlay z-[80]"
             @click="onBackdrop"
         >
             <div
-                class="flex max-h-[min(90vh,640px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-aksara-line bg-white shadow-xl"
+                class="aksara-dialog flex max-h-[min(90vh,640px)] max-w-2xl flex-col"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Pilih media konteks"
             >
                 <div class="flex items-center justify-between border-b border-aksara-line px-4 py-3">
                     <div>
-                        <h2 class="font-display text-base font-semibold text-aksara-ink">Media konteks</h2>
+                        <h2 class="text-base font-semibold text-aksara-ink">Media konteks</h2>
                         <p class="text-xs text-aksara-muted">Hanya file di folder materi ini.</p>
                     </div>
                     <button type="button" class="aksara-btn-secondary !px-2 !py-1 text-xs" @click="emit('close')">
@@ -156,7 +156,7 @@ function onBackdrop(event) {
                     </button>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 border-b border-aksara-line bg-aksara-mist/30 px-4 py-2">
+                <div class="flex flex-wrap items-center gap-2 border-b border-aksara-line bg-aksara-mist/40 px-4 py-2">
                     <button
                         type="button"
                         class="aksara-btn-primary !px-3 !py-1.5 text-xs"
@@ -175,7 +175,7 @@ function onBackdrop(event) {
                     </button>
                 </div>
 
-                <p v-if="error" class="border-b border-red-100 bg-red-50 px-4 py-2 text-xs text-red-700">
+                <p v-if="error" class="border-b border-aksara-danger/20 bg-aksara-danger/5 px-4 py-2 text-xs text-aksara-danger">
                     {{ error }}
                 </p>
 
@@ -209,7 +209,7 @@ function onBackdrop(event) {
                             <button
                                 v-if="deleteUrl"
                                 type="button"
-                                class="absolute right-1.5 top-1.5 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 shadow-sm opacity-0 transition group-hover:opacity-100"
+                                class="absolute right-1.5 top-1.5 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-aksara-danger shadow-sm opacity-0 transition group-hover:opacity-100"
                                 :disabled="deletingName === item.name"
                                 @click.stop="removeItem(item)"
                             >

@@ -30,6 +30,7 @@ const paths = {
     check: 'M5 13l4 4L19 7',
     'x-mark': 'M6 18L18 6M6 6l12 12',
     'chevron-down': 'M19 9l-7 7-7-7',
+    'chevron-up': 'M5 15l7-7 7 7',
     'chevron-right': 'M9 5l7 7-7 7',
     'chevron-left': 'M15 19l-7-7 7-7',
     'arrow-left': 'M10 19l-7-7m0 0l7-7m-7 7h18',
@@ -39,11 +40,18 @@ const paths = {
     shield: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
     bolt: 'M13 10V3L4 14h7v7l9-11h-7z',
     menu: 'M4 7h16M4 12h16M4 17h16',
+    document: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+    pdf: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+    download: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4',
+    upload: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12',
+    // Kuis: clipboard + daftar opsi (bukan centang absensi)
+    quiz: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
 };
 
 const d = computed(() => paths[props.name] || paths.dashboard);
 const extraEye = computed(() => props.name === 'eye');
 const extraSettings = computed(() => props.name === 'settings');
+const extraPdf = computed(() => props.name === 'pdf');
 </script>
 
 <template>
@@ -62,6 +70,14 @@ const extraSettings = computed(() => props.name === 'settings');
             stroke-linejoin="round"
             stroke-width="2"
             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+        />
+        <!-- Garis isi file — membedakan PDF dari dokumen Word kosong -->
+        <path
+            v-if="extraPdf"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 13h6M9 17h4"
         />
     </svg>
 </template>

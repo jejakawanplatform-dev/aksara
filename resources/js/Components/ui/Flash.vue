@@ -10,14 +10,16 @@ const error = computed(() => page.props.flash?.error);
 <template>
     <div
         v-if="message"
-        class="mb-4 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800"
+        class="mb-4 rounded-xl border border-aksara-ok/25 bg-aksara-ok/5 px-4 py-3 text-sm font-medium text-aksara-ink"
+        role="status"
     >
-        <span>{{ message }}</span>
+        {{ message }}
     </div>
     <div
         v-if="error"
-        class="mb-4 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800"
+        class="mb-4 rounded-xl border border-aksara-danger/25 bg-aksara-danger/5 px-4 py-3 text-sm font-medium text-aksara-ink"
+        role="alert"
     >
-        <span>{{ error }}</span>
+        {{ error }}
     </div>
 </template>

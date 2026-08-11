@@ -2,8 +2,9 @@
 import { computed } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Card from '@/Components/ui/Card.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import StatusBadge from '@/Components/ui/StatusBadge.vue';
 
 const props = defineProps({
     quiz: { type: Object, required: true },
@@ -26,6 +27,8 @@ const answeredCount = computed(
     () => Object.values(form.answers).filter((v) => v !== null && v !== undefined && v !== '').length,
 );
 
+const passed = computed(() => props.score !== null && props.score >= 70);
+
 function submit() {
     form.post(props.submitUrl, { preserveScroll: true });
 }
@@ -33,26 +36,40 @@ function submit() {
 
 <template>
     <AppLayout :title="`Quiz — ${quiz.title}`">
-        <template #header>Quiz — {{ quiz.title }}</template>
+        <template #header>Quiz</template>
 
-        <div class="mx-auto max-w-3xl space-y-6">
-            <Card>
-                <h2 class="text-xl font-bold text-aksara-ink">{{ quiz.title }}</h2>
-                <p class="mt-1 text-sm text-aksara-muted">{{ quiz.questionCount }} soal</p>
-            </Card>
+        <div class="mx-auto max-w-3xl space-y-5">
+            <PageHeader
+                :title="quiz.title"
+                :description="`${quiz.questionCount} soal`"
+            />
 
             <div
                 v-if="alreadyDone || (submitted && score !== null)"
-                class="rounded-xl border p-6 text-center"
-                :class="alreadyDone ? 'border-blue-200 bg-blue-50' : 'border-green-300 bg-green-50'"
+                class="aksara-surface p-6 text-center"
             >
-                <p v-if="!alreadyDone" class="text-lg font-semibold text-green-800">Quiz Selesai!</p>
-                <p class="my-3 text-4xl font-bold" :class="alreadyDone ? 'text-blue-700' : 'text-green-700'">
+                <StatusBadge
+                    v-if="!alreadyDone"
+                    :status="passed ? 'published' : 'draft'"
+                    :label="passed ? 'Lulus KKM' : 'Belum KKM'"
+                    class="mb-3"
+                />
+                <p v-if="!alreadyDone" class="text-lg font-semibold text-aksara-ink">Quiz Selesai!</p>
+                <p
+                    v-else
+                    class="text-sm font-semibold text-aksara-info"
+                >
+                    Sudah dikerjakan sebelumnya
+                </p>
+                <p
+                    class="my-3 text-4xl font-bold"
+                    :class="passed ? 'text-aksara-ok' : 'text-aksara-danger'"
+                >
                     {{ score }}
                 </p>
-                <p class="text-sm" :class="alreadyDone ? 'text-blue-500' : 'text-green-600'">
+                <p class="text-sm text-aksara-muted">
                     {{
-                        score >= 70
+                        passed
                             ? alreadyDone
                                 ? 'Selamat! Kamu lulus.'
                                 : 'Kamu lulus KKM (70)!'
@@ -68,7 +85,12 @@ function submit() {
             </div>
 
             <form v-else class="space-y-4" @submit.prevent="submit">
-                <Card v-for="q in questions" :key="q.index" :id="`question-${q.index}`">
+                <div
+                    v-for="q in questions"
+                    :key="q.index"
+                    :id="`question-${q.index}`"
+                    class="aksara-surface p-4 sm:p-5"
+                >
                     <p class="mb-3 font-medium text-aksara-ink">{{ q.index + 1 }}. {{ q.question }}</p>
                     <div class="space-y-2">
                         <label
@@ -86,9 +108,9 @@ function submit() {
                             <span class="text-sm text-aksara-ink">{{ opt }}</span>
                         </label>
                     </div>
-                </Card>
+                </div>
 
-                <Card>
+                <div class="aksara-surface p-4 sm:p-5">
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-aksara-muted">
                             Terjawab:
@@ -100,10 +122,10 @@ function submit() {
                             :disabled="form.processing || answeredCount < questions.length"
                             :title="answeredCount < questions.length ? 'Jawab semua soal dulu' : ''"
                         >
-                            {{ form.processing ? 'Menilai...' : 'Kumpulkan Jawaban' }}
+                            {{ form.processing ? 'Menilai…' : 'Kumpulkan Jawaban' }}
                         </Btn>
                     </div>
-                </Card>
+                </div>
             </form>
         </div>
     </AppLayout>

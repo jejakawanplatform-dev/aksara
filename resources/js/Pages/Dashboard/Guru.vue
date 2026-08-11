@@ -27,33 +27,33 @@ defineProps({
 
         <div class="space-y-6">
             <div
-                class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-aksara-teal to-teal-800 p-6 text-white shadow-md"
+                class="rounded-xl border border-aksara-line bg-white p-5 shadow-sm border-l-4 border-l-aksara-teal"
             >
-                <div class="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
-                    <div class="max-w-2xl space-y-1.5">
-                        <h3 class="font-display text-2xl font-bold tracking-tight">
+                <div class="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+                    <div class="max-w-2xl space-y-1">
+                        <h3 class="text-xl font-bold tracking-tight text-aksara-ink">
                             Halo, {{ userName }}
                         </h3>
-                        <p class="text-xs leading-relaxed text-white/90">
+                        <p class="text-sm leading-relaxed text-aksara-muted">
                             Kelola draf modul ajar, materi, kehadiran, dan evaluasi kelas.
                         </p>
                     </div>
-                    <div class="flex shrink-0 flex-wrap items-center gap-2.5">
+                    <div class="flex shrink-0 flex-wrap items-center gap-2">
                         <Link
                             :href="urls.plansCreateAi"
-                            class="rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-aksara-teal shadow-sm hover:bg-aksara-mist"
+                            class="aksara-btn-primary !px-3.5 !py-2 text-xs"
                         >
                             + Buat Draf AI
                         </Link>
                         <Link
                             :href="urls.plansCreateManual"
-                            class="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/20"
+                            class="aksara-btn-secondary !px-3.5 !py-2 text-xs"
                         >
                             + Buat Manual
                         </Link>
                         <Link
                             :href="urls.reportsGuru"
-                            class="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/20"
+                            class="aksara-btn-secondary !px-3.5 !py-2 text-xs"
                         >
                             Jurnal Guru
                         </Link>
@@ -66,7 +66,7 @@ defineProps({
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">
                         Total Modul Ajar
                     </p>
-                    <p class="mt-2 font-display text-2xl font-bold text-aksara-ink">
+                    <p class="mt-2 text-2xl font-bold text-aksara-ink">
                         {{ metrics.totalPlans }}
                     </p>
                     <p class="mt-1 text-[11px]">
@@ -79,7 +79,7 @@ defineProps({
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">
                         Materi Terbit
                     </p>
-                    <p class="mt-2 font-display text-2xl font-bold text-aksara-info">
+                    <p class="mt-2 text-2xl font-bold text-aksara-info">
                         {{ metrics.publishedMaterials }}
                     </p>
                     <p class="mt-1 text-[11px] text-aksara-muted">
@@ -90,7 +90,7 @@ defineProps({
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">
                         Jurnal Refleksi
                     </p>
-                    <p class="mt-2 font-display text-2xl font-bold text-aksara-teal-dark">
+                    <p class="mt-2 text-2xl font-bold text-aksara-teal-dark">
                         {{ metrics.evaluationsCount }}
                     </p>
                     <p class="mt-1 text-[11px] text-aksara-muted">Catatan evaluasi terisi</p>
@@ -99,7 +99,7 @@ defineProps({
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-aksara-muted">
                         Kuota AI Hari Ini
                     </p>
-                    <p class="mt-2 font-display text-2xl font-bold text-aksara-warn">
+                    <p class="mt-2 text-2xl font-bold text-aksara-warn">
                         {{ metrics.todayAiCount }}
                         <span class="text-xs font-medium text-aksara-muted">/ {{ metrics.dailyLimit }}</span>
                     </p>
@@ -264,7 +264,7 @@ defineProps({
                                     <span>{{ cls.label }}</span>
                                 </div>
                                 <span
-                                    class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700"
+                                    class="rounded-full bg-aksara-mist px-2 py-0.5 text-[10px] font-semibold text-aksara-muted"
                                 >
                                     {{ cls.studentsCount }} Siswa
                                 </span>

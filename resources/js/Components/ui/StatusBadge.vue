@@ -7,23 +7,23 @@ const props = defineProps({
 });
 
 const map = {
-    draft: { text: 'Draf', class: 'bg-amber-50 text-aksara-warn ring-amber-200' },
-    reviewed: { text: 'Direview', class: 'bg-sky-50 text-aksara-info ring-sky-200' },
-    published: { text: 'Diterbitkan', class: 'bg-emerald-50 text-aksara-ok ring-emerald-200' },
-    pending: { text: 'Menunggu', class: 'bg-amber-50 text-aksara-warn ring-amber-200' },
-    approved: { text: 'Disetujui', class: 'bg-emerald-50 text-aksara-ok ring-emerald-200' },
-    archived: { text: 'Diarsipkan', class: 'bg-slate-100 text-slate-600 ring-slate-200' },
+    draft: { text: 'Draf', class: 'bg-aksara-warn/10 text-aksara-warn ring-aksara-warn/25' },
+    reviewed: { text: 'Direview', class: 'bg-aksara-info/10 text-aksara-info ring-aksara-info/25' },
+    published: { text: 'Diterbitkan', class: 'bg-aksara-ok/10 text-aksara-ok ring-aksara-ok/25' },
+    pending: { text: 'Menunggu', class: 'bg-aksara-warn/10 text-aksara-warn ring-aksara-warn/25' },
+    approved: { text: 'Disetujui', class: 'bg-aksara-ok/10 text-aksara-ok ring-aksara-ok/25' },
+    archived: { text: 'Diarsipkan', class: 'bg-aksara-mist text-aksara-muted ring-aksara-line' },
 };
 
 const meta = computed(() => {
     const key = String(props.status || '').toLowerCase();
-    return map[key] || { text: key || 'Status', class: 'bg-slate-100 text-slate-700 ring-slate-200' };
+    return map[key] || { text: key || 'Status', class: 'bg-aksara-mist text-aksara-muted ring-aksara-line' };
 });
 </script>
 
 <template>
     <span
-        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset"
+        class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold leading-none ring-1 ring-inset"
         :class="meta.class"
     >
         {{ label || meta.text }}

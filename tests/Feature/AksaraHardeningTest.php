@@ -248,7 +248,7 @@ class AksaraHardeningTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Materials/Index')
-                ->where('materials', fn ($rows) => ! collect($rows)->contains(
+                ->where('materials.data', fn ($rows) => ! collect($rows)->contains(
                     fn ($row) => ($row['title'] ?? '') === 'Khusus VII-B'
                 ))
             );

@@ -8,6 +8,7 @@ use App\Models\LearningPlan;
 use App\Models\SchoolClass;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,6 +21,10 @@ class AttendanceSummaryController extends Controller
         $user = Auth::user();
         $classId = $request->query('classId') ? (int) $request->query('classId') : null;
         $planId = $request->query('planId') ? (int) $request->query('planId') : null;
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
 
         $allowedClassIds = $this->allowedClassIds($user);
         $classes = SchoolClass::query()
@@ -33,7 +38,7 @@ class AttendanceSummaryController extends Controller
 
         $plans = collect();
         $allowedPlanIds = collect();
-        $summaryData = [];
+        $summaryData = $this->emptyPaginator($perPage);
 
         if ($classId !== null) {
             // Wali kelas / admin: semua rencana di kelas. Guru mapel: hanya miliknya.
@@ -55,27 +60,32 @@ class AttendanceSummaryController extends Controller
                 ? collect([$planId])
                 : $allowedPlanIds;
 
-            $class = SchoolClass::query()->with('students:id,name')->find($classId);
-            $students = $class !== null ? $class->students : collect();
+            $class = SchoolClass::query()->find($classId);
 
-            foreach ($students as $student) {
-                $records = $student->attendances()
-                    ->whereIn('plan_id', $planIdsForSummary)
-                    ->get();
+            if ($class !== null) {
+                $summaryData = $class->students()
+                    ->orderBy('name')
+                    ->paginate($perPage)
+                    ->withQueryString()
+                    ->through(function ($student) use ($planIdsForSummary) {
+                        $records = $student->attendances()
+                            ->whereIn('plan_id', $planIdsForSummary)
+                            ->get();
 
-                $hadir = $records->where('status', AttendanceStatus::Present)->count();
-                $total = $records->count();
+                        $hadir = $records->where('status', AttendanceStatus::Present)->count();
+                        $total = $records->count();
 
-                $summaryData[] = [
-                    'studentId' => $student->id,
-                    'studentName' => $student->name,
-                    'hadir' => $hadir,
-                    'izin' => $records->where('status', AttendanceStatus::Excused)->count(),
-                    'sakit' => $records->where('status', AttendanceStatus::Sick)->count(),
-                    'alpha' => $records->where('status', AttendanceStatus::Absent)->count(),
-                    'total' => $total,
-                    'pct' => $total > 0 ? (int) round(($hadir / $total) * 100) : 0,
-                ];
+                        return [
+                            'studentId' => $student->id,
+                            'studentName' => $student->name,
+                            'hadir' => $hadir,
+                            'izin' => $records->where('status', AttendanceStatus::Excused)->count(),
+                            'sakit' => $records->where('status', AttendanceStatus::Sick)->count(),
+                            'alpha' => $records->where('status', AttendanceStatus::Absent)->count(),
+                            'total' => $total,
+                            'pct' => $total > 0 ? (int) round(($hadir / $total) * 100) : 0,
+                        ];
+                    });
             }
         }
 
@@ -89,6 +99,7 @@ class AttendanceSummaryController extends Controller
             'filters' => [
                 'classId' => $classId,
                 'planId' => $planId,
+                'per_page' => $perPage,
             ],
             'indexUrl' => route('attendance.summary'),
         ]);
@@ -115,5 +126,10 @@ class AttendanceSummaryController extends Controller
 
         // Admin atau role lain yang punya attendance.summary via matrix override.
         return SchoolClass::query()->pluck('id');
+    }
+
+    private function emptyPaginator(int $perPage): LengthAwarePaginator
+    {
+        return new LengthAwarePaginator([], 0, $perPage);
     }
 }

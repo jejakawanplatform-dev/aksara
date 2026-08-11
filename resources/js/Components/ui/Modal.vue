@@ -5,7 +5,7 @@ const props = defineProps({
     open: { type: Boolean, default: false },
     title: { type: String, default: '' },
     description: { type: String, default: '' },
-    maxWidth: { type: String, default: 'lg' }, // sm | md | lg | xl
+    maxWidth: { type: String, default: 'lg' }, // sm | md | lg | xl | 2xl
     closeOnBackdrop: { type: Boolean, default: true },
 });
 
@@ -16,6 +16,7 @@ const maxWidthClass = {
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
+    '2xl': 'max-w-2xl',
 };
 
 function onBackdrop() {
@@ -56,12 +57,12 @@ onBeforeUnmount(clearBodyLock);
     <Teleport to="body">
         <div
             v-if="open"
-            class="fixed inset-0 z-[70] flex items-center justify-center bg-aksara-ink/40 p-4"
+            class="aksara-overlay z-[70]"
             role="presentation"
             @click.self="onBackdrop"
         >
             <div
-                class="aksara-modal w-full overflow-hidden rounded-2xl border border-aksara-line bg-white shadow-xl"
+                class="aksara-dialog aksara-modal"
                 :class="maxWidthClass[maxWidth] || maxWidthClass.lg"
                 role="dialog"
                 aria-modal="true"
@@ -69,11 +70,11 @@ onBeforeUnmount(clearBodyLock);
             >
                 <div
                     v-if="title || $slots.header || $slots.close"
-                    class="flex items-start justify-between gap-3 border-b border-aksara-line px-5 py-4"
+                    class="aksara-dialog__header"
                 >
                     <div class="min-w-0">
                         <slot name="header">
-                            <h3 v-if="title" class="font-display text-lg font-semibold text-aksara-ink">
+                            <h3 v-if="title" class="text-base font-semibold text-aksara-ink">
                                 {{ title }}
                             </h3>
                             <p v-if="description" class="mt-0.5 text-xs text-aksara-muted">
@@ -91,14 +92,11 @@ onBeforeUnmount(clearBodyLock);
                     </button>
                 </div>
 
-                <div class="max-h-[min(70vh,36rem)] overflow-y-auto px-5 py-4">
+                <div class="aksara-dialog__body">
                     <slot />
                 </div>
 
-                <div
-                    v-if="$slots.footer"
-                    class="flex flex-wrap justify-end gap-2 border-t border-aksara-line bg-aksara-mist/20 px-5 py-3"
-                >
+                <div v-if="$slots.footer" class="aksara-dialog__footer">
                     <slot name="footer" />
                 </div>
             </div>

@@ -1,15 +1,18 @@
 <script setup>
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Card from '@/Components/ui/Card.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 import Field from '@/Components/ui/Field.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Icon from '@/Components/ui/Icon.vue';
+import IconButton from '@/Components/ui/IconButton.vue';
+import Pagination from '@/Components/ui/Pagination.vue';
 import Modal from '@/Components/ui/Modal.vue';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'Manajemen Pengguna' },
-    users: { type: Array, required: true },
+    users: { type: Object, required: true },
     filters: { type: Object, default: () => ({}) },
     roles: { type: Array, default: () => [] },
     classes: { type: Array, default: () => [] },
@@ -23,6 +26,15 @@ const localFilters = reactive({
     role: props.filters.role || '',
 });
 
+const perPage = computed(() => Number(props.filters.per_page) || Number(props.users.per_page) || 10);
+
+const filterQuery = computed(() => ({
+    search: localFilters.search || undefined,
+    role: localFilters.role || undefined,
+    per_page: perPage.value,
+    linksUserId: props.linksUser?.id,
+}));
+
 let filterTimer = null;
 watch(
     localFilters,
@@ -32,9 +44,8 @@ watch(
             router.get(
                 props.urls.index,
                 {
-                    search: localFilters.search || undefined,
-                    role: localFilters.role || undefined,
-                    linksUserId: props.linksUser?.id,
+                    ...filterQuery.value,
+                    page: 1,
                 },
                 { preserveState: true, replace: true },
             );
@@ -104,18 +115,26 @@ function deleteUser(user) {
 }
 
 function openLinks(user) {
-    router.get(props.urls.index, {
-        search: localFilters.search || undefined,
-        role: localFilters.role || undefined,
-        linksUserId: user.id,
-    }, { preserveState: true });
+    router.get(
+        props.urls.index,
+        {
+            ...filterQuery.value,
+            linksUserId: user.id,
+        },
+        { preserveState: true },
+    );
 }
 
 function closeLinks() {
-    router.get(props.urls.index, {
-        search: localFilters.search || undefined,
-        role: localFilters.role || undefined,
-    }, { preserveState: true, replace: true });
+    router.get(
+        props.urls.index,
+        {
+            search: localFilters.search || undefined,
+            role: localFilters.role || undefined,
+            per_page: perPage.value,
+        },
+        { preserveState: true, replace: true },
+    );
 }
 
 const attachClassForm = useForm({ class_id: '' });
@@ -167,16 +186,21 @@ function saveHomeroom() {
     <AppLayout :title="pageTitle">
         <template #header>{{ pageTitle }}</template>
 
-        <div class="space-y-6">
-            <Card
+        <div class="space-y-5">
+            <PageHeader
                 title="Kelola Pengguna Sistem"
                 description="Pengelolaan akun pengguna, penetapan role, dan penautan wali kelas/ortu."
             >
                 <template #actions>
-                    <Btn type="button" @click="openCreate">Tambah pengguna</Btn>
+                    <Btn type="button" size="sm" class="gap-1.5" @click="openCreate">
+                        <Icon name="plus" class="h-3.5 w-3.5" />
+                        Tambah pengguna
+                    </Btn>
                 </template>
+            </PageHeader>
 
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+            <div class="aksara-surface p-4 sm:p-5">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Field label="Cari" for-id="user-search">
                         <input
                             id="user-search"
@@ -188,42 +212,60 @@ function saveHomeroom() {
                     </Field>
                     <Field label="Role" for-id="user-role">
                         <select id="user-role" v-model="localFilters.role" class="aksara-select">
-                            <option value="">Semua</option>
+                            <option value="">Semua role</option>
                             <option v-for="r in roles" :key="r.value" :value="r.value">{{ r.label }}</option>
                         </select>
                     </Field>
                 </div>
-            </Card>
+            </div>
 
-            <div class="overflow-hidden rounded-2xl border border-aksara-line bg-white">
-                <table class="w-full text-sm">
-                    <thead class="bg-aksara-mist text-left text-xs uppercase text-aksara-muted">
-                        <tr>
-                            <th class="px-5 py-3">Nama</th>
-                            <th class="px-5 py-3">Email</th>
-                            <th class="px-5 py-3">Role</th>
-                            <th class="px-5 py-3 text-right">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-aksara-line">
-                        <tr v-for="user in users" :key="user.id">
-                            <td class="px-5 py-3 font-medium">{{ user.name }}</td>
-                            <td class="px-5 py-3 text-aksara-muted">{{ user.email }}</td>
-                            <td class="px-5 py-3">{{ user.roleLabel }}</td>
-                            <td class="space-x-2 px-5 py-3 text-right">
-                                <button type="button" class="text-xs font-semibold text-aksara-teal" @click="openLinks(user)">
-                                    Tautan
-                                </button>
-                                <button type="button" class="text-xs font-semibold text-aksara-ink" @click="openEdit(user)">
-                                    Edit
-                                </button>
-                                <button type="button" class="text-xs font-semibold text-red-600" @click="deleteUser(user)">
-                                    Hapus
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div v-if="!users.data?.length" class="aksara-surface-dashed p-10 text-center">
+                <h3 class="text-lg font-semibold text-aksara-ink">Belum ada pengguna</h3>
+                <p class="mt-2 text-sm text-aksara-muted">Tidak ada data yang sesuai filter.</p>
+                <div class="mt-4 flex justify-center">
+                    <Btn type="button" size="sm" class="gap-1.5" @click="openCreate">
+                        <Icon name="plus" class="h-3.5 w-3.5" />
+                        Tambah pengguna
+                    </Btn>
+                </div>
+            </div>
+
+            <div v-else class="aksara-surface">
+                <div class="overflow-x-auto">
+                    <table class="aksara-table w-full min-w-[640px]">
+                        <thead>
+                            <tr>
+                                <th class="aksara-th">Nama</th>
+                                <th class="aksara-th">Email</th>
+                                <th class="aksara-th">Role</th>
+                                <th class="aksara-th w-36 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="user in users.data" :key="user.id" class="hover:bg-aksara-mist/40">
+                                <td class="aksara-td font-semibold text-aksara-ink">{{ user.name }}</td>
+                                <td class="aksara-td text-sm text-aksara-muted">{{ user.email }}</td>
+                                <td class="aksara-td text-sm">{{ user.roleLabel }}</td>
+                                <td class="aksara-td">
+                                    <div class="flex flex-wrap items-center justify-end gap-0.5">
+                                        <IconButton icon="access" label="Tautan" @click="openLinks(user)" />
+                                        <IconButton icon="pencil" label="Edit" @click="openEdit(user)" />
+                                        <IconButton icon="trash" label="Hapus" danger @click="deleteUser(user)" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="px-4 pb-4 sm:px-5">
+                    <Pagination
+                        :paginator="users"
+                        :per-page="perPage"
+                        :base-url="urls.index"
+                        :query="filterQuery"
+                    />
+                </div>
             </div>
         </div>
 
@@ -270,11 +312,11 @@ function saveHomeroom() {
         >
             <template v-if="linksUser">
                 <div v-if="linksUser.isStudent" class="space-y-3">
-                    <h4 class="text-sm font-semibold">Rombel</h4>
+                    <h4 class="text-sm font-semibold text-aksara-ink">Rombel</h4>
                     <ul class="space-y-1 text-sm">
-                        <li v-for="c in linksUser.classes" :key="c.id" class="flex justify-between">
+                        <li v-for="c in linksUser.classes" :key="c.id" class="flex items-center justify-between">
                             <span>{{ c.name }}</span>
-                            <button type="button" class="text-xs text-aksara-danger" @click="detachClass(c.id)">Lepas</button>
+                            <IconButton icon="x-mark" label="Lepas rombel" danger @click="detachClass(c.id)" />
                         </li>
                     </ul>
                     <div class="flex gap-2">
@@ -287,11 +329,11 @@ function saveHomeroom() {
                 </div>
 
                 <div v-if="linksUser.isParent" class="space-y-3">
-                    <h4 class="text-sm font-semibold">Anak</h4>
+                    <h4 class="text-sm font-semibold text-aksara-ink">Anak</h4>
                     <ul class="space-y-1 text-sm">
-                        <li v-for="c in linksUser.children" :key="c.id" class="flex justify-between">
+                        <li v-for="c in linksUser.children" :key="c.id" class="flex items-center justify-between">
                             <span>{{ c.name }}</span>
-                            <button type="button" class="text-xs text-aksara-danger" @click="detachChild(c.id)">Lepas</button>
+                            <IconButton icon="x-mark" label="Lepas tautan" danger @click="detachChild(c.id)" />
                         </li>
                     </ul>
                     <div class="flex gap-2">
@@ -304,7 +346,7 @@ function saveHomeroom() {
                 </div>
 
                 <div v-if="linksUser.isHomeroomTeacher" class="space-y-3">
-                    <h4 class="text-sm font-semibold">Homeroom</h4>
+                    <h4 class="text-sm font-semibold text-aksara-ink">Homeroom</h4>
                     <select v-model="homeroomForm.homeroom_class_id" class="aksara-select w-full">
                         <option value="">— Tidak ditugaskan —</option>
                         <option v-for="c in classes" :key="c.id" :value="String(c.id)">{{ c.name }}</option>

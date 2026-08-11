@@ -83,7 +83,7 @@ class AttendanceSummaryTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Attendance/Summary')
                 ->where('plans', fn ($plans) => count($plans) >= 2)
-                ->where('summaryData', fn ($rows) => collect($rows)->contains(
+                ->where('summaryData.data', fn ($rows) => collect($rows)->contains(
                     fn ($row) => $row['studentId'] === $student->id
                         && $row['hadir'] === 1
                         && $row['alpha'] === 1

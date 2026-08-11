@@ -5,7 +5,7 @@ defineProps({
 </script>
 
 <template>
-    <div class="overflow-x-auto rounded-2xl border border-aksara-line bg-white shadow-sm">
+    <div class="aksara-surface overflow-x-auto">
         <table class="aksara-table">
             <thead v-if="headers?.length || $slots.headers">
                 <tr>

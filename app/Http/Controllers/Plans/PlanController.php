@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Plans;
 
 use App\Enums\MaterialStatus;
 use App\Enums\PlanStatus;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\AiGeneration;
@@ -34,9 +35,16 @@ class PlanController extends Controller
         $status = (string) $request->query('status', '');
         $teacher = (string) $request->query('teacher', '');
         $subject = (string) $request->query('subject', '');
+        $perPage = (int) $request->query('per_page', 10);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 10;
+        }
 
         $teachers = $isAdmin
-            ? User::query()->orderBy('name')->get(['id', 'name'])
+            ? User::query()
+                ->whereIn('role', [UserRole::Teacher, UserRole::HomeroomTeacher])
+                ->orderBy('name')
+                ->get(['id', 'name'])
             : collect([]);
 
         $subjects = $isAdmin
@@ -51,7 +59,7 @@ class PlanController extends Controller
             ->when($search !== '', fn ($q) => $q->where('topic', 'like', "%{$search}%"))
             ->with(['teacher', 'class', 'subject', 'aiGenerations', 'material', 'quizzes', 'attendance', 'evaluation'])
             ->latest()
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(function (LearningPlan $plan) {
                 $hasMaterial = (bool) $plan->material;
@@ -79,6 +87,7 @@ class PlanController extends Controller
                         'draft' => route('plans.draft', $plan),
                         'quiz' => route('plans.quiz', $plan),
                         'openMaterial' => route('plans.open-material', $plan),
+                        'exportExcel' => route('plans.export.single', [$plan, 'excel']),
                         'exportWord' => route('plans.export.single', [$plan, 'word']),
                         'exportPdf' => route('plans.export.single', [$plan, 'pdf']),
                         'attendance' => route('attendance.form', $plan),
@@ -102,6 +111,7 @@ class PlanController extends Controller
                 'status' => $status,
                 'teacher' => $teacher,
                 'subject' => $subject,
+                'per_page' => $perPage,
             ],
             'teachers' => $teachers,
             'subjects' => $subjects,
@@ -313,7 +323,7 @@ class PlanController extends Controller
 
     public function draft(LearningPlan $plan): Response
     {
-        abort_unless($plan->teacher_id === Auth::id(), 403);
+        $this->authorizeOwnerOrAdmin($plan);
 
         $generation = $plan->aiGenerations()->latest()->first();
         $hydrated = $this->hydrateGenerationOutput($generation);
@@ -345,7 +355,7 @@ class PlanController extends Controller
 
     public function approveDraft(Request $request, LearningPlan $plan): RedirectResponse
     {
-        abort_unless($plan->teacher_id === Auth::id(), 403);
+        $this->authorizeOwnerOrAdmin($plan);
 
         $generation = $plan->aiGenerations()->latest()->first();
         if (! $generation) {
@@ -400,7 +410,7 @@ class PlanController extends Controller
 
     public function publishDraft(LearningPlan $plan): RedirectResponse
     {
-        abort_unless($plan->teacher_id === Auth::id(), 403);
+        $this->authorizeOwnerOrAdmin($plan);
 
         $canPublish = in_array($plan->status, [PlanStatus::Reviewed, PlanStatus::Published], true)
             && $plan->material()->exists();

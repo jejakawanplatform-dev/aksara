@@ -14,17 +14,18 @@ export default {
         extend: {
             colors: {
                 aksara: {
-                    ink: '#0c2e2a',
-                    teal: '#147a68',
-                    'teal-dark': '#0f5c4e',
-                    mist: '#eef6f4',
-                    paper: '#f5f8f7',
-                    line: '#d5e3df',
-                    muted: '#5b716c',
+                    ink: '#0f1c24',
+                    teal: '#0f766e',
+                    'teal-dark': '#0d5f5a',
+                    mist: '#eef6f7',
+                    paper: '#f5fafb',
+                    line: '#d7e4e8',
+                    muted: '#5c6f78',
                     warn: '#b45309',
-                    danger: '#b42318',
+                    danger: '#b91c1c',
                     info: '#0369a1',
                     ok: '#047857',
+                    sky: '#7dd3d8',
                 },
             },
             fontFamily: {
@@ -32,7 +33,7 @@ export default {
                 display: ['Literata', ...defaultTheme.fontFamily.serif],
             },
             boxShadow: {
-                aksara: '0 10px 30px -18px rgba(12, 46, 42, 0.35)',
+                aksara: '0 8px 20px -12px rgba(15, 28, 36, 0.18)',
             },
         },
     },

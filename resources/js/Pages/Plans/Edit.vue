@@ -1,10 +1,11 @@
 <script setup>
 import { computed, watch } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Card from '@/Components/ui/Card.vue';
+import PageHeader from '@/Components/ui/PageHeader.vue';
 import Field from '@/Components/ui/Field.vue';
 import Btn from '@/Components/ui/Btn.vue';
+import Icon from '@/Components/ui/Icon.vue';
 
 const props = defineProps({
     plan: { type: Object, required: true },
@@ -93,80 +94,90 @@ function submit() {
     <AppLayout title="Edit Rencana Pembelajaran">
         <template #header>Edit Rencana Pembelajaran</template>
 
-        <div class="mb-4">
-            <a :href="indexUrl" class="text-sm text-aksara-muted hover:text-aksara-ink">← Rencana Pembelajaran</a>
+        <div class="space-y-5">
+            <PageHeader
+                :title="plan.topic"
+                description="Sunting field rencana pembelajaran."
+            >
+                <template #meta>
+                    <Link :href="indexUrl" class="inline-flex items-center gap-1 text-sm text-aksara-muted hover:text-aksara-ink">
+                        <Icon name="arrow-left" class="h-3.5 w-3.5" />
+                        Rencana Pembelajaran
+                    </Link>
+                </template>
+            </PageHeader>
+
+            <div class="aksara-surface p-4 sm:p-5">
+                <form class="grid grid-cols-1 gap-4 md:grid-cols-2" @submit.prevent="submit">
+                    <Field label="Tahun Ajaran" required :error="editor.errors.academic_year_id">
+                        <select v-model="editor.academic_year_id" class="aksara-select">
+                            <option v-for="y in options.academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Semester" required :error="editor.errors.semester_id">
+                        <select v-model="editor.semester_id" class="aksara-select">
+                            <option v-for="s in filteredSemesters" :key="s.id" :value="s.id">{{ s.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Kelas" required :error="editor.errors.class_id">
+                        <select v-model="editor.class_id" class="aksara-select">
+                            <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Mata Pelajaran" required :error="editor.errors.subject_id">
+                        <select v-model="editor.subject_id" class="aksara-select">
+                            <option v-for="s in options.subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+                        </select>
+                    </Field>
+                    <Field label="CP" :error="editor.errors.curriculum_cp_id">
+                        <select v-model="editor.curriculum_cp_id" class="aksara-select">
+                            <option value="">Opsional</option>
+                            <option v-for="cp in filteredCps" :key="cp.id" :value="cp.id">{{ cp.label }}</option>
+                        </select>
+                    </Field>
+                    <Field label="TP" :error="editor.errors.curriculum_tp_id">
+                        <select v-model="editor.curriculum_tp_id" class="aksara-select">
+                            <option value="">Opsional</option>
+                            <option v-for="tp in filteredTps" :key="tp.id" :value="tp.id">{{ tp.label }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Fase" required :error="editor.errors.phase">
+                        <select v-model="editor.phase" class="aksara-select">
+                            <option v-for="p in options.phases" :key="p" :value="p">{{ p }}</option>
+                        </select>
+                    </Field>
+                    <Field label="Kelas (angka)" required :error="editor.errors.grade">
+                        <input v-model.number="editor.grade" type="number" min="1" max="12" class="aksara-input" />
+                    </Field>
+                    <Field label="Topik" required class="md:col-span-2" :error="editor.errors.topic">
+                        <input v-model="editor.topic" type="text" class="aksara-input" />
+                    </Field>
+                    <Field label="Durasi (menit)" required :error="editor.errors.duration_minutes">
+                        <input v-model.number="editor.duration_minutes" type="number" min="10" max="480" class="aksara-input" />
+                    </Field>
+                    <Field label="Status" required :error="editor.errors.status">
+                        <select v-model="editor.status" class="aksara-select">
+                            <option value="draft">Draf</option>
+                            <option value="published">Diterbitkan</option>
+                        </select>
+                    </Field>
+                    <Field label="Kebutuhan Siswa" class="md:col-span-2" :error="editor.errors.student_needs">
+                        <input v-model="editor.student_needs" type="text" class="aksara-input" />
+                    </Field>
+                    <Field label="Tujuan Pembelajaran" required class="md:col-span-2" :error="editor.errors.learning_objectives">
+                        <textarea v-model="editor.learning_objectives" rows="3" class="aksara-input" />
+                    </Field>
+                    <Field label="Referensi Kurikulum" required class="md:col-span-2" :error="editor.errors.curriculum_reference">
+                        <textarea v-model="editor.curriculum_reference" rows="2" class="aksara-input" />
+                    </Field>
+
+                    <div class="aksara-form-actions md:col-span-2 border-t border-aksara-line pt-4">
+                        <Btn :href="indexUrl" variant="secondary">Kembali ke Daftar</Btn>
+                        <Btn :href="draftUrl" variant="secondary">Review AI</Btn>
+                        <Btn type="submit" :disabled="editor.processing">Simpan</Btn>
+                    </div>
+                </form>
+            </div>
         </div>
-
-        <Card :title="plan.topic" description="Sunting field rencana pembelajaran.">
-            <form class="grid grid-cols-1 gap-4 md:grid-cols-2" @submit.prevent="submit">
-                <Field label="Tahun Ajaran" required :error="editor.errors.academic_year_id">
-                    <select v-model="editor.academic_year_id" class="aksara-select">
-                        <option v-for="y in options.academicYears" :key="y.id" :value="y.id">{{ y.name }}</option>
-                    </select>
-                </Field>
-                <Field label="Semester" required :error="editor.errors.semester_id">
-                    <select v-model="editor.semester_id" class="aksara-select">
-                        <option v-for="s in filteredSemesters" :key="s.id" :value="s.id">{{ s.name }}</option>
-                    </select>
-                </Field>
-                <Field label="Kelas" required :error="editor.errors.class_id">
-                    <select v-model="editor.class_id" class="aksara-select">
-                        <option v-for="c in filteredClasses" :key="c.id" :value="c.id">{{ c.name }}</option>
-                    </select>
-                </Field>
-                <Field label="Mata Pelajaran" required :error="editor.errors.subject_id">
-                    <select v-model="editor.subject_id" class="aksara-select">
-                        <option v-for="s in options.subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
-                    </select>
-                </Field>
-                <Field label="CP" :error="editor.errors.curriculum_cp_id">
-                    <select v-model="editor.curriculum_cp_id" class="aksara-select">
-                        <option value="">Opsional</option>
-                        <option v-for="cp in filteredCps" :key="cp.id" :value="cp.id">{{ cp.label }}</option>
-                    </select>
-                </Field>
-                <Field label="TP" :error="editor.errors.curriculum_tp_id">
-                    <select v-model="editor.curriculum_tp_id" class="aksara-select">
-                        <option value="">Opsional</option>
-                        <option v-for="tp in filteredTps" :key="tp.id" :value="tp.id">{{ tp.label }}</option>
-                    </select>
-                </Field>
-                <Field label="Fase" required :error="editor.errors.phase">
-                    <select v-model="editor.phase" class="aksara-select">
-                        <option v-for="p in options.phases" :key="p" :value="p">{{ p }}</option>
-                    </select>
-                </Field>
-                <Field label="Kelas (angka)" required :error="editor.errors.grade">
-                    <input v-model.number="editor.grade" type="number" min="1" max="12" class="aksara-input" />
-                </Field>
-                <Field label="Topik" required class="md:col-span-2" :error="editor.errors.topic">
-                    <input v-model="editor.topic" type="text" class="aksara-input" />
-                </Field>
-                <Field label="Durasi (menit)" required :error="editor.errors.duration_minutes">
-                    <input v-model.number="editor.duration_minutes" type="number" min="10" max="480" class="aksara-input" />
-                </Field>
-                <Field label="Status" required :error="editor.errors.status">
-                    <select v-model="editor.status" class="aksara-select">
-                        <option value="draft">Draf</option>
-                        <option value="published">Diterbitkan</option>
-                    </select>
-                </Field>
-                <Field label="Kebutuhan Siswa" class="md:col-span-2" :error="editor.errors.student_needs">
-                    <input v-model="editor.student_needs" type="text" class="aksara-input" />
-                </Field>
-                <Field label="Tujuan Pembelajaran" required class="md:col-span-2" :error="editor.errors.learning_objectives">
-                    <textarea v-model="editor.learning_objectives" rows="3" class="aksara-input" />
-                </Field>
-                <Field label="Referensi Kurikulum" required class="md:col-span-2" :error="editor.errors.curriculum_reference">
-                    <textarea v-model="editor.curriculum_reference" rows="2" class="aksara-input" />
-                </Field>
-
-                <div class="md:col-span-2 flex flex-wrap gap-2">
-                    <Btn type="submit" :disabled="editor.processing">Simpan</Btn>
-                    <Btn :href="draftUrl" variant="secondary">Review AI</Btn>
-                    <Btn :href="indexUrl" variant="secondary">Kembali ke Daftar</Btn>
-                </div>
-            </form>
-        </Card>
     </AppLayout>
 </template>

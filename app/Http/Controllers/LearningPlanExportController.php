@@ -71,7 +71,7 @@ class LearningPlanExportController extends Controller
     }
 
     /**
-     * Export single Learning Plan (Word, PDF)
+     * Export single Learning Plan (Excel, Word, PDF)
      */
     public function exportSingle(LearningPlan $plan, string $format)
     {
@@ -83,6 +83,15 @@ class LearningPlanExportController extends Controller
         $plan->load(['teacher', 'class', 'subject', 'academicYear', 'semester', 'material']);
         $safeTopic = preg_replace('/[^A-Za-z0-9_-]/', '', str_replace(' ', '_', $plan->topic));
         $filename = "Modul_Ajar_{$safeTopic}_" . now()->format('Ymd');
+
+        if ($format === 'excel') {
+            $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+            file_put_contents($tempFile, $this->exportService->exportPlansExcel(collect([$plan])));
+
+            return response()->download($tempFile, "{$filename}.xlsx", [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend(true);
+        }
 
         if ($format === 'word') {
             $tempFile = tempnam(sys_get_temp_dir(), 'docx_');
