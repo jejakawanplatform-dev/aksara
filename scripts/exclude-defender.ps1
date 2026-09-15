@@ -1,62 +1,62 @@
-<#
-.SYNOPSIS
-  Skrip optimasi performa pengembang: menambahkan pengecualian Windows Defender
-  untuk proyek Aksara dan ekosistem pengembangan PHP / Node.js / Playwright.
-
-.DESCRIPTION
-  Windows Defender Real-time Protection sering menyebabkan lonjakan CPU (MsMpEng.exe)
-  dan latency tinggi saat scanning berkas ribuan dependensi (node_modules, vendor, storage,
-  dan binary Playwright). Skrip ini mengecualikan direktori proyek dan proses pengembang utama.
-  
-.NOTES
-  Memerlukan hak akses Administrator (Elevated PowerShell).
-#>
-
-# Cek apakah sesi saat ini memiliki hak akses Administrator
+# Aksara - Optimasi Windows Defender untuk Developer
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 if (-not $isAdmin) {
-    Write-Host "Hak akses Administrator diperlukan. Meminta izin UAC..." -ForegroundColor Yellow
-    Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-File `"$PSCommandPath`""
+    Write-Host '==========================================================' -ForegroundColor Yellow
+    Write-Host ' [PERHATIAN] HAK AKSES ADMINISTRATOR DIPERLUKAN' -ForegroundColor Yellow
+    Write-Host '==========================================================' -ForegroundColor Yellow
+    Write-Host 'Pengaturan Windows Defender memerlukan izin Administrator.' -ForegroundColor Gray
+    Write-Host ''
+    Write-Host 'Pilihan cara menjalankan:' -ForegroundColor White
+    Write-Host '1. Klik kanan pada file scripts\exclude-defender.bat -> Run as Administrator' -ForegroundColor Cyan
+    Write-Host '2. Buka PowerShell sebagai Administrator, lalu jalankan skrip ini lagi.' -ForegroundColor Cyan
+    Write-Host ''
+    try {
+        $scriptPath = $PSCommandPath
+        if (-not $scriptPath) { $scriptPath = $MyInvocation.MyCommand.Definition }
+        Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `'$scriptPath`'"
+    } catch {
+        # Sesi non-interaktif
+    }
     exit
 }
 
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "   AKSARA — OPTIMASI WINDOWS DEFENDER UNTUK DEVELOPER     " -ForegroundColor Cyan
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host ""
+Write-Host '==========================================================' -ForegroundColor Cyan
+Write-Host '   AKSARA - OPTIMASI WINDOWS DEFENDER UNTUK DEVELOPER     ' -ForegroundColor Cyan
+Write-Host '==========================================================' -ForegroundColor Cyan
+Write-Host ''
 
 # 1. Daftar Direktori Proyek & Tooling Cache
 $pathsToExclude = @(
-    "C:\Users\jejak\Documents\www\Bimtek\aksara",
-    "C:\Users\jejak\Documents\www\Bimtek",
-    "C:\Users\jejak\AppData\Local\ms-playwright",
-    "C:\Users\jejak\AppData\Roaming\npm-cache",
-    "C:\Users\jejak\AppData\Local\Composer",
-    "C:\Users\jejak\.gemini\antigravity-ide"
+    'C:\Users\jejak\Documents\www\Bimtek\aksara',
+    'C:\Users\jejak\Documents\www\Bimtek',
+    'C:\Users\jejak\AppData\Local\ms-playwright',
+    'C:\Users\jejak\AppData\Roaming\npm-cache',
+    'C:\Users\jejak\AppData\Local\Composer',
+    'C:\Users\jejak\.gemini\antigravity-ide'
 )
 
 # 2. Daftar Proses Pengembang
 $processesToExclude = @(
-    "php.exe",
-    "node.exe",
-    "git.exe",
-    "chrome.exe",
-    "headless_shell.exe"
+    'php.exe',
+    'node.exe',
+    'git.exe',
+    'chrome.exe',
+    'headless_shell.exe'
 )
 
-Write-Host "[1/2] Menambahkan Pengecualian Folder (Paths)..." -ForegroundColor Green
-foreach ($path in $pathsToExclude) {
+Write-Host '[1/2] Menambahkan Pengecualian Folder (Paths)...' -ForegroundColor Green
+foreach ($p in $pathsToExclude) {
     try {
-        Add-MpPreference -ExclusionPath $path -ErrorAction Stop
-        Write-Host "  [OK] Excluded Path: $path" -ForegroundColor Gray
+        Add-MpPreference -ExclusionPath $p -ErrorAction Stop
+        Write-Host "  [OK] Excluded Path: $p" -ForegroundColor Gray
     } catch {
-        Write-Host "  [WARN] Gagal menambahkan $path : $_" -ForegroundColor Red
+        Write-Host "  [WARN] Gagal menambahkan $p : $_" -ForegroundColor Red
     }
 }
 
-Write-Host ""
-Write-Host "[2/2] Menambahkan Pengecualian Proses (Processes)..." -ForegroundColor Green
+Write-Host ''
+Write-Host '[2/2] Menambahkan Pengecualian Proses (Processes)...' -ForegroundColor Green
 foreach ($proc in $processesToExclude) {
     try {
         Add-MpPreference -ExclusionProcess $proc -ErrorAction Stop
@@ -66,10 +66,16 @@ foreach ($proc in $processesToExclude) {
     }
 }
 
-Write-Host ""
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "  SELESAI! Pengecualian Windows Defender berhasil dipasang" -ForegroundColor Green
-Write-Host "  Proses scanning MsMpEng.exe tidak akan mengganggu kerja." -ForegroundColor Green
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host ""
-Read-Host -Prompt "Tekan Enter untuk menutup jendela ini"
+Write-Host ''
+Write-Host '==========================================================' -ForegroundColor Cyan
+Write-Host '  SELESAI! Pengecualian Windows Defender berhasil dipasang' -ForegroundColor Green
+Write-Host '  Proses scanning MsMpEng.exe tidak akan mengganggu kerja.' -ForegroundColor Green
+Write-Host '==========================================================' -ForegroundColor Cyan
+Write-Host ''
+Write-Host 'Pengecualian yang aktif:' -ForegroundColor Cyan
+Get-MpPreference | Select-Object -ExpandProperty ExclusionPath
+Write-Host ''
+Write-Host 'Proses yang dikecualikan:' -ForegroundColor Cyan
+Get-MpPreference | Select-Object -ExpandProperty ExclusionProcess
+Write-Host ''
+Read-Host -Prompt 'Tekan Enter untuk keluar'
