@@ -4,16 +4,20 @@
 docs/
 ├── README.md
 ├── steering/          ← aturan tetap
-└── spec/              ← kemampuan produk (piramida terbalik dari codebase)
+├── spec/              ← kemampuan produk (piramida terbalik dari codebase)
+│   ├── README.md
+│   ├── 01-scaffold-inertia/ … 14-exports-pdf/
+│   └── _template/
+└── discussions/       ← ruang diskusi, RFC, & konsensus antar AI agent / manusia
     ├── README.md
-    ├── 01-scaffold-inertia/ … 14-exports-pdf/
-    └── _template/
+    └── _template.md
 ```
 
 | Folder | Untuk apa |
 |---|---|
 | [steering/](steering/) | Aturan produk, ADR, handover |
 | [spec/](spec/) | Dokumentasi kemampuan **dari kode yang ada** |
+| [discussions/](discussions/) | Ruang diskusi teknis, RFC, & konsensus antar agent/manusia |
 
 **Stack UI:** Laravel 13 + Inertia + Vue 3 + TipTap Vue.
 

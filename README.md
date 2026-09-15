@@ -34,13 +34,8 @@ Referensi perilaku stack UI lama (Livewire/Alpine, read-only): `/home/jejakawan/
 
 ## Akun Demo
 
-| Role | Email | Password |
-|---|---|---|
-| Administrator | admin@aksara.test | password |
-| Guru | naya@aksara.test | password |
-| Wali Kelas | arif@aksara.test | password |
-| Siswa | adit@aksara.test | password |
-| Wali Murid | ortu.adit@aksara.test | password |
+Daftar akun dan kredensial pengujian lokal dipindahkan ke dokumentasi internal:  
+👉 **[Lihat Akun Demo & Kredensial](docs/steering/demo-accounts.md)**
 
 ---
 

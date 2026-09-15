@@ -50,7 +50,7 @@ php artisan storage:link
 php artisan serve   # atau vhost lokal
 ```
 
-Akun demo: lihat tabel di `README.md` (contoh guru `naya@aksara.test` / `password`).
+Akun demo: lihat dokumen [docs/steering/demo-accounts.md](demo-accounts.md) (contoh guru `naya@aksara.test` / `password`).
 
 Seed berisi rencana/materi/kuis **Informatika — Dekomposisi Masalah** (published), TA **2025/2026**, semester **Ganjil**, rombel **VII-A / VIII-A / IX-A**.
 
