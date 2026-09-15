@@ -18,6 +18,9 @@ import IconButton from '@/Components/ui/IconButton.vue';
 import Icon from '@/Components/ui/Icon.vue';
 import Pagination from '@/Components/ui/Pagination.vue';
 import ExportMenu from '@/Components/ui/ExportMenu.vue';
+import BulkToolbar from '@/Components/ui/BulkToolbar.vue';
+import BulkConfirmModal from '@/Components/ui/BulkConfirmModal.vue';
+import { useBulkSelect } from '@/Composables/useBulkSelect';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'Referensi Kurikulum' },
@@ -54,6 +57,50 @@ const perPage = computed(() => Number(props.filters.per_page) || 10);
 const rombelRows = computed(() => props.rombels?.data ?? []);
 const subjectRows = computed(() => props.subjects?.data ?? []);
 const atpRows = computed(() => props.atp?.data ?? []);
+
+// ── Bulk Select (Rombel & Mapel) ──────────────────────────────
+const rombelBulk = useBulkSelect();
+const showRombelBulkModal = ref(false);
+
+const mapelBulk = useBulkSelect();
+const showMapelBulkModal = ref(false);
+
+watch(() => props.rombels?.data, () => rombelBulk.clearSelection());
+watch(() => props.subjects?.data, () => mapelBulk.clearSelection());
+watch(() => props.tab, () => {
+    rombelBulk.clearSelection();
+    mapelBulk.clearSelection();
+});
+
+function submitBulkDeleteRombel() {
+    if (!props.urls.rombelsBulkDestroy) return;
+    router.post(
+        props.urls.rombelsBulkDestroy,
+        { ids: rombelBulk.selectedIds.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showRombelBulkModal.value = false;
+                rombelBulk.clearSelection();
+            },
+        }
+    );
+}
+
+function submitBulkDeleteMapel() {
+    if (!props.urls.mapelBulkDestroy) return;
+    router.post(
+        props.urls.mapelBulkDestroy,
+        { ids: mapelBulk.selectedIds.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showMapelBulkModal.value = false;
+                mapelBulk.clearSelection();
+            },
+        }
+    );
+}
 
 const filterQuery = computed(() => ({
     tab: props.tab,
@@ -497,7 +544,31 @@ const formTitle = computed(() => {
 
                 <!-- Rombel -->
                 <div v-else-if="tab === 'rombel'" class="space-y-4">
-                    <div class="flex items-center justify-between gap-3">
+                    <BulkToolbar
+                        v-if="canManage && rombelBulk.hasSelection.value"
+                        :selected-count="rombelBulk.getSelectedCount(rombels.total)"
+                        :total-count="rombels.total || 0"
+                        :current-page-count="rombels.data?.length || 0"
+                        :is-all-matching="rombelBulk.isAllMatching.value"
+                        item-label="rombel"
+                        @clear="rombelBulk.clearSelection"
+                        @select-all-matching="rombelBulk.selectAllMatching"
+                        @clear-matching="rombelBulk.isAllMatching.value = false"
+                    >
+                        <template #actions>
+                            <Btn
+                                type="button"
+                                variant="danger"
+                                size="sm"
+                                class="gap-1.5"
+                                @click="showRombelBulkModal = true"
+                            >
+                                <Icon name="trash" class="h-3.5 w-3.5" />
+                                Hapus terpilih ({{ rombelBulk.getSelectedCount(rombels.total) }})
+                            </Btn>
+                        </template>
+                    </BulkToolbar>
+                    <div v-else class="flex items-center justify-between gap-3">
                         <h3 class="text-base font-semibold text-aksara-ink">Rombel</h3>
                         <div v-if="canManage" class="aksara-toolbar">
                             <Btn
@@ -515,6 +586,16 @@ const formTitle = computed(() => {
                         <table class="aksara-table w-full min-w-[560px]">
                             <thead>
                                 <tr>
+                                    <th v-if="canManage" class="aksara-th w-10 text-center">
+                                        <input
+                                            type="checkbox"
+                                            class="aksara-checkbox"
+                                            :checked="rombelBulk.isAllSelected(rombelRows.map(r => r.id))"
+                                            :indeterminate.prop="rombelBulk.isIndeterminate(rombelRows.map(r => r.id))"
+                                            aria-label="Pilih semua rombel di halaman ini"
+                                            @change="rombelBulk.toggleSelectAll(rombelRows.map(r => r.id))"
+                                        />
+                                    </th>
                                     <th class="aksara-th">Nama</th>
                                     <th class="aksara-th">Kelas</th>
                                     <th class="aksara-th">Wali</th>
@@ -524,6 +605,15 @@ const formTitle = computed(() => {
                             </thead>
                             <tbody>
                                 <tr v-for="r in rombelRows" :key="r.id" class="hover:bg-aksara-mist/40">
+                                    <td v-if="canManage" class="aksara-td text-center" @click.stop>
+                                        <input
+                                            type="checkbox"
+                                            class="aksara-checkbox"
+                                            :checked="rombelBulk.isSelected(r.id)"
+                                            :aria-label="`Pilih rombel ${r.name}`"
+                                            @change="rombelBulk.toggleSelect(r.id)"
+                                        />
+                                    </td>
                                     <td class="aksara-td font-medium">{{ r.name }}</td>
                                     <td class="aksara-td">{{ r.grade }}</td>
                                     <td class="aksara-td text-aksara-muted">{{ r.homeroomName || '—' }}</td>
@@ -566,7 +656,31 @@ const formTitle = computed(() => {
 
                 <!-- Mapel -->
                 <div v-else-if="tab === 'mapel'" class="space-y-4">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
+                    <BulkToolbar
+                        v-if="canManage && mapelBulk.hasSelection.value"
+                        :selected-count="mapelBulk.getSelectedCount(subjects.total)"
+                        :total-count="subjects.total || 0"
+                        :current-page-count="subjects.data?.length || 0"
+                        :is-all-matching="mapelBulk.isAllMatching.value"
+                        item-label="mata pelajaran"
+                        @clear="mapelBulk.clearSelection"
+                        @select-all-matching="mapelBulk.selectAllMatching"
+                        @clear-matching="mapelBulk.isAllMatching.value = false"
+                    >
+                        <template #actions>
+                            <Btn
+                                type="button"
+                                variant="danger"
+                                size="sm"
+                                class="gap-1.5"
+                                @click="showMapelBulkModal = true"
+                            >
+                                <Icon name="trash" class="h-3.5 w-3.5" />
+                                Hapus terpilih ({{ mapelBulk.getSelectedCount(subjects.total) }})
+                            </Btn>
+                        </template>
+                    </BulkToolbar>
+                    <div v-else class="flex flex-wrap items-center justify-between gap-2">
                         <h3 class="text-base font-semibold text-aksara-ink">Mata Pelajaran</h3>
                         <div class="aksara-toolbar">
                             <select
@@ -594,6 +708,16 @@ const formTitle = computed(() => {
                         <table class="aksara-table w-full min-w-[480px]">
                             <thead>
                                 <tr>
+                                    <th v-if="canManage" class="aksara-th w-10 text-center">
+                                        <input
+                                            type="checkbox"
+                                            class="aksara-checkbox"
+                                            :checked="mapelBulk.isAllSelected(subjectRows.map(s => s.id))"
+                                            :indeterminate.prop="mapelBulk.isIndeterminate(subjectRows.map(s => s.id))"
+                                            aria-label="Pilih semua mata pelajaran di halaman ini"
+                                            @change="mapelBulk.toggleSelectAll(subjectRows.map(s => s.id))"
+                                        />
+                                    </th>
                                     <th class="aksara-th">Nama</th>
                                     <th class="aksara-th">Kode</th>
                                     <th class="aksara-th">Guru</th>
@@ -602,6 +726,15 @@ const formTitle = computed(() => {
                             </thead>
                             <tbody>
                                 <tr v-for="s in subjectRows" :key="s.id" class="hover:bg-aksara-mist/40">
+                                    <td v-if="canManage" class="aksara-td text-center" @click.stop>
+                                        <input
+                                            type="checkbox"
+                                            class="aksara-checkbox"
+                                            :checked="mapelBulk.isSelected(s.id)"
+                                            :aria-label="`Pilih mata pelajaran ${s.name}`"
+                                            @change="mapelBulk.toggleSelect(s.id)"
+                                        />
+                                    </td>
                                     <td class="aksara-td font-medium">{{ s.name }}</td>
                                     <td class="aksara-td">{{ s.code }}</td>
                                     <td class="aksara-td text-xs text-aksara-muted">{{ (s.teacherNames || []).join(', ') || '—' }}</td>
@@ -967,5 +1100,21 @@ const formTitle = computed(() => {
                 <Btn type="submit" form="refs-import-form" size="sm" :disabled="importForm.processing">Impor</Btn>
             </template>
         </Modal>
+
+        <BulkConfirmModal
+            v-model="showRombelBulkModal"
+            :count="rombelBulk.getSelectedCount(rombels.total)"
+            item-label="rombel"
+            danger-word="HAPUS"
+            @confirm="submitBulkDeleteRombel"
+        />
+
+        <BulkConfirmModal
+            v-model="showMapelBulkModal"
+            :count="mapelBulk.getSelectedCount(subjects.total)"
+            item-label="mata pelajaran"
+            danger-word="HAPUS"
+            @confirm="submitBulkDeleteMapel"
+        />
     </AppLayout>
 </template>

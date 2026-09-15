@@ -133,6 +133,7 @@ Route::middleware(['auth', 'permission:references.view'])->prefix('references')-
     Route::post('/semesters/{semester}/activate', [ReferenceController::class, 'activateSemester'])->name('semesters.activate');
 
     Route::post('/rombels', [ReferenceController::class, 'storeRombel'])->name('rombels.store');
+    Route::post('/rombels/bulk-destroy', [ReferenceController::class, 'bulkDestroyRombel'])->name('rombels.bulk-destroy');
     Route::put('/rombels/{rombel}', [ReferenceController::class, 'updateRombel'])->name('rombels.update');
     Route::delete('/rombels/{rombel}', [ReferenceController::class, 'destroyRombel'])->name('rombels.destroy');
     Route::post('/rombels/{rombel}/attach-student', [ReferenceController::class, 'attachStudent'])->name('rombels.attach-student');
@@ -140,6 +141,7 @@ Route::middleware(['auth', 'permission:references.view'])->prefix('references')-
     Route::post('/rombels/{rombel}/enrol', [ReferenceController::class, 'toggleTeacherEnrolment'])->name('rombels.enrol');
 
     Route::post('/mapel', [ReferenceController::class, 'storeMapel'])->name('mapel.store');
+    Route::post('/mapel/bulk-destroy', [ReferenceController::class, 'bulkDestroyMapel'])->name('mapel.bulk-destroy');
     Route::put('/mapel/{subject}', [ReferenceController::class, 'updateMapel'])->name('mapel.update');
     Route::delete('/mapel/{subject}', [ReferenceController::class, 'destroyMapel'])->name('mapel.destroy');
     Route::post('/mapel/{subject}/teachers', [ReferenceController::class, 'saveSubjectTeachers'])->name('mapel.teachers');

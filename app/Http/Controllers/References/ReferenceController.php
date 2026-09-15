@@ -345,12 +345,14 @@ class ReferenceController extends Controller
                 'semestersDestroy' => route('references.semesters.destroy', ['semester' => '__ID__']),
                 'semestersActivate' => route('references.semesters.activate', ['semester' => '__ID__']),
                 'rombelsStore' => route('references.rombels.store'),
+                'rombelsBulkDestroy' => route('references.rombels.bulk-destroy'),
                 'rombelsUpdate' => route('references.rombels.update', ['rombel' => '__ID__']),
                 'rombelsDestroy' => route('references.rombels.destroy', ['rombel' => '__ID__']),
                 'rombelsAttachStudent' => route('references.rombels.attach-student', ['rombel' => '__ID__']),
                 'rombelsDetachStudent' => route('references.rombels.detach-student', ['rombel' => '__RID__', 'student' => '__SID__']),
                 'rombelsEnrol' => route('references.rombels.enrol', ['rombel' => '__ID__']),
                 'mapelStore' => route('references.mapel.store'),
+                'mapelBulkDestroy' => route('references.mapel.bulk-destroy'),
                 'mapelUpdate' => route('references.mapel.update', ['subject' => '__ID__']),
                 'mapelDestroy' => route('references.mapel.destroy', ['subject' => '__ID__']),
                 'mapelTeachers' => route('references.mapel.teachers', ['subject' => '__ID__']),
@@ -557,6 +559,46 @@ class ReferenceController extends Controller
             ->with('message', 'Rombel dihapus.');
     }
 
+    public function bulkDestroyRombel(Request $request): RedirectResponse
+    {
+        $this->ensureCanManage();
+
+        $data = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:school_classes,id',
+        ]);
+
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $data['ids']);
+
+        $rombels = SchoolClass::with('learningPlans')->whereIn('id', $ids)->get();
+
+        $deletedCount = 0;
+        $skippedCount = 0;
+
+        foreach ($rombels as $rombel) {
+            if ($rombel->learningPlans->isNotEmpty()) {
+                $skippedCount++;
+                continue;
+            }
+
+            $rombel->students()->detach();
+            $rombel->delete();
+            $deletedCount++;
+        }
+
+        if ($deletedCount === 0 && $skippedCount > 0) {
+            return back()->with('error', "Tidak ada rombel yang dihapus karena {$skippedCount} rombel masih memiliki rencana pembelajaran.");
+        }
+
+        $message = "{$deletedCount} rombel berhasil dihapus.";
+        if ($skippedCount > 0) {
+            $message .= " ({$skippedCount} rombel dilewati karena masih memiliki rencana pembelajaran).";
+        }
+
+        return redirect()->route('references.index', ['tab' => 'rombel'])->with('message', $message);
+    }
+
     public function attachStudent(Request $request, SchoolClass $rombel): RedirectResponse
     {
         $this->ensureCanManage();
@@ -659,6 +701,46 @@ class ReferenceController extends Controller
 
         return redirect()->route('references.index', ['tab' => 'mapel'])
             ->with('message', 'Mata pelajaran dihapus.');
+    }
+
+    public function bulkDestroyMapel(Request $request): RedirectResponse
+    {
+        $this->ensureCanManage();
+
+        $data = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subjects,id',
+        ]);
+
+        /** @var list<int> $ids */
+        $ids = array_map('intval', $data['ids']);
+
+        $subjects = Subject::with(['cps', 'atpItems', 'learningPlans'])->whereIn('id', $ids)->get();
+
+        $deletedCount = 0;
+        $skippedCount = 0;
+
+        foreach ($subjects as $subject) {
+            if ($subject->cps->isNotEmpty() || $subject->atpItems->isNotEmpty() || $subject->learningPlans->isNotEmpty()) {
+                $skippedCount++;
+                continue;
+            }
+
+            $subject->teachers()->detach();
+            $subject->delete();
+            $deletedCount++;
+        }
+
+        if ($deletedCount === 0 && $skippedCount > 0) {
+            return back()->with('error', "Tidak ada mata pelajaran yang dihapus karena {$skippedCount} mata pelajaran masih terhubung dengan CP, ATP, atau rencana pembelajaran.");
+        }
+
+        $message = "{$deletedCount} mata pelajaran berhasil dihapus.";
+        if ($skippedCount > 0) {
+            $message .= " ({$skippedCount} mata pelajaran dilewati karena terhubung dengan CP/ATP/rencana pembelajaran).";
+        }
+
+        return redirect()->route('references.index', ['tab' => 'mapel'])->with('message', $message);
     }
 
     public function saveSubjectTeachers(Request $request, Subject $subject): RedirectResponse
