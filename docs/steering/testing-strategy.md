@@ -10,6 +10,8 @@ Membuktikan bahwa vertical slice aman secara permission/role, alur bisnis benar,
 |---|---|---|
 | Pest / PHPUnit | `php artisan test` | Feature & unit (100% wajib pass) |
 | Pest Smoke Test | `php artisan test --filter=CriticalJourneySmokeTest` | Alur kritis lintas 5 role sekolah |
+| Vitest | `npm run test:unit` | Frontend unit testing (composables/helpers) |
+| Playwright | `npm run test:e2e` | Browser E2E smoke test (TipTap, KaTeX, Bulk Actions) |
 | Larastan | `vendor/bin/phpstan analyse --memory-limit=1G` | Type / static analysis **Level 9 (0 error)** |
 | Pint | `vendor/bin/pint --test` | Format PHP |
 | Vite | `npm run build` | Bundle Inertia/Vue/TipTap (0 error & warning) |
@@ -82,19 +84,25 @@ Bukan pengganti feature test otorisasi.
 ## Cara menjalankan lokal (QA Gate Wajib)
 
 ```bash
-# 1. Full Pest Test Suite
+# 1. Full Pest Test Suite (Backend)
 php artisan test
 
-# 2. Critical Journey Smoke Test
+# 2. Critical Journey Smoke Test (5 Role)
 php artisan test --filter=CriticalJourneySmokeTest
 
-# 3. Static Analysis PHPStan Level 9
+# 3. Frontend Unit Tests (Vitest)
+npm run test:unit
+
+# 4. Browser E2E Smoke Tests (Playwright)
+npm run test:e2e
+
+# 5. Static Analysis PHPStan Level 9
 vendor/bin/phpstan analyse --memory-limit=1G
 
-# 4. Code Formatting Check
+# 6. Code Formatting Check
 vendor/bin/pint --test
 
-# 5. Frontend Assets Compilation
+# 7. Frontend Assets Compilation
 npm run build
 ```
 
@@ -103,13 +111,13 @@ npm run build
 1. Test lama tetap hijau (100% passed).
 2. Minimal satu test baru untuk path kritis yang diubah (permission atau alur).
 3. Smoke test alur 5 role tetap lulus.
-4. PHPStan tetap di **Level 9 dengan 0 errors / 0 warnings**.
-5. `npm run build` sukses tanpa error/warning jika menyentuh frontend.
-6. Catat perintah + hasil di `handover.md` bila perubahan besar.
-7. Dilarang mengandalkan “berhasil di browser saja” untuk authorization.
+4. Unit test JavaScript (Vitest) & E2E (Playwright) lolos.
+5. PHPStan tetap di **Level 9 dengan 0 errors / 0 warnings**.
+6. `npm run build` sukses tanpa error/warning jika menyentuh frontend.
+7. Catat perintah + hasil di `handover.md` bila perubahan besar.
+8. Dilarang mengandalkan “berhasil di browser saja” untuk authorization.
 
 ## Yang sengaja ditunda
 
-- Load / performance test.
-- E2E browser penuh (Dusk/Playwright).
+- Load / stress performance test (concurrency kuis 100+ siswa bersamaan).
 - Contract test terhadap AI provider nyata (cukup mock + validasi schema).

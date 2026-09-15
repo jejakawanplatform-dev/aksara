@@ -18,7 +18,9 @@
 - [x] Update `testing-strategy.md` dan `handover.md` mencatat adopsi QA Level 9 dan Smoke Testing.
 - [x] Update status diskusi menjadi `ADOPTED`.
 
+- [x] (P3) Tambahkan Browser E2E smoke test menggunakan Playwright (`tests/e2e/`) untuk login multi-role, TipTap editor, MediaPicker, dan Bulk Actions dialog.
+- [x] (P3) Tambahkan unit test Vitest (`tests/Unit/js/`) untuk composables JavaScript (`useBulkSelect`, `authValidation`).
+
 ## Debt / Rencana Lanjutan
 
-- [ ] (P3) Tambahkan Browser E2E smoke test menggunakan Playwright untuk interaksi TipTap dan KaTeX.
-- [ ] (P3) Tambahkan unit test Vitest untuk composables JavaScript.
+- [ ] (P4) Load / stress test concurrency kuis (30+ siswa submit kuis serentak).

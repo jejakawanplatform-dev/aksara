@@ -9,8 +9,28 @@ Format berkas ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/
 ## [Unreleased]
 
 ### Planned
-- **Browser E2E Testing:** Pengujian headless browser via Playwright (`@playwright/test`) untuk TipTap rich editor, media upload, KaTeX formula preview, dan dialog konfirmasi modal.
-- **Frontend Unit Testing:** Pengujian headless unit test via Vitest untuk JavaScript composables (`useBulkSelect`, `useCan`, `useFlash`) dan utility functions.
+- **Concurrency & Stress Testing:** Pengujian beban serentak pengerjaan kuis siswa (30+ submission bersamaan).
+
+---
+
+## [0.20.0] - 2026-09-15
+
+### Added
+- **Frontend Unit Testing via Vitest:**
+  - Konfigurasi `vitest.config.js` dengan path alias `@` ke `./resources/js`.
+  - Skrip `test:unit` dan `test:unit:watch` pada `package.json`.
+  - Berkas pengujian `tests/Unit/js/useBulkSelect.test.js` (5 skenario: inisialisasi, toggle select, select all, indeterminate, matching across pages).
+  - Berkas pengujian `tests/Unit/js/authValidation.test.js` (5 skenario: isFilled, format email, password length, password confirmation, server vs local error resolution).
+  - 10/10 pengujian unit JavaScript lolos 100%.
+- **Browser E2E Smoke Testing via Playwright (`@playwright/test`):**
+  - Konfigurasi `playwright.config.js` dengan Chromium headless engine dan base URL `http://127.0.0.1:8000`.
+  - Skrip `test:e2e` pada `package.json`.
+  - `tests/e2e/auth-smoke.spec.js`: Uji login otomatis dan verifikasi antarmuka dashboard untuk 3 peran (Admin, Guru, Siswa).
+  - `tests/e2e/tiptap-editor.spec.js`: Uji render TipTap editor materi, keberadaan toolbar, interaksi input teks, dan pembukaan dialog MediaPicker modal.
+  - `tests/e2e/bulk-actions.spec.js`: Uji interaksi checkbox seleksi tabel pengguna, kemunculan `BulkToolbar`, pembukaan modal konfirmasi dengan *double confirmation guard* (wajib ketik "HAPUS"), dan penutupan aman.
+  - 6/6 skenario peramban Playwright lolos 100%.
+- **Pembaruan Dokumen Kemudi:**
+  - Menambahkan `npm run test:unit` dan `npm run test:e2e` ke QA Gate di `docs/steering/coding-standards.md` dan `docs/steering/testing-strategy.md`.
 
 ---
 

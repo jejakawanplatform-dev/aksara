@@ -26,6 +26,8 @@ const canSelectAllMatching = computed(() => {
 
 <template>
     <div
+        role="toolbar"
+        aria-label="Aksi massal"
         class="flex flex-col gap-3 rounded-xl border border-aksara-primary/40 bg-aksara-primary/5 p-3.5 shadow-sm transition-all sm:flex-row sm:items-center sm:justify-between"
     >
         <div class="flex flex-wrap items-center gap-2.5 text-sm text-aksara-ink">

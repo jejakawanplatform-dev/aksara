@@ -27,12 +27,13 @@ Jangan menambah stack UI di luar Inertia + Vue tanpa ADR baru.
 - Bulk actions & selection toolkit: spec **18** + `useBulkSelect`, `BulkToolbar`, `BulkConfirmModal`, endpoint `users.bulk-destroy` (proteksi diri & relasi), test 6/6 passed
 - **Static Analysis Level 9 (Larastan/PHPStan):** 0 error / 0 warning dengan `phpstan-baseline.neon` terisolasi rapi.
 - **Critical Journey Smoke Test:** `tests/Feature/Smoke/CriticalJourneySmokeTest.php` memverifikasi alur terpadu 5 role sekolah (136 assertions, 100% pass).
-- **Penegakan QA Agen AI Wajib:** Pest 146/146 pass, PHPStan Level 9 = 0 error, npm run build = hijau tanpa kompromi.
+- **Frontend Testing Suite (Vitest & Playwright):** 10 unit tests JavaScript lolos 100% (`useBulkSelect`, `authValidation`) dan 6 browser E2E smoke tests Playwright lolos 100% (Auth 3-role, TipTap MediaPicker, Bulk Actions safety modal).
+- **Penegakan QA Agen AI Wajib:** Pest 146/146 pass, Vitest pass, Playwright pass, PHPStan Level 9 = 0 error, npm run build = hijau tanpa kompromi.
 
 ### Perlu penguatan
 
-- Smoke browser TipTap MediaPicker + resize/properti + Co-Pilot apply setelah deploy
 - Perluas assertInertia pada feature test kritis
+- Co-Pilot apply setelah deploy pada provider AI nyata (bukan mock)
 
 ### Backlog / non-scope
 

@@ -131,7 +131,7 @@ Aksara dirancang dan dikembangkan dengan penuh dedikasi oleh:
 
 * **Pengembang:** **jejakawan**
 * **Situs Web:** [https://jejakawan.com](https://jejakawan.com)
-* **Hubungi:** [halo@jejakawan.com](mailto:halo@jejakawan.com)
+* **Hubungi:** [info@jejakawan.com](mailto:info@jejakawan.com)
 
 ---
 

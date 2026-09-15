@@ -27,6 +27,9 @@ docs/ssl/
 /etc/nginx/ssl/
 _ide_helper.php
 Homestead.json
-Homestead.yaml
 Thumbs.db
+
+# Test artifacts
+/test-results/
+/playwright-report/
 

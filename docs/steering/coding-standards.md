@@ -118,17 +118,27 @@ Setiap perubahan kode (backend maupun frontend) **WAJIB** melalui gerbang penguj
    php artisan test --filter=CriticalJourneySmokeTest
    ```
    Wajib dijalankan terutama bila menyentuh routing, middleware, otorisasi, atau model inti 5 role (Admin, Guru, Siswa, Wali Kelas, Wali Murid).
-3. **Static Analysis PHPStan Level 9 (0 Error):**
+3. **Frontend Unit Tests (Vitest):**
+   ```bash
+   npm run test:unit
+   ```
+   Pengujian unit logic JavaScript/composables (`useBulkSelect`, `authValidation`, dll.).
+4. **Browser E2E Smoke Tests (Playwright):**
+   ```bash
+   npm run test:e2e
+   ```
+   Pengujian interaksi peramban nyata (TipTap editor, MediaPicker, render KaTeX, dan Bulk Actions dialog).
+5. **Static Analysis PHPStan Level 9 (0 Error):**
    ```bash
    vendor/bin/phpstan analyse --memory-limit=1G
    ```
    Wajib menghasilkan output `[OK] No errors` pada **Level 9**. Larang menurunkan level analisis tanpa konsensus tim arsitek.
-4. **Frontend Asset Build (0 Error & 0 Warning):**
+6. **Frontend Asset Build (0 Error & 0 Warning):**
    ```bash
    npm run build
    ```
    Wajib selesai tanpa kompilasi gagal, sintaks error, atau dependensi Vue/Tailwind yang hilang.
-5. **Code Style Formatting:**
+7. **Code Style Formatting:**
    ```bash
    vendor/bin/pint --test
    ```
@@ -142,7 +152,7 @@ Sebuah tugas dianggap selesai bila:
 - [ ] Otorisasi permission/role/kepemilikan diverifikasi
 - [ ] AI (bila ada) tetap menghasilkan draf + tervalidasi
 - [ ] Page Vue memakai layout/komponen UI yang ada (bukan markup ad-hoc berlebihan)
-- [ ] QA Gate lulus penuh (Pest 100%, PHPStan Level 9 = 0 error, npm run build = hijau)
+- [ ] QA Gate lulus penuh (Pest 100%, Vitest pass, Playwright pass, PHPStan Level 9 = 0 error, npm run build = hijau)
 - [ ] `handover.md` / `decision-log.md` diperbarui bila perlu
 - [ ] Dokumentasi spesifikasi di `docs/spec/` atau diskusi di `docs/discussions/` diperbarui
 
