@@ -41,11 +41,11 @@ class LearningPipelineTest extends TestCase
                 ->component('Plans/Index')
                 ->has('auth.permissions')
                 ->where('nav.1.title', 'PEMBELAJARAN')
-                ->where('nav.1.items.0.label', '1. Rencana Pembelajaran')
-                ->where('nav.1.items.1.label', '2. Materi Pembelajaran')
-                ->where('nav.1.items.2.label', '3. Rekap Kehadiran')
-                ->where('nav.2.items.0.label', '4. Laporan Guru')
-                ->where('nav.2.items.1.label', '5. Evaluasi & Refleksi')
+                ->where('nav.1.items.0.label', 'Rencana Pembelajaran')
+                ->where('nav.1.items.1.label', 'Materi Pembelajaran')
+                ->where('nav.1.items.2.label', 'Rekap Kehadiran')
+                ->where('nav.1.items.3.label', 'Laporan Guru')
+                ->where('nav.1.items.4.label', 'Evaluasi & Refleksi')
             );
     }
 

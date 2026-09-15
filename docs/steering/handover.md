@@ -24,6 +24,7 @@ Jangan menambah stack UI di luar Inertia + Vue tanpa ADR baru.
 - Domain + UI Inertia/Vue sesuai `docs/spec/01–17` (scaffold → design system)
 - Design system Vue SoT: spec **17** + `Components/ui/*`; TipTap: `Components/tiptap/*` (spec 15)
 - Media context-scoped materi: list/upload/delete (spec 16)
+- Bulk actions & selection toolkit: spec **18** + `useBulkSelect`, `BulkToolbar`, `BulkConfirmModal`, endpoint `users.bulk-destroy` (proteksi diri & relasi), test 6/6 passed
 
 ### Perlu penguatan
 
@@ -102,6 +103,10 @@ Aturan cepat:
 3. Jangan sentuh `vendor/`, `node_modules/`, `public/build/`, `storage/`.
 4. Jangan ubah `LICENSE` tanpa ADR di `decision-log.md`.
 5. Baca `file-header.md` + `coding-standards.md` sebelum generate kode.
+6. **Siklus Selesai Pekerjaan (Wajib):** Setiap fitur baru yang berasal dari `docs/discussions/` jika sudah selesai wajib:
+   - Dibuatkan catatan tahapannya di `docs/spec/` (`plan.md`, `tasks.md`, `implementation.md`, `verification.md`).
+   - Dicatat penambahannya di `docs/steering/handover.md` (bagian `### Selesai`) beserta bukti kelulusan test.
+   - Diubah status diskusinya menjadi `ADOPTED`.
 
 ### Brand footer (sidebar / Welcome / auth)
 

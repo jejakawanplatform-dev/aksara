@@ -109,6 +109,7 @@ class UserController extends Controller
             'urls' => [
                 'index' => route('users.index'),
                 'store' => route('users.store'),
+                'bulkDestroy' => route('users.bulk-destroy'),
                 'update' => route('users.update', ['user' => '__ID__']),
                 'destroy' => route('users.destroy', ['user' => '__ID__']),
                 'attachClass' => route('users.attach-class', ['user' => '__ID__']),
@@ -198,6 +199,90 @@ class UserController extends Controller
         });
 
         return redirect()->route('users.index')->with('message', 'Pengguna dihapus.');
+    }
+
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+
+        $validated = $request->validate([
+            'ids' => ['required_without:select_all_matching', 'array'],
+            'ids.*' => ['integer', 'exists:users,id'],
+            'select_all_matching' => ['nullable', 'boolean'],
+            'search' => ['nullable', 'string'],
+            'role' => ['nullable', 'string'],
+        ]);
+
+        $query = User::query();
+
+        if (! empty($validated['select_all_matching'])) {
+            $search = (string) ($validated['search'] ?? '');
+            $roleFilter = (string) ($validated['role'] ?? '');
+
+            $query->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('email', 'like', '%'.$search.'%');
+                });
+            })->when($roleFilter !== '', fn ($q) => $q->where('role', $roleFilter));
+        } else {
+            $query->whereIn('id', $validated['ids'] ?? []);
+        }
+
+        $users = $query->get();
+
+        if ($users->isEmpty()) {
+            return back()->with('error', 'Tidak ada pengguna yang dipilih untuk dihapus.');
+        }
+
+        $currentUserId = Auth::id();
+        $skippedSelf = false;
+        $skippedTeacher = 0;
+        $skippedHomeroom = 0;
+        $deletedCount = 0;
+
+        DB::transaction(function () use ($users, $currentUserId, &$skippedSelf, &$skippedTeacher, &$skippedHomeroom, &$deletedCount) {
+            foreach ($users as $user) {
+                if ($user->id === $currentUserId) {
+                    $skippedSelf = true;
+                    continue;
+                }
+
+                if ($user->isTeacher() && $user->learningPlans()->exists()) {
+                    $skippedTeacher++;
+                    continue;
+                }
+
+                if ($user->isHomeroomTeacher() && $user->homeroomClasses()->exists()) {
+                    $skippedHomeroom++;
+                    continue;
+                }
+
+                $user->classes()->detach();
+                $user->children()->detach();
+                $user->parents()->detach();
+                $user->delete();
+                $deletedCount++;
+            }
+        });
+
+        $messages = [];
+        if ($deletedCount > 0) {
+            $messages[] = "{$deletedCount} pengguna berhasil dihapus.";
+        }
+        if ($skippedSelf) {
+            $messages[] = 'Akun Anda sendiri dilewati demi keamanan.';
+        }
+        if ($skippedTeacher > 0) {
+            $messages[] = "{$skippedTeacher} guru dilewati karena masih memiliki rencana pembelajaran aktif.";
+        }
+        if ($skippedHomeroom > 0) {
+            $messages[] = "{$skippedHomeroom} wali kelas dilewati karena masih terikat rombel binaan.";
+        }
+
+        $flashType = $deletedCount > 0 ? 'message' : 'error';
+
+        return redirect()->route('users.index')->with($flashType, implode(' ', $messages));
     }
 
     public function attachClass(Request $request, User $user): RedirectResponse

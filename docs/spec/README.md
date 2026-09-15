@@ -33,11 +33,13 @@ Blade hanya `resources/views/app.blade.php` + `resources/views/exports/*`.
 | 15 | TipTap rich editor (global) | [15-tiptap-editor](15-tiptap-editor/) |
 | 16 | Context-scoped media | [16-context-media](16-context-media/) |
 | 17 | Design system (Vue SoT) | [17-design-system](17-design-system/) |
+| 18 | Bulk actions & selection toolkit | [18-bulk-actions](18-bulk-actions/) |
 
 ## Untuk agent
 
 1. Pakai tabel **Lokasi artefak** di `verification.md` / `implementation.md` sebagai path kanonik.
 2. Debt hanya dari baris `todo` di `tasks.md`.
 3. Jangan menambah stack UI di luar Inertia + Vue tanpa ADR.
+4. Fitur/tahap baru yang selesai diimplementasikan dari `docs/discussions/` **wajib didokumentasikan di sini** (buat folder tahap baru, misal `18-...`, menggunakan `_template/`), daftarkan ke tabel tahap, dan catat di `docs/steering/handover.md`.
 
 Template: [`_template/`](_template/).

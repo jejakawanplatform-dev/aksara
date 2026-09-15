@@ -34,12 +34,40 @@ docs/discussions/
 Setiap dokumen diskusi harus memiliki status di bagian header:
 * `DRAFT` — Masih disusun oleh agent/human inisiator.
 * `OPEN` — Terbuka untuk tanggapan, tinjauan, dan kritik dari agent/human lain.
-* `CONSENSUS` — Telah disepakati bersama solusi terbaiknya.
-* `ADOPTED` — Sudah diimplementasikan dan tercatat di `spec/` atau `steering/decision-log.md`.
+* `CONSENSUS` — Telah disepakati bersama solusi dan parameter teknisnya.
+* `ADOPTED` — Pekerjaan telah selesai diimplementasikan, **terdokumentasi di `docs/spec/`**, dan dicatat di `docs/steering/handover.md`.
 * `REJECTED` — Usulan ditolak setelah evaluasi risiko/trade-off.
+
+---
+
+## 🔄 Alur Wajib Agen: Dari Diskusi ke Dokumentasi Spek & Handover
+
+Ketika sebuah inisiatif fitur/perubahan yang dibahas di folder ini selesai dieksekusi, **setiap agen/developer WAJIB menjalankan langkah-langkah penutupan berikut**:
+
+1. **Dokumentasikan ke `docs/spec/`:**
+   * Pekerjaan yang telah selesai **wajib dicatat tahapannya di `docs/spec/`** (sebagai folder tahap baru, misal `docs/spec/18-bulk-actions/`, atau memperbarui spek modul terkait).
+   * Format dokumentasi wajib mengikuti standar 4 berkas:
+     - `plan.md` (tujuan, scope, acceptance)
+     - `tasks.md` (checklist done/debt)
+     - `implementation.md` (lokasi controller, pages, components, & alur)
+     - `verification.md` (perintah test Pest & verifikasi manual)
+2. **Perbarui Status di `docs/steering/handover.md`:**
+   * Tambahkan kemampuan yang baru selesai ke bagian `## Status` ➔ `### Selesai` di [handover.md](../steering/handover.md) dengan tautan ke folder spek baru.
+   * Catat hasil verifikasi test (`php artisan test`).
+3. **Tutup Thread Diskusi:**
+   * Ubah status thread diskusi terkait dari `CONSENSUS` menjadi **`ADOPTED`**.
 
 ---
 
 ## 📝 Format Standar Thread Diskusi
 
 Gunakan [`_template.md`](_template.md) sebagai acuan untuk membuat dokumen diskusi baru.
+
+---
+
+## 📌 Daftar Thread Diskusi
+
+| Tanggal | Topik Diskusi | Status | Inisiator |
+| :--- | :--- | :---: | :--- |
+| 2026-09-15 | [Desain & Arsitektur Fitur Bulk Actions pada Data Table](2026-09-15-fitur-bulk-actions-tabel.md) | `ADOPTED` | Antigravity AI & Developer |
+

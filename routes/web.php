@@ -83,6 +83,7 @@ Route::middleware(['auth', 'permission:materials.read|plans.manage'])->prefix('m
 Route::middleware(['auth', 'permission:users.manage'])->prefix('users')->name('users.')->group(function () {
     Route::get('/', [UserController::class, 'index'])->name('index');
     Route::post('/', [UserController::class, 'store'])->name('store');
+    Route::post('/bulk-destroy', [UserController::class, 'bulkDestroy'])->name('bulk-destroy');
     Route::put('/{user}', [UserController::class, 'update'])->name('update');
     Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     Route::post('/{user}/attach-class', [UserController::class, 'attachClass'])->name('attach-class');

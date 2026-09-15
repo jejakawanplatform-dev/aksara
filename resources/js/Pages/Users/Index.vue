@@ -16,6 +16,9 @@ import Icon from '@/Components/ui/Icon.vue';
 import IconButton from '@/Components/ui/IconButton.vue';
 import Pagination from '@/Components/ui/Pagination.vue';
 import Modal from '@/Components/ui/Modal.vue';
+import BulkToolbar from '@/Components/ui/BulkToolbar.vue';
+import BulkConfirmModal from '@/Components/ui/BulkConfirmModal.vue';
+import { useBulkSelect } from '@/Composables/useBulkSelect';
 
 const props = defineProps({
     pageTitle: { type: String, default: 'Manajemen Pengguna' },
@@ -42,10 +45,42 @@ const filterQuery = computed(() => ({
     linksUserId: props.linksUser?.id,
 }));
 
+const bulk = useBulkSelect();
+const showBulkDeleteModal = ref(false);
+const isBulkDeleting = ref(false);
+
+function openBulkDelete() {
+    showBulkDeleteModal.value = true;
+}
+
+function submitBulkDelete() {
+    isBulkDeleting.value = true;
+    router.post(
+        props.urls.bulkDestroy,
+        {
+            ids: bulk.isAllMatching.value ? [] : bulk.selectedIds.value,
+            select_all_matching: bulk.isAllMatching.value,
+            search: localFilters.search || undefined,
+            role: localFilters.role || undefined,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                bulk.clearSelection();
+                showBulkDeleteModal.value = false;
+            },
+            onFinish: () => {
+                isBulkDeleting.value = false;
+            },
+        },
+    );
+}
+
 let filterTimer = null;
 watch(
     localFilters,
     () => {
+        bulk.clearSelection();
         clearTimeout(filterTimer);
         filterTimer = setTimeout(() => {
             router.get(
@@ -206,7 +241,33 @@ function saveHomeroom() {
                 </template>
             </PageHeader>
 
-            <div class="aksara-surface p-4 sm:p-5">
+            <!-- Contextual Toolbar: Swap antara Filter biasa dan Aksi Massal -->
+            <BulkToolbar
+                v-if="bulk.hasSelection.value"
+                :selected-count="bulk.getSelectedCount(users.total)"
+                :total-count="users.total || 0"
+                :current-page-count="users.data?.length || 0"
+                :is-all-matching="bulk.isAllMatching.value"
+                item-label="pengguna"
+                @clear="bulk.clearSelection"
+                @select-all-matching="bulk.selectAllMatching"
+                @clear-matching="bulk.isAllMatching.value = false"
+            >
+                <template #actions>
+                    <Btn
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        class="gap-1.5"
+                        @click="openBulkDelete"
+                    >
+                        <Icon name="trash" class="h-3.5 w-3.5" />
+                        Hapus terpilih ({{ bulk.getSelectedCount(users.total) }})
+                    </Btn>
+                </template>
+            </BulkToolbar>
+
+            <div v-else class="aksara-surface p-4 sm:p-5">
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Field label="Cari" for-id="user-search">
                         <input
@@ -242,6 +303,16 @@ function saveHomeroom() {
                     <table class="aksara-table w-full min-w-[640px]">
                         <thead>
                             <tr>
+                                <th class="aksara-th w-10 text-center">
+                                    <input
+                                        type="checkbox"
+                                        class="h-4 w-4 cursor-pointer rounded border-aksara-line text-aksara-primary focus:ring-aksara-primary/30"
+                                        :checked="bulk.isAllSelected(users.data)"
+                                        :indeterminate="bulk.isIndeterminate(users.data)"
+                                        aria-label="Pilih semua di halaman ini"
+                                        @change="bulk.toggleSelectAll(users.data)"
+                                    />
+                                </th>
                                 <th class="aksara-th">Nama</th>
                                 <th class="aksara-th">Email</th>
                                 <th class="aksara-th">Role</th>
@@ -249,7 +320,25 @@ function saveHomeroom() {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="user in users.data" :key="user.id" class="hover:bg-aksara-mist/40">
+                            <tr
+                                v-for="user in users.data"
+                                :key="user.id"
+                                :class="[
+                                    'transition-colors',
+                                    bulk.isSelected(user.id) || bulk.isAllMatching.value
+                                        ? 'bg-aksara-primary/5 hover:bg-aksara-primary/10'
+                                        : 'hover:bg-aksara-mist/40',
+                                ]"
+                            >
+                                <td class="aksara-td w-10 text-center">
+                                    <input
+                                        type="checkbox"
+                                        class="h-4 w-4 cursor-pointer rounded border-aksara-line text-aksara-primary focus:ring-aksara-primary/30"
+                                        :checked="bulk.isSelected(user.id) || bulk.isAllMatching.value"
+                                        aria-label="Pilih pengguna"
+                                        @change="bulk.toggleSelect(user.id)"
+                                    />
+                                </td>
                                 <td class="aksara-td font-semibold text-aksara-ink">{{ user.name }}</td>
                                 <td class="aksara-td text-sm text-aksara-muted">{{ user.email }}</td>
                                 <td class="aksara-td text-sm">{{ user.roleLabel }}</td>
@@ -362,5 +451,19 @@ function saveHomeroom() {
                 </div>
             </template>
         </Modal>
+
+        <BulkConfirmModal
+            :open="showBulkDeleteModal"
+            title="Hapus Pengguna Terpilih"
+            description="Akun pengguna yang dipilih akan dihapus secara permanen beserta relasi rombel dan perwalian. Guru yang memiliki rencana pembelajaran aktif dan wali kelas yang terikat rombel akan otomatis dilewati demi integritas data."
+            :count="bulk.getSelectedCount(users.total)"
+            item-label="pengguna"
+            confirm-word="HAPUS"
+            :danger="true"
+            :processing="isBulkDeleting"
+            confirm-button-text="Ya, Hapus Sekarang"
+            @close="showBulkDeleteModal = false"
+            @confirm="submitBulkDelete"
+        />
     </AppLayout>
 </template>

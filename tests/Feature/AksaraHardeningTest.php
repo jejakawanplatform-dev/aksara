@@ -144,7 +144,7 @@ class AksaraHardeningTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Reports/Teacher')
                 ->has('reportData')
-                ->where('reportData.0.topic', fn ($topic) => str_contains($topic, 'Dekomposisi'))
+                ->where('reportData.data.0.topic', fn ($topic) => str_contains($topic, 'Dekomposisi'))
             );
     }
 

@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
 final class SidebarNav
 {
     /**
-     * @return list<array{title: string, items: list<array{label: string, href: string, active: bool, permission: ?string, icon: string}>}>
+     * @return list<array{title: string, items: list<array{label: string, href: ?string, active: bool, permission: ?string, icon: string, children?: list<array{label: string, href: string, permission: ?string}>}>}>
      */
     public static function groups(Request $request): array
     {
