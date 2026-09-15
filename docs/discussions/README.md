@@ -70,4 +70,5 @@ Gunakan [`_template.md`](_template.md) sebagai acuan untuk membuat dokumen disku
 | Tanggal | Topik Diskusi | Status | Inisiator |
 | :--- | :--- | :---: | :--- |
 | 2026-09-15 | [Desain & Arsitektur Fitur Bulk Actions pada Data Table](2026-09-15-fitur-bulk-actions-tabel.md) | `ADOPTED` | Antigravity AI & Developer |
+| 2026-09-15 | [Evaluasi Kesenjangan Test Suite & Perancangan Smoke Test Otomatis](2026-09-15-strategi-smoke-test-dan-gap-test-suite.md) | `ADOPTED` | Antigravity AI & Developer |
 

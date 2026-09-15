@@ -22,8 +22,8 @@ Standar ini wajib dipatuhi manusia maupun AI agent.
 | Auth pages | Breeze Inertia → `Pages/Auth/*` |
 | PDF / export view | Blade di `resources/views/exports` saja |
 | Format | `vendor/bin/pint` |
-| Static analysis | Larastan / PHPStan level 5 (`vendor/bin/phpstan analyse`) |
-| Test | `php artisan test` (Pest); assert Inertia / HTTP feature |
+| Static analysis | Larastan / PHPStan **Level 9** (`vendor/bin/phpstan analyse --memory-limit=1G`) |
+| Test | `php artisan test` (Pest); assert Inertia / HTTP feature + Smoke Test |
 | Assets | `npm run build` / `npm run dev` (Vite entry: `inertia-app.js`) |
 | Config | Hanya lewat `.env` / `config/*` — tanpa hard-code secret |
 
@@ -68,7 +68,7 @@ resources/views/
   exports/                     ← PDF Blade
 routes/web.php|auth.php
 docs/steering|spec/
-tests/Feature|Unit/
+tests/Feature|Unit|Smoke/
 ```
 
 ### Aturan arsitektur
@@ -104,7 +104,37 @@ tests/Feature|Unit/
 5. Jangan commit `.env`.
 6. HTML materi disanitasi (`MaterialContentHtml`) sebelum persist/tampil.
 
-## 7. Definition of Done (per tugas)
+## 7. Quality Assurance (QA) Wajib Sebelum Selesai
+
+Setiap perubahan kode (backend maupun frontend) **WAJIB** melalui gerbang pengujian (QA gate) berikut sebelum pekerjaan dinyatakan selesai atau di-commit:
+
+1. **Pest Test Suite (100% Pass):**
+   ```bash
+   php artisan test
+   ```
+   Seluruh pengujian unit dan fitur (146+ tests) wajib berstatus hijau (`passed`).
+2. **Smoke Test Lintas Role (Critical Journey):**
+   ```bash
+   php artisan test --filter=CriticalJourneySmokeTest
+   ```
+   Wajib dijalankan terutama bila menyentuh routing, middleware, otorisasi, atau model inti 5 role (Admin, Guru, Siswa, Wali Kelas, Wali Murid).
+3. **Static Analysis PHPStan Level 9 (0 Error):**
+   ```bash
+   vendor/bin/phpstan analyse --memory-limit=1G
+   ```
+   Wajib menghasilkan output `[OK] No errors` pada **Level 9**. Larang menurunkan level analisis tanpa konsensus tim arsitek.
+4. **Frontend Asset Build (0 Error & 0 Warning):**
+   ```bash
+   npm run build
+   ```
+   Wajib selesai tanpa kompilasi gagal, sintaks error, atau dependensi Vue/Tailwind yang hilang.
+5. **Code Style Formatting:**
+   ```bash
+   vendor/bin/pint --test
+   ```
+   Format kode PHP harus mematuhi standar Laravel Pint.
+
+## 8. Definition of Done (per tugas)
 
 Sebuah tugas dianggap selesai bila:
 
@@ -112,14 +142,15 @@ Sebuah tugas dianggap selesai bila:
 - [ ] Otorisasi permission/role/kepemilikan diverifikasi
 - [ ] AI (bila ada) tetap menghasilkan draf + tervalidasi
 - [ ] Page Vue memakai layout/komponen UI yang ada (bukan markup ad-hoc berlebihan)
-- [ ] Test relevan dijalankan / ditambahkan
-- [ ] Pint/PHPStan tidak memperkenalkan regresi jelas
-- [ ] `npm run build` hijau jika menyentuh frontend
+- [ ] QA Gate lulus penuh (Pest 100%, PHPStan Level 9 = 0 error, npm run build = hijau)
 - [ ] `handover.md` / `decision-log.md` diperbarui bila perlu
+- [ ] Dokumentasi spesifikasi di `docs/spec/` atau diskusi di `docs/discussions/` diperbarui
 
-## 8. Instruksi wajib ke agent
+## 9. Instruksi wajib ke agent
 
-Setiap prompt ke agent harus memuat:
+Setiap agen AI (manusia maupun otomatis) yang membuat atau memperbarui kode pada proyek Aksara **DILARANG KERAS** menyatakan tugas selesai atau melakukan serah-terima (`handover`) sebelum menjalankan verifikasi QA suite di atas.
+
+Setiap prompt atau eksekusi agent harus memuat:
 
 1. dokumen `/docs` yang wajib dibaca;
 2. satu tujuan spesifik;
@@ -127,7 +158,7 @@ Setiap prompt ke agent harus memuat:
 4. acceptance criteria;
 5. batasan data/keamanan;
 6. rencana sebelum implementasi;
-7. ringkasan test + risiko setelahnya.
+7. **eksekusi QA suite wajib** (Pest + PHPStan L9 + Build) dan pencatatan buktinya di ringkasan serah-terima.
 
 Template lengkap: lihat `docs/steering/handover.md` dan spek kemampuan di `docs/spec/` (piramida terbalik).
 

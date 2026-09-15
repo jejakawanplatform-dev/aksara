@@ -34,6 +34,7 @@ Blade hanya `resources/views/app.blade.php` + `resources/views/exports/*`.
 | 16 | Context-scoped media | [16-context-media](16-context-media/) |
 | 17 | Design system (Vue SoT) | [17-design-system](17-design-system/) |
 | 18 | Bulk actions & selection toolkit | [18-bulk-actions](18-bulk-actions/) |
+| 19 | Smoke testing & QA suite enforcer | [19-smoke-testing-qa](19-smoke-testing-qa/) |
 
 ## Untuk agent
 

@@ -245,16 +245,19 @@ class UserController extends Controller
             foreach ($users as $user) {
                 if ($user->id === $currentUserId) {
                     $skippedSelf = true;
+
                     continue;
                 }
 
                 if ($user->isTeacher() && $user->learningPlans()->exists()) {
                     $skippedTeacher++;
+
                     continue;
                 }
 
                 if ($user->isHomeroomTeacher() && $user->homeroomClasses()->exists()) {
                     $skippedHomeroom++;
+
                     continue;
                 }
 

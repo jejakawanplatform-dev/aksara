@@ -43,19 +43,19 @@ class ReferenceController extends Controller
     /** Tab yang diizinkan per section sub-menu. */
     private const SECTION_CONFIG = [
         'references.section.school' => [
-            'tabs'       => ['profil', 'operasional'],
+            'tabs' => ['profil', 'operasional'],
             'defaultTab' => 'profil',
-            'pageTitle'  => 'Profil Sekolah',
+            'pageTitle' => 'Profil Sekolah',
         ],
         'references.section.academic' => [
-            'tabs'       => ['tahun', 'semester', 'rombel', 'mapel'],
+            'tabs' => ['tahun', 'semester', 'rombel', 'mapel'],
             'defaultTab' => 'tahun',
-            'pageTitle'  => 'Data Akademik',
+            'pageTitle' => 'Data Akademik',
         ],
         'references.section.curriculum' => [
-            'tabs'       => ['cp', 'atp'],
+            'tabs' => ['cp', 'atp'],
             'defaultTab' => 'cp',
-            'pageTitle'  => 'Kurikulum',
+            'pageTitle' => 'Kurikulum',
         ],
     ];
 
@@ -66,10 +66,10 @@ class ReferenceController extends Controller
 
         $canManage = $user->can(PermissionCatalog::REFERENCES_MANAGE);
 
-        $routeName   = $request->route()?->getName() ?? 'references.index';
+        $routeName = $request->route()?->getName() ?? 'references.index';
         $sectionConf = self::SECTION_CONFIG[$routeName] ?? null;
         $allowedTabs = $sectionConf ? $sectionConf['tabs'] : self::TABS;
-        $pageTitle   = $sectionConf ? $sectionConf['pageTitle'] : 'Referensi Master';
+        $pageTitle = $sectionConf ? $sectionConf['pageTitle'] : 'Referensi Master';
 
         $sectionDefaultTab = $sectionConf
             ? ($canManage ? $sectionConf['defaultTab'] : ($sectionConf['defaultTab'] === 'profil' ? 'operasional' : $sectionConf['defaultTab']))
@@ -277,7 +277,7 @@ class ReferenceController extends Controller
 
         $allTabs = [
             ['key' => 'profil',     'label' => 'Profil Sekolah',  'adminOnly' => true],
-            ['key' => 'operasional','label' => 'Operasional',     'adminOnly' => true],
+            ['key' => 'operasional', 'label' => 'Operasional',     'adminOnly' => true],
             ['key' => 'tahun',     'label' => 'Tahun Ajaran',     'adminOnly' => false],
             ['key' => 'semester',  'label' => 'Semester',         'adminOnly' => false],
             ['key' => 'rombel',    'label' => 'Rombel',           'adminOnly' => false],

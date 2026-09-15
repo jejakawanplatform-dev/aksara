@@ -8,10 +8,11 @@ Membuktikan bahwa vertical slice aman secara permission/role, alur bisnis benar,
 
 | Tool | Perintah | Fungsi |
 |---|---|---|
-| Pest / PHPUnit | `php artisan test` | Feature & unit |
-| Larastan | `vendor/bin/phpstan analyse` | Type / static analysis |
-| Pint | `vendor/bin/pint` | Format PHP |
-| Vite | `npm run build` | Bundle Inertia/Vue/TipTap |
+| Pest / PHPUnit | `php artisan test` | Feature & unit (100% wajib pass) |
+| Pest Smoke Test | `php artisan test --filter=CriticalJourneySmokeTest` | Alur kritis lintas 5 role sekolah |
+| Larastan | `vendor/bin/phpstan analyse --memory-limit=1G` | Type / static analysis **Level 9 (0 error)** |
+| Pint | `vendor/bin/pint --test` | Format PHP |
+| Vite | `npm run build` | Bundle Inertia/Vue/TipTap (0 error & warning) |
 | CI | `.github/workflows/ci.yml` | PHP 8.4 + MySQL |
 
 ## Lapisan pengujian
@@ -44,18 +45,15 @@ Membuktikan bahwa vertical slice aman secara permission/role, alur bisnis benar,
 
 Untuk respons Inertia, utamakan assert status + permission; boleh `assertInertia(fn …)` bila paket/helpers tersedia di suite.
 
-### 4. Alur bisnis (smoke)
+### 4. Smoke Test Terpadu (Critical Journey Smoke Test)
 
-1. Guru buat rencana → `draft`.
-2. Generate AI → `ai_generations` `pending`.
-3. Approve → plan `reviewed`, material `draft`.
-4. Publish → plan + material `published`.
-5. Siswa buka materi → `learning_events`.
-6. Siswa submit kuis → `quiz_attempts.score`.
-7. Guru isi absensi + evaluasi → upsert.
-8. Laporan guru / dashboard wali menampilkan ringkasan.
-9. Co-Pilot: ceklis gambar kondisional; apply tanpa `<img>` palsu.
-10. Upload TipTap → `storage/app/public/materials/{id}/`.
+Pengujian alur kritis bersambung dalam satu eksekusi terpadu (`tests/Feature/Smoke/CriticalJourneySmokeTest.php`):
+1. **Admin**: Mengakses Dashboard Admin, Manajemen Pengguna (`/users`), Pengaturan AI System (`/settings`), dan Referensi Kurikulum (`/references`).
+2. **Guru**: Mengakses Dashboard Guru, daftar RPP (`/plans`), dan membuka Editor TipTap materi pembelajaran (`/materials/{id}/edit`).
+3. **Siswa**: Mengakses Dashboard Siswa, membaca materi (`/materials/{id}`), mencatat `learning_events`, dan mengerjakan kuis interaktif hingga submit skor (`quiz_attempts`).
+4. **Guru**: Mengisi absensi kehadiran siswa (`attendance_records`) dan menyimpan evaluasi & refleksi pembelajaran (`teacher_evaluations`).
+5. **Wali Kelas**: Mengakses Dashboard Wali Kelas dan membuka rekap kehadiran kelas (`/attendance/summary`).
+6. **Wali Murid**: Mengakses Dashboard Wali Murid dan memantau capaian kehadiran dan kuis anak secara transparan.
 
 ### 5. Frontend (manual / browser)
 
@@ -69,6 +67,7 @@ Bukan pengganti feature test otorisasi.
 
 | Area | File |
 |---|---|
+| Smoke Test Terpadu | `tests/Feature/Smoke/CriticalJourneySmokeTest.php` |
 | Dasar / role / seed | `tests/Feature/AksaraTest.php`, `AksaraHardeningTest.php` |
 | Auth Breeze | `tests/Feature/Auth/*`, `ProfileTest.php` |
 | Materi + Co-Pilot | `MaterialAiCopilotTest.php`, `MaterialAuthoringTest.php` |
@@ -78,24 +77,36 @@ Bukan pengganti feature test otorisasi.
 | Referensi | `ReferenceCrudTest.php`, `ReferenceExportImportTest.php` |
 | Users / RBAC / settings | `UserManagementTest.php`, `RbacMatrixTest.php`, `SystemSettingsTest.php` |
 | Oversight | `AdminOversightTest.php` |
+| Absensi & Evaluasi | `AttendanceEvaluationInertiaTest.php` |
 
-## Cara menjalankan lokal
+## Cara menjalankan lokal (QA Gate Wajib)
 
 ```bash
+# 1. Full Pest Test Suite
 php artisan test
-php artisan test --filter=MaterialAiCopilotTest
-vendor/bin/phpstan analyse
+
+# 2. Critical Journey Smoke Test
+php artisan test --filter=CriticalJourneySmokeTest
+
+# 3. Static Analysis PHPStan Level 9
+vendor/bin/phpstan analyse --memory-limit=1G
+
+# 4. Code Formatting Check
 vendor/bin/pint --test
+
+# 5. Frontend Assets Compilation
 npm run build
 ```
 
-## Definition of done untuk test
+## Definition of done untuk test & agen AI
 
-1. Test lama tetap hijau.
+1. Test lama tetap hijau (100% passed).
 2. Minimal satu test baru untuk path kritis yang diubah (permission atau alur).
-3. Sentuh Vue/CSS → `npm run build` sukses.
-4. Catat perintah + hasil di `handover.md` bila perubahan besar.
-5. Jangan mengandalkan “berhasil di browser saja” untuk authorization.
+3. Smoke test alur 5 role tetap lulus.
+4. PHPStan tetap di **Level 9 dengan 0 errors / 0 warnings**.
+5. `npm run build` sukses tanpa error/warning jika menyentuh frontend.
+6. Catat perintah + hasil di `handover.md` bila perubahan besar.
+7. Dilarang mengandalkan “berhasil di browser saja” untuk authorization.
 
 ## Yang sengaja ditunda
 

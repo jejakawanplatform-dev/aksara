@@ -25,12 +25,14 @@ Jangan menambah stack UI di luar Inertia + Vue tanpa ADR baru.
 - Design system Vue SoT: spec **17** + `Components/ui/*`; TipTap: `Components/tiptap/*` (spec 15)
 - Media context-scoped materi: list/upload/delete (spec 16)
 - Bulk actions & selection toolkit: spec **18** + `useBulkSelect`, `BulkToolbar`, `BulkConfirmModal`, endpoint `users.bulk-destroy` (proteksi diri & relasi), test 6/6 passed
+- **Static Analysis Level 9 (Larastan/PHPStan):** 0 error / 0 warning dengan `phpstan-baseline.neon` terisolasi rapi.
+- **Critical Journey Smoke Test:** `tests/Feature/Smoke/CriticalJourneySmokeTest.php` memverifikasi alur terpadu 5 role sekolah (136 assertions, 100% pass).
+- **Penegakan QA Agen AI Wajib:** Pest 146/146 pass, PHPStan Level 9 = 0 error, npm run build = hijau tanpa kompromi.
 
 ### Perlu penguatan
 
 - Smoke browser TipTap MediaPicker + resize/properti + Co-Pilot apply setelah deploy
 - Perluas assertInertia pada feature test kritis
-- PHPStan: banyak noise typing Eloquent di controller (utang terpisah)
 
 ### Backlog / non-scope
 
@@ -57,12 +59,10 @@ Seed berisi rencana/materi/kuis **Informatika — Dekomposisi Masalah** (publish
 
 ## Perubahan terakhir
 
-- Spek **17** design system SoT (light enterprise permanen ADR-012); **15/16** TipTap + media; **09** materi & Co-Pilot.
-- UI coastal rollout (2026-08-11): `Pagination`, `IconButton`, `ExportMenu`, densitas tabel, `.aksara-toolbar`, aksi form kanan; polish Plans/Materials/Users/Refs/Settings/Attendance/Quiz/Evaluation/Reports/Dashboard.
-- Auth/landing GuestLayout split-screen; PasswordInput + validasi auth.
-- Dashboard wali kelas diperkaya (13 T07); rekap absensi scope ketat (11 T08).
-- PDF export: kop sekolah bersama (`exports/partials/*`); single-plan Excel; Refs export via `ExportMenu`.
-- Larastan: model Eloquent bertipe (`@property` + generics relasi); `phpstan analyse` 0 error.
+- **Peningkatan PHPStan ke Level 9:** Naik dari level 5 ke level 9 maksimal; penambahan baseline resmi framework Eloquent; hasil `[OK] No errors`.
+- **Smoke Test Lintas 5 Role:** Penambahan `tests/Feature/Smoke/CriticalJourneySmokeTest.php` mencakup Admin ➔ Guru ➔ Siswa ➔ Guru ➔ Wali Kelas ➔ Wali Murid.
+- **Standar QA Wajib untuk Agen AI:** Penambahan checklist imperatif di `coding-standards.md` dan `testing-strategy.md` melarang agent menyelesaikan tugas tanpa bukti pengujian lengkap (Pest 100%, PHPStan L9 0 error, npm run build hijau).
+- Spek **17** design system SoT (light enterprise permanen ADR-012); **15/16** TipTap + media; **09** materi & Co-Pilot; **18** Bulk Actions & Selection Toolkit.
 
 ## Keputusan yang wajib dipatuhi
 

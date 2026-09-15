@@ -1,12 +1,13 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
 
 parameters:
     paths:
         - app
 
-    # Level 5 — seimbang antara strict dan praktis untuk workshop
-    level: 5
+    # Level 9 — level tertinggi & paling ketat untuk static analysis
+    level: 9
 
     # Casts / enum PHPDoc sering terlalu "certain" di Larastan → noise instanceof/narrowing
     treatPhpDocTypesAsCertain: false
