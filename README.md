@@ -70,17 +70,21 @@ php artisan serve
 ## Perintah Berguna
 
 ```bash
-php artisan aksara:seed-demo    # Reset + isi ulang data demo
-php artisan test                # Pest feature/unit
-vendor/bin/phpstan analyse      # Static analysis Larastan
-php artisan route:list          # Daftar semua routes
+php artisan aksara:seed-demo             # Reset + isi ulang data demo
+php artisan test                         # Pest feature/unit suite
+php artisan test --filter=CriticalJourneySmokeTest  # Smoke test lintas 5 role
+vendor/bin/phpstan analyse --memory-limit=1G        # Static analysis Larastan (Level 9)
+vendor/bin/pint --test                   # Pemeriksaan format kode
+npm run build                            # Kompilasi aset Vite (Vue 3/Inertia)
 ```
 
 ---
 
 ## Dokumentasi
 
+- Log Perubahan & Rilis: [`CHANGELOG.md`](CHANGELOG.md)
 - Steering (aturan tetap): `docs/steering/`
 - Deploy / env / rollback: `docs/steering/deployment.md`
-- Spek bertahap: `docs/spec/`
+- Spek bertahap (01–19): `docs/spec/`
+- Diskusi antar agent / RFC: `docs/discussions/`
 - Handover status: `docs/steering/handover.md`
