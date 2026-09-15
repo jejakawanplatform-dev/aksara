@@ -5,9 +5,9 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "test:unit": "vitest run",
-        "test:unit:watch": "vitest",
-        "test:e2e": "playwright test"
+        "test:unit": "node --max-old-space-size=2048 ./node_modules/vitest/vitest.mjs run",
+        "test:unit:watch": "node --max-old-space-size=2048 ./node_modules/vitest/vitest.mjs",
+        "test:e2e": "node --max-old-space-size=2048 ./node_modules/@playwright/test/cli.js test"
     },
     "devDependencies": {
         "@playwright/test": "^1.63.0",
