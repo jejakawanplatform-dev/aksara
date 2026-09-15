@@ -152,8 +152,7 @@ function exportItems(plan) {
         { label: 'PDF', href: plan.urls.exportPdf, icon: 'pdf', target: '_blank' },
     ];
 }
-
-
+</script>
 
 <template>
     <AppLayout title="Rencana Pembelajaran">
