@@ -18,6 +18,9 @@ import Pagination from '@/Components/ui/Pagination.vue';
 import IconButton from '@/Components/ui/IconButton.vue';
 import ExportMenu from '@/Components/ui/ExportMenu.vue';
 import Icon from '@/Components/ui/Icon.vue';
+import BulkToolbar from '@/Components/ui/BulkToolbar.vue';
+import BulkConfirmModal from '@/Components/ui/BulkConfirmModal.vue';
+import { useBulkSelect } from '@/Composables/useBulkSelect';
 
 const props = defineProps({
     plans: { type: Object, required: true },
@@ -28,6 +31,7 @@ const props = defineProps({
     importTemplateUrl: { type: String, required: true },
     importUrl: { type: String, required: true },
     indexUrl: { type: String, required: true },
+    bulkDestroyUrl: { type: String, required: true },
     createAiUrl: { type: String, required: true },
     createManualUrl: { type: String, required: true },
     exportUrls: { type: Object, required: true },
@@ -51,24 +55,50 @@ const filterQuery = computed(() => ({
     per_page: perPage.value,
 }));
 
-const showImport = ref(false);
-const importForm = useForm({
-    importFile: null,
-});
+// ── Bulk Select ────────────────────────────────────────────────
+const bulk = useBulkSelect();
+const showBulkDeleteModal = ref(false);
+const isBulkDeleting = ref(false);
+
+function openBulkDelete() {
+    showBulkDeleteModal.value = true;
+}
+
+function submitBulkDelete() {
+    isBulkDeleting.value = true;
+    router.post(
+        props.bulkDestroyUrl,
+        {
+            ids: bulk.isAllMatching.value ? [] : bulk.selectedIds.value,
+            select_all_matching: bulk.isAllMatching.value,
+            search: localFilters.search || undefined,
+            status: localFilters.status || undefined,
+            teacher: localFilters.teacher || undefined,
+            subject: localFilters.subject || undefined,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                bulk.clearSelection();
+                showBulkDeleteModal.value = false;
+            },
+            onFinish: () => {
+                isBulkDeleting.value = false;
+            },
+        },
+    );
+}
 
 let filterTimer = null;
-
 watch(
     localFilters,
     () => {
+        bulk.clearSelection();
         clearTimeout(filterTimer);
         filterTimer = setTimeout(() => {
             router.get(
                 props.indexUrl,
-                {
-                    ...filterQuery.value,
-                    page: 1,
-                },
+                { ...filterQuery.value, page: 1 },
                 { preserveState: true, replace: true },
             );
         }, 300);
@@ -76,13 +106,22 @@ watch(
     { deep: true },
 );
 
+watch(
+    () => props.plans.data,
+    () => bulk.clearSelection(),
+);
+// ──────────────────────────────────────────────────────────────
+
+const showImport = ref(false);
+const importForm = useForm({ importFile: null });
+
 function onImportFile(e) {
-    importForm.importFile = e.target.files?.[0] ?? null;
+    importForm.importFile = e.target.files[0] ?? null;
 }
 
 function submitImport() {
     importForm.post(props.importUrl, {
-        forceFormData: true,
+        preserveScroll: true,
         onSuccess: () => {
             showImport.value = false;
             importForm.reset();
@@ -90,9 +129,10 @@ function submitImport() {
     });
 }
 
-function deletePlan(url) {
-    if (!window.confirm('Yakin ingin menghapus rencana pembelajaran ini?')) return;
-    router.delete(url);
+function deletePlan(destroyUrl) {
+    if (confirm('Yakin hapus rencana pembelajaran ini?')) {
+        router.delete(destroyUrl, { preserveScroll: true });
+    }
 }
 
 function materiClass(plan) {
@@ -112,7 +152,8 @@ function exportItems(plan) {
         { label: 'PDF', href: plan.urls.exportPdf, icon: 'pdf', target: '_blank' },
     ];
 }
-</script>
+
+
 
 <template>
     <AppLayout title="Rencana Pembelajaran">
@@ -158,7 +199,33 @@ function exportItems(plan) {
                 </template>
             </PageHeader>
 
-            <div class="aksara-surface p-4 sm:p-5">
+            <!-- Contextual Toolbar: Swap antara Filter biasa dan Aksi Massal -->
+            <BulkToolbar
+                v-if="bulk.hasSelection.value"
+                :selected-count="bulk.getSelectedCount(plans.total)"
+                :total-count="plans.total || 0"
+                :current-page-count="plans.data?.length || 0"
+                :is-all-matching="bulk.isAllMatching.value"
+                item-label="rencana pembelajaran"
+                @clear="bulk.clearSelection"
+                @select-all-matching="bulk.selectAllMatching"
+                @clear-matching="bulk.isAllMatching.value = false"
+            >
+                <template #actions>
+                    <Btn
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        class="gap-1.5"
+                        @click="openBulkDelete"
+                    >
+                        <Icon name="trash" class="h-3.5 w-3.5" />
+                        Hapus terpilih ({{ bulk.getSelectedCount(plans.total) }})
+                    </Btn>
+                </template>
+            </BulkToolbar>
+
+            <div v-else class="aksara-surface p-4 sm:p-5">
                 <div
                     class="grid grid-cols-1 gap-3"
                     :class="isAdmin ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'"
@@ -209,6 +276,16 @@ function exportItems(plan) {
                     <table class="aksara-table w-full min-w-[880px]">
                         <thead>
                             <tr>
+                                <th class="aksara-th w-10 text-center">
+                                    <input
+                                        type="checkbox"
+                                        class="h-4 w-4 cursor-pointer rounded border-aksara-line text-aksara-primary focus:ring-aksara-primary/30"
+                                        :checked="bulk.isAllSelected(plans.data)"
+                                        :indeterminate="bulk.isIndeterminate(plans.data)"
+                                        aria-label="Pilih semua di halaman ini"
+                                        @change="bulk.toggleSelectAll(plans.data)"
+                                    />
+                                </th>
                                 <th class="aksara-th">Topik</th>
                                 <th v-if="isAdmin" class="aksara-th">Guru</th>
                                 <th class="aksara-th">Mapel / Kelas</th>
@@ -217,7 +294,25 @@ function exportItems(plan) {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="plan in plans.data" :key="plan.id" class="hover:bg-aksara-mist/40">
+                            <tr
+                                v-for="plan in plans.data"
+                                :key="plan.id"
+                                :class="[
+                                    'transition-colors',
+                                    bulk.isSelected(plan.id) || bulk.isAllMatching.value
+                                        ? 'bg-aksara-primary/5 hover:bg-aksara-primary/10'
+                                        : 'hover:bg-aksara-mist/40',
+                                ]"
+                            >
+                                <td class="aksara-td w-10 text-center">
+                                    <input
+                                        type="checkbox"
+                                        class="h-4 w-4 cursor-pointer rounded border-aksara-line text-aksara-primary focus:ring-aksara-primary/30"
+                                        :checked="bulk.isSelected(plan.id) || bulk.isAllMatching.value"
+                                        aria-label="Pilih RPP"
+                                        @change="bulk.toggleSelect(plan.id)"
+                                    />
+                                </td>
                                 <td class="aksara-td">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="font-medium text-aksara-ink">{{ plan.topic }}</span>
@@ -335,5 +430,14 @@ function exportItems(plan) {
                 <Btn size="sm" :disabled="importForm.processing" @click="submitImport">Impor</Btn>
             </template>
         </Modal>
+
+        <BulkConfirmModal
+            v-model="showBulkDeleteModal"
+            :count="bulk.getSelectedCount(plans.total)"
+            :loading="isBulkDeleting"
+            item-label="rencana pembelajaran"
+            danger-word="HAPUS"
+            @confirm="submitBulkDelete"
+        />
     </AppLayout>
 </template>

@@ -130,6 +130,7 @@ class PlanController extends Controller
             'importTemplateUrl' => route('plans.import.template'),
             'importUrl' => route('plans.import'),
             'indexUrl' => route('plans.index'),
+            'bulkDestroyUrl' => route('plans.bulk-destroy'),
             'createAiUrl' => route('plans.create', ['mode' => 'ai']),
             'createManualUrl' => route('plans.create', ['mode' => 'manual']),
             'exportUrls' => [
@@ -283,6 +284,80 @@ class PlanController extends Controller
 
         return back()->with('message', 'Rencana pembelajaran dihapus.');
     }
+
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'ids'                 => ['required_without:select_all_matching', 'array'],
+            'ids.*'               => ['integer', 'exists:learning_plans,id'],
+            'select_all_matching' => ['nullable', 'boolean'],
+            'search'              => ['nullable', 'string'],
+            'status'              => ['nullable', 'string'],
+            'teacher'             => ['nullable', 'string'],
+            'subject'             => ['nullable', 'string'],
+        ]);
+
+        $query = LearningPlan::query()->forCurrentUser();
+
+        if (! empty($validated['select_all_matching'])) {
+            $search  = (string) ($validated['search'] ?? '');
+            $status  = (string) ($validated['status'] ?? '');
+            $teacher = (string) ($validated['teacher'] ?? '');
+            $subject = (string) ($validated['subject'] ?? '');
+
+            $query
+                ->when($search !== '', fn ($q) => $q->where('topic', 'like', "%{$search}%"))
+                ->when($status !== '', fn ($q) => $q->where('status', $status))
+                ->when($teacher !== '', fn ($q) => $q->where('teacher_id', $teacher))
+                ->when($subject !== '', fn ($q) => $q->where('subject_id', $subject));
+        } else {
+            $query->whereIn('id', $validated['ids'] ?? []);
+        }
+
+        $plans = $query->get();
+
+        if ($plans->isEmpty()) {
+            return back()->with('error', 'Tidak ada rencana pembelajaran yang dipilih untuk dihapus.');
+        }
+
+        $skippedPublished = 0;
+        $skippedForbidden = 0;
+        $deletedCount     = 0;
+
+        foreach ($plans as $plan) {
+            // Guru hanya bisa hapus milik sendiri (admin bisa semua)
+            if (! $user->isAdmin() && $plan->teacher_id !== $user->id) {
+                $skippedForbidden++;
+                continue;
+            }
+            // Lindungi RPP yang sudah diterbitkan (status = published)
+            if ($plan->isPublished()) {
+                $skippedPublished++;
+                continue;
+            }
+
+            $plan->delete();
+            $deletedCount++;
+        }
+
+        $messages = [];
+        if ($deletedCount > 0) {
+            $messages[] = "{$deletedCount} rencana pembelajaran berhasil dihapus.";
+        }
+        if ($skippedPublished > 0) {
+            $messages[] = "{$skippedPublished} RPP yang sudah diterbitkan dilewati demi integritas data.";
+        }
+        if ($skippedForbidden > 0) {
+            $messages[] = "{$skippedForbidden} RPP milik guru lain tidak dapat dihapus.";
+        }
+
+        $flashType = $deletedCount > 0 ? 'message' : 'error';
+
+        return redirect()->route('plans.index')->with($flashType, implode(' ', $messages));
+    }
+
 
     public function openMaterial(LearningPlan $plan): RedirectResponse
     {

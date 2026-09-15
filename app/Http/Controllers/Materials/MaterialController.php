@@ -19,6 +19,7 @@ use App\Models\LearningMaterial;
 use App\Models\LearningPlan;
 use App\Support\MaterialContentHtml;
 use App\Support\SubjectContext;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -84,9 +85,73 @@ class MaterialController extends Controller
                 'per_page' => $perPage,
             ],
             'indexUrl' => route('materials.index'),
+            'bulkDestroyUrl' => $user->isStudent() ? null : route('materials.bulk-destroy'),
             'isStudent' => $user->isStudent(),
         ]);
     }
+
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        // Hanya Admin dan Guru yang boleh melakukan aksi massal
+        abort_if($user->isStudent(), 403);
+
+        $validated = $request->validate([
+            'ids'                 => ['required_without:select_all_matching', 'array'],
+            'ids.*'               => ['integer', 'exists:learning_materials,id'],
+            'select_all_matching' => ['nullable', 'boolean'],
+            'search'              => ['nullable', 'string'],
+            'status'              => ['nullable', 'string'],
+        ]);
+
+        // Scope ke materi yang boleh diakses user ini (plan milik sendiri / admin semua)
+        $planIds = LearningPlan::query()->forCurrentUser()->pluck('id');
+        $query   = LearningMaterial::query()->whereIn('plan_id', $planIds);
+
+        if (! empty($validated['select_all_matching'])) {
+            $search = (string) ($validated['search'] ?? '');
+            $status = (string) ($validated['status'] ?? '');
+            $query
+                ->when($search !== '', fn ($q) => $q->whereHas('plan', fn ($p) => $p->where('topic', 'like', "%{$search}%")))
+                ->when($status !== '', fn ($q) => $q->where('status', $status));
+        } else {
+            $query->whereIn('id', $validated['ids'] ?? []);
+        }
+
+        $materials = $query->with('events')->get();
+
+        if ($materials->isEmpty()) {
+            return back()->with('error', 'Tidak ada materi yang dipilih untuk dihapus.');
+        }
+
+        $skippedPublished = 0;
+        $deletedCount     = 0;
+
+        foreach ($materials as $material) {
+            // Materi yang sudah diterbitkan dan sudah pernah dibaca siswa dilindungi
+            if ($material->status === MaterialStatus::Published && $material->events->isNotEmpty()) {
+                $skippedPublished++;
+                continue;
+            }
+
+            $material->delete();
+            $deletedCount++;
+        }
+
+        $messages = [];
+        if ($deletedCount > 0) {
+            $messages[] = "{$deletedCount} materi berhasil dihapus.";
+        }
+        if ($skippedPublished > 0) {
+            $messages[] = "{$skippedPublished} materi yang sudah dibaca siswa dilewati demi integritas data.";
+        }
+
+        $flashType = $deletedCount > 0 ? 'message' : 'error';
+
+        return redirect()->route('materials.index')->with($flashType, implode(' ', $messages));
+    }
+
 
     public function show(LearningMaterial $material): Response
     {

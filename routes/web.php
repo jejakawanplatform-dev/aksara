@@ -49,6 +49,7 @@ Route::middleware(['auth', 'permission:plans.manage'])->prefix('plans')->name('p
     Route::get('/', [PlanController::class, 'index'])->name('index');
     Route::get('/create', [PlanController::class, 'create'])->name('create');
     Route::post('/', [PlanController::class, 'store'])->name('store');
+    Route::post('/bulk-destroy', [PlanController::class, 'bulkDestroy'])->name('bulk-destroy');
     Route::post('/import', [PlanController::class, 'import'])->name('import');
     Route::get('/export/{format}', [LearningPlanExportController::class, 'export'])->name('export');
     Route::get('/import/template', [LearningPlanExportController::class, 'downloadTemplate'])->name('import.template');
@@ -66,6 +67,7 @@ Route::middleware(['auth', 'permission:plans.manage'])->prefix('plans')->name('p
 
 Route::middleware(['auth', 'permission:materials.read|plans.manage'])->prefix('materials')->name('materials.')->group(function () {
     Route::get('/', [MaterialController::class, 'index'])->name('index');
+    Route::post('/bulk-destroy', [MaterialController::class, 'bulkDestroy'])->name('bulk-destroy');
     Route::get('/{material}', [MaterialController::class, 'show'])->name('show');
 
     /** Inertia + Vue TipTap editor (Tahap 18) */
