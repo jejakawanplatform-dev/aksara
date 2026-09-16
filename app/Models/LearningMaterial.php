@@ -13,6 +13,7 @@
 namespace App\Models;
 
 use App\Enums\MaterialStatus;
+use Database\Factories\LearningMaterialFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,7 +33,7 @@ use Illuminate\Support\Carbon;
  */
 class LearningMaterial extends Model
 {
-    /** @use HasFactory<\Database\Factories\LearningMaterialFactory> */
+    /** @use HasFactory<LearningMaterialFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = ['plan_id', 'content', 'status', 'published_at'];

@@ -4,12 +4,13 @@
 
 | Area | Path |
 |---|---|
-| Controllers | `References/ReferenceController`, `ReferenceImportController`, `CurriculumExportController` |
+| Controllers | `References/ReferenceController`, `ReferenceImportController`, `References/CurriculumExportController` |
 | Service | `app/Services/CurriculumExportImportService.php` |
 | Page | `resources/js/Pages/References/Index.vue` |
 | Models | `AcademicYear`, `Semester`, `SchoolClass`, `Subject`, `CurriculumCp`, `CurriculumTp`, `CurriculumAtpItem` |
 | PDF Blade | `resources/views/exports/cp-tp-pdf.blade.php`, `atp-pdf.blade.php` |
-| Tests | `ReferenceCrudTest`, `ReferenceExportImportTest` |
+| Bulk Actions | `references.rombels.bulk-destroy`, `references.mapel.bulk-destroy` |
+| Tests | `ReferenceCrudTest`, `ReferenceExportImportTest`, `ReferenceBulkActionTest` |
 
 ## UI (2026-08-11)
 

@@ -14,7 +14,7 @@
 
 ## 1. Konteks & Masalah Bisnis
 
-Saat ini, modul Manajemen Pengguna ([`Users/Index.vue`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Users/Index.vue)) di platform Aksara hanya mendukung **pendaftaran pengguna secara manual satu per satu** melalui form modal (`UserController::store`).
+Saat ini, modul Manajemen Pengguna ([`Users/Index.vue`](../../resources/js/Pages/Users/Index.vue)) di platform Aksara hanya mendukung **pendaftaran pengguna secara manual satu per satu** melalui form modal (`UserController::store`).
 
 ### Masalah & Hambatan Nyata:
 1. **Inefisiensi Onboarding Tahun Ajaran Baru:**
@@ -38,7 +38,7 @@ Fitur ekspor dirancang fleksibel dengan dua mode:
 1. **Ekspor Berdasarkan Filter / Seluruh Data:**
    - Administrator dapat mengekspor data sesuai filter aktif di halaman (misal: hanya role *Siswa*, hanya role *Guru*, atau hasil pencarian kata kunci).
 2. **Ekspor Baris Terpilih (*Bulk Export*):**
-   - Memanfaatkan composable [`useBulkSelect`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Composables/useBulkSelect.js) yang sudah aktif di halaman pengguna: tombol *Ekspor Terpilih* muncul pada `BulkToolbar`.
+   - Memanfaatkan composable [`useBulkSelect`](../../resources/js/Composables/useBulkSelect.js) yang sudah aktif di halaman pengguna: tombol *Ekspor Terpilih* muncul pada `BulkToolbar`.
 
 #### Struktur Kolom Ekspor:
 | No | Kolom Spreadsheet | Sumber Data di Model `User` | Keterangan |
@@ -139,7 +139,7 @@ sequenceDiagram
      - `GET /users/template` (`users.template`)
      - `POST /users/import` (`users.import`)
 3. **Frontend UI Components:**
-   - [`resources/js/Pages/Users/Index.vue`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Users/Index.vue): Penambahan dropdown `ExportMenu` dan tombol `Impor`.
+   - [`resources/js/Pages/Users/Index.vue`](../../resources/js/Pages/Users/Index.vue): Penambahan dropdown `ExportMenu` dan tombol `Impor`.
    - `resources/js/Components/users/UserImportModal.vue`: Modal interaktif berisi panduan, tombol download template, drag-and-drop file upload, dan indikator progres/error.
 4. **Automated Testing Suite (Pest):**
    - `tests/Feature/UserExportImportTest.php`:

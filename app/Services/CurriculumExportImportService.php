@@ -18,6 +18,7 @@ use App\Models\CurriculumCp;
 use App\Models\CurriculumTp;
 use App\Models\Semester;
 use App\Models\Subject;
+use App\Support\Spreadsheet\SpreadsheetSanitizer;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory as SpreadsheetIOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -54,10 +55,10 @@ class CurriculumExportImportService
         foreach ($cps as $cp) {
             if ($cp->tps->isEmpty()) {
                 $sheet->setCellValue("A{$row}", $no);
-                $sheet->setCellValue("B{$row}", $cp->element_code);
-                $sheet->setCellValue("C{$row}", $cp->element_name);
-                $sheet->setCellValue("D{$row}", $cp->statement);
-                $sheet->setCellValue("E{$row}", $cp->source_note ?: '');
+                $sheet->setCellValue("B{$row}", SpreadsheetSanitizer::sanitize($cp->element_code));
+                $sheet->setCellValue("C{$row}", SpreadsheetSanitizer::sanitize($cp->element_name));
+                $sheet->setCellValue("D{$row}", SpreadsheetSanitizer::sanitize($cp->statement));
+                $sheet->setCellValue("E{$row}", SpreadsheetSanitizer::sanitize($cp->source_note ?: ''));
                 $sheet->setCellValue("F{$row}", '—');
                 $sheet->setCellValue("G{$row}", '—');
                 $sheet->setCellValue("H{$row}", '—');
@@ -66,14 +67,14 @@ class CurriculumExportImportService
             } else {
                 foreach ($cp->tps as $tp) {
                     $sheet->setCellValue("A{$row}", $no);
-                    $sheet->setCellValue("B{$row}", $cp->element_code);
-                    $sheet->setCellValue("C{$row}", $cp->element_name);
-                    $sheet->setCellValue("D{$row}", $cp->statement);
-                    $sheet->setCellValue("E{$row}", $cp->source_note ?: '');
-                    $sheet->setCellValue("F{$row}", $tp->code);
-                    $sheet->setCellValue("G{$row}", $tp->grade ?: '—');
+                    $sheet->setCellValue("B{$row}", SpreadsheetSanitizer::sanitize($cp->element_code));
+                    $sheet->setCellValue("C{$row}", SpreadsheetSanitizer::sanitize($cp->element_name));
+                    $sheet->setCellValue("D{$row}", SpreadsheetSanitizer::sanitize($cp->statement));
+                    $sheet->setCellValue("E{$row}", SpreadsheetSanitizer::sanitize($cp->source_note ?: ''));
+                    $sheet->setCellValue("F{$row}", SpreadsheetSanitizer::sanitize($tp->code));
+                    $sheet->setCellValue("G{$row}", SpreadsheetSanitizer::sanitize($tp->grade ?: '—'));
                     $sheet->setCellValue("H{$row}", $tp->sequence);
-                    $sheet->setCellValue("I{$row}", $tp->statement);
+                    $sheet->setCellValue("I{$row}", SpreadsheetSanitizer::sanitize($tp->statement));
                     $row++;
                 }
             }
@@ -180,11 +181,11 @@ class CurriculumExportImportService
         foreach ($atpItems as $item) {
             $sheet->setCellValue("A{$row}", $item->sequence);
             $sheet->setCellValue("B{$row}", $item->grade);
-            $sheet->setCellValue("C{$row}", $item->semester?->name ?: 'Semua');
-            $sheet->setCellValue("D{$row}", $item->unit_title ?: '—');
-            $sheet->setCellValue("E{$row}", $item->tp?->code ?: '—');
-            $sheet->setCellValue("F{$row}", $item->tp?->statement ?: '—');
-            $sheet->setCellValue("G{$row}", $item->estimated_meetings ?: '—');
+            $sheet->setCellValue("C{$row}", SpreadsheetSanitizer::sanitize($item->semester?->name ?: 'Semua'));
+            $sheet->setCellValue("D{$row}", SpreadsheetSanitizer::sanitize($item->unit_title ?: '—'));
+            $sheet->setCellValue("E{$row}", SpreadsheetSanitizer::sanitize($item->tp?->code ?: '—'));
+            $sheet->setCellValue("F{$row}", SpreadsheetSanitizer::sanitize($item->tp?->statement ?: '—'));
+            $sheet->setCellValue("G{$row}", SpreadsheetSanitizer::sanitize($item->estimated_meetings ?: '—'));
             $row++;
         }
 

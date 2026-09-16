@@ -14,6 +14,7 @@ namespace Tests\Feature;
 
 use App\Enums\AttendanceStatus;
 use App\Enums\PlanStatus;
+use App\Enums\UserRole;
 use App\Models\AttendanceRecord;
 use App\Models\LearningPlan;
 use App\Models\SchoolClass;
@@ -132,7 +133,7 @@ class AttendanceExportTest extends TestCase
             'name' => 'Guru Lain',
             'email' => 'guru.lain@aksara.test',
             'password' => 'password',
-            'role' => \App\Enums\UserRole::Teacher,
+            'role' => UserRole::Teacher,
         ]);
         $otherGuru->syncAppRole();
 

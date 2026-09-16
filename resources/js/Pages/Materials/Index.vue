@@ -279,11 +279,16 @@ function exportItems(material) {
 
         <BulkConfirmModal
             v-if="!isStudent"
-            v-model="showBulkDeleteModal"
+            :open="showBulkDeleteModal"
+            title="Hapus Materi Terpilih"
+            description="Materi pembelajaran yang dipilih akan dihapus. Materi yang terikat dengan RPP aktif tetap dilindungi."
             :count="bulk.getSelectedCount(materials.total)"
-            :loading="isBulkDeleting"
             item-label="materi"
-            danger-word="HAPUS"
+            confirm-word="HAPUS"
+            :danger="true"
+            :processing="isBulkDeleting"
+            confirm-button-text="Ya, Hapus Sekarang"
+            @close="showBulkDeleteModal = false"
             @confirm="submitBulkDelete"
         />
     </AppLayout>

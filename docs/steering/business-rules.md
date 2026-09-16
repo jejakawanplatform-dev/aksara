@@ -6,8 +6,8 @@ Dokumen ini adalah sumber kebenaran untuk peran, alur proses, dan aturan yang wa
 
 | Role | Kode | Boleh | Tidak boleh |
 |---|---|---|---|
-| Administrator | `admin` | CRUD pengguna, matrix hak akses, dashboard sistem, lihat/CRUD referensi (default) | Mengubah rencana/materi milik guru (default matrix) |
-| Guru | `teacher` | CRUD rencana miliknya, generate AI, review/publish, absensi, evaluasi, laporan guru, referensi kurikulum | Mengelola akun pengguna / matrix akses |
+| Administrator | `admin` | CRUD pengguna, matrix hak akses, dashboard sistem, lihat/CRUD referensi, supervisi global rencana & materi pembelajaran (ekspor, hapus massal, pembersihan data yatim) | Mengubah data nilai/kuis siswa di luar wewenang supervisi |
+| Guru | `teacher` | CRUD rencana miliknya, generate AI, review/publish, absensi, evaluasi, laporan guru, referensi kurikulum mapel ampuannya (termasuk mapel Informatika untuk kebutuhan Bimtek) | Mengelola akun pengguna / matrix akses |
 | Siswa | `student` | Baca materi `published`, kerjakan kuis miliknya, lihat hasilnya sendiri | Membuat/mengedit rencana, melihat draf, absensi global |
 | Wali kelas | `homeroom_teacher` | Lihat ringkasan kelas yang diampu | Mengubah rencana/materi/absensi guru mapel |
 | Wali murid | `parent` | Baca ringkasan anak yang terhubung di `parent_students` | Melihat data anak lain / mengubah data akademik |
@@ -22,17 +22,18 @@ draft → reviewed → published
 
 | Status | Arti | Siapa yang mengubah |
 |---|---|---|
-| `draft` | Rencana baru / masih diedit; draf AI belum disetujui | Guru pemilik |
-| `reviewed` | Draf AI disetujui; materi terkait dibuat sebagai draf | Guru pemilik (approve draft) |
-| `published` | Rencana + materi siap diakses siswa | Guru pemilik (publish) |
+| `draft` | Rencana baru / masih diedit; draf AI belum disetujui | Guru pemilik / Admin (supervisi) |
+| `reviewed` | Draf AI disetujui; materi terkait dibuat sebagai draf | Guru pemilik / Admin (supervisi) |
+| `published` | Rencana + materi siap diakses siswa | Guru pemilik / Admin (supervisi) |
 
 ### Aturan terkait
 
-1. Hanya guru pemilik (`teacher_id`) yang boleh mengubah rencana.
-2. Generate AI hanya dari konteks pembelajaran (fase, kelas, mapel, topik, durasi, tujuan, kebutuhan belajar, referensi kurikulum).
-3. Output AI **selalu draf** — wajib direview guru sebelum publish.
-4. Label UI: “Draf hasil AI — wajib direview guru”.
-5. Publish mengubah status rencana dan materi terkait menjadi `published` (serta mengisi `published_at` pada materi).
+1. Guru hanya berhak mengubah atau menghapus rencana pembelajaran miliknya sendiri (`teacher_id === Auth::id()`). Administrator memiliki wewenang supervisi global (`plans.manage`) untuk pemeliharaan sistem, audit, ekspor, dan pembersihan massal (Spec 08).
+2. Otorisasi referensi kurikulum guru (`ReferenceController`): Guru hanya dapat memodifikasi CP/TP/ATP untuk mapel yang diampu via `subject_teachers` atau rencana aktif miliknya, dengan pengecualian khusus mapel Informatika (`INF`) yang terbuka untuk seluruh guru peserta workshop Bimtek (Spec 06).
+3. Generate AI hanya dari konteks pembelajaran (fase, kelas, mapel, topik, durasi, tujuan, kebutuhan belajar, referensi kurikulum).
+4. Output AI **selalu draf** — wajib direview guru sebelum publish.
+5. Label UI: “Draf hasil AI — wajib direview guru”.
+6. Publish mengubah status rencana dan materi terkait menjadi `published` (serta mengisi `published_at` pada materi).
 
 ## 3. Materi pembelajaran
 
@@ -50,6 +51,7 @@ draft → reviewed → published
 4. Konten teks seksi disimpan di JSON `learning_materials.content` (`title`, `sections[].heading/body`, `reflectionQuestion`).
 5. File gambar materi (jika ada) disimpan di disk `public` (`materials/{material_id}/`); HTML body hanya boleh mereferensikan `/storage/...` atau `data:image/...` tepercaya (ADR-008).
 6. Hasil Asisten Aksara **tidak** boleh memasukkan URL file gambar fiktif ke body seksi. Saran ilustrasi + prompt AI Image tampil **di chat saja** (`illustrationTips`), bukan di konten siswa/export.
+7. Materi pembelajaran dapat diekspor ke format cetak PDF resmi (A4 Portrait berkop sekolah), Microsoft Word (.docx), dan Markdown (.md) untuk kebutuhan belajar luring dan arsip kurikulum (ADR-014).
 
 ## 4. Generasi AI
 
@@ -76,6 +78,8 @@ draft → reviewed → published
 2. Status: `present` | `excused` | `sick` | `absent`.
 3. Guru pemilik rencana yang mengisi/mengubah.
 4. Upsert diperbolehkan (updateOrCreate).
+5. Peringatan Dini Kehadiran (*Early Warning Indicator*): Siswa dengan persentase kehadiran di bawah 75% (`< 75%`) otomatis mendapatkan penanda visual untuk intervensi dini wali kelas dan guru.
+6. Rekapitulasi Presensi Multi-Format: Rekapitulasi kehadiran kelas dapat diekspor ke format cetak PDF resmi (Landscape A4 dengan Kop Surat Sekolah dan blok tanda tangan) serta spreadsheet Excel (.xlsx) dengan kalkulasi otomatis (ADR-014).
 
 ## 6. Kuis
 
@@ -99,13 +103,19 @@ draft → reviewed → published
 | Wali kelas | Ringkasan kelas yang diampu |
 | Wali murid | Ringkasan anak terhubung saja (mode baca) |
 
-## 9. Data demo & privasi
+## 9. Aksi Massal & Tata Kelola Data Pengguna
+
+1. **Guardrail Proteksi Diri:** Administrator tidak dapat menghapus akunnya sendiri melalui fitur `bulkDestroy` (`Auth::id()` otomatis dilewati).
+2. **Perlindungan Integritas Relasional:** Akun guru yang memiliki rencana pembelajaran aktif dan wali kelas yang memiliki rombel binaan aktif dilindungi dari penghapusan massal, dan sistem memberikan rekap peringatan eksplisit.
+3. **Pipa Impor Excel:** Impor pengguna memvalidasi format kolom template wajib (`nama`, `email`, `role`). Duplikasi ditangani via opsi `skip` atau `update`. Kredensial acak sementara hanya tersimpan dalam session flash dan dapat diunduh sekali (ADR-015).
+
+## 10. Data demo & privasi
 
 1. Gunakan data fiktif (seeder `DemoDataSeeder` / `php artisan aksara:seed-demo`).
 2. Jangan commit `.env` atau API key.
 3. Jangan memasukkan data pribadi nyata ke prompt, repository, atau lingkungan demo.
 
-## 10. Aturan yang belum sepenuhnya ditegakkan (debt)
+## 11. Aturan yang belum sepenuhnya ditegakkan (debt)
 
 Catatan untuk agent/developer:
 

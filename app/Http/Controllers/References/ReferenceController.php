@@ -580,6 +580,7 @@ class ReferenceController extends Controller
         foreach ($rombels as $rombel) {
             if ($rombel->learningPlans->isNotEmpty()) {
                 $skippedCount++;
+
                 continue;
             }
 
@@ -724,6 +725,7 @@ class ReferenceController extends Controller
         foreach ($subjects as $subject) {
             if ($subject->cps->isNotEmpty() || $subject->atpItems->isNotEmpty() || $subject->learningPlans->isNotEmpty()) {
                 $skippedCount++;
+
                 continue;
             }
 
@@ -799,6 +801,7 @@ class ReferenceController extends Controller
             'sequence' => 'required|integer|min:1',
         ]);
 
+        abort_unless($this->canManageSubject($cp->subject_id), 403);
         abort_unless($this->canManageSubject((int) $data['subject_id']), 403);
 
         $cp->update([
@@ -865,6 +868,9 @@ class ReferenceController extends Controller
             'sequence' => 'required|integer|min:1',
         ]);
 
+        $tp->loadMissing('cp');
+        abort_unless($tp->cp && $this->canManageSubject($tp->cp->subject_id), 403);
+
         $cp = CurriculumCp::query()->whereKey($data['curriculum_cp_id'])->firstOrFail();
         abort_unless($this->canManageSubject($cp->subject_id), 403);
 
@@ -930,7 +936,26 @@ class ReferenceController extends Controller
             'estimated_meetings' => 'nullable|integer|min:1',
         ]);
 
+        if ($atp) {
+            abort_unless($this->canManageSubject($atp->subject_id), 403);
+        }
         abort_unless($this->canManageSubject((int) $data['subject_id']), 403);
+
+        $tp = CurriculumTp::query()->with('cp')->whereKey($data['curriculum_tp_id'])->first();
+        if (! $tp || ! $tp->cp || $tp->cp->subject_id !== (int) $data['subject_id']) {
+            throw ValidationException::withMessages([
+                'curriculum_tp_id' => 'Tujuan Pembelajaran (TP) yang dipilih bukan milik mata pelajaran ini.',
+            ]);
+        }
+
+        if (! empty($data['semester_id'])) {
+            $semester = Semester::query()->whereKey($data['semester_id'])->first();
+            if (! $semester || $semester->academic_year_id !== (int) $data['academic_year_id']) {
+                throw ValidationException::withMessages([
+                    'semester_id' => 'Semester tidak sesuai dengan tahun ajaran yang dipilih.',
+                ]);
+            }
+        }
 
         $payload = [
             'subject_id' => $data['subject_id'],

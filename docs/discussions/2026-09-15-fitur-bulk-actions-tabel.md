@@ -15,14 +15,14 @@
 
 ## 1. Konteks & Masalah
 
-Saat ini, seluruh tabel data di Aksara (seperti [Users/Index.vue](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Users/Index.vue), [Plans/Index.vue](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Plans/Index.vue), [Materials/Index.vue](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Materials/Index.vue), dan [References/Index.vue](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/References/Index.vue)) hanya mendukung **aksi baris tunggal** (*single-row action*), seperti:
+Saat ini, seluruh tabel data di Aksara (seperti [Users/Index.vue](../../resources/js/Pages/Users/Index.vue), [Plans/Index.vue](../../resources/js/Pages/Plans/Index.vue), [Materials/Index.vue](../../resources/js/Pages/Materials/Index.vue), dan [References/Index.vue](../../resources/js/Pages/References/Index.vue)) hanya mendukung **aksi baris tunggal** (*single-row action*), seperti:
 * Lihat detail (*Show*)
 * Edit data (*Edit*)
 * Hapus satu data (*Delete*)
 
 ### Dampak & Kebutuhan Pengguna:
 1. **Inefisiensi Operasional:** Administrator atau guru yang mengelola puluhan hingga ratusan data (contoh: hapus draf materi usang, arsipkan rencana pembelajaran lama, atau bersihkan akun siswa alumni) harus mengklik konfirmasi satu per satu.
-2. **Ketiadaan Standar Massal:** Belum ada pola seragam di level komponen UI ([Components/ui/Table.vue](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Components/ui/Table.vue)) untuk menangani pemilihan multi-baris (*checkbox selection*).
+2. **Ketiadaan Standar Massal:** Belum ada pola seragam di level komponen UI ([Components/ui/Table.vue](../../resources/js/Components/ui/Table.vue)) untuk menangani pemilihan multi-baris (*checkbox selection*).
 3. **Kebutuhan Fitur Aksi Massal Nyata:**
    - **Bulk Delete:** Menghapus banyak data sekaligus dengan aman.
    - **Bulk Status Update:** Mengubah status materi draf menjadi terbit (*publish*) atau arsip (*archive*).
@@ -127,8 +127,8 @@ Berdasarkan diskusi dan evaluasi best practice industri:
      - **Active Selection State (`selectedCount > 0`):** Toolbar bertransisi menjadi bilah aksi kontekstual dengan warna aksen lembut (*primary surface tint*). Sisi kiri menampilkan counter seleksi & link select all, sisi kanan menampilkan tombol aksi massal (Hapus, Ubah Status, Batal).
 
 4. **Modul Percontohan (Pilot Modules):**
-   * **Modul Pengguna:** [Users/Index.vue](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Users/Index.vue) (Bulk Delete, Bulk Role/Status).
-   * **Modul Materi Pembelajaran:** [Materials/Index.vue](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Materials/Index.vue) (Bulk Status Publish/Archive, Bulk Delete).
+   * **Modul Pengguna:** [Users/Index.vue](../../resources/js/Pages/Users/Index.vue) (Bulk Delete, Bulk Role/Status).
+   * **Modul Materi Pembelajaran:** [Materials/Index.vue](../../resources/js/Pages/Materials/Index.vue) (Bulk Status Publish/Archive, Bulk Delete).
 
 ---
 

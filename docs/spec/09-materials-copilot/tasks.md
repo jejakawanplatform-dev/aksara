@@ -12,3 +12,5 @@
 | T08 | Wire TipTap + media endpoints di Edit | P0 | done | detail di 15/16 |
 | T09 | Tests MaterialAuthoring / AiCopilot / Html | P1 | done | |
 | T10 | Smoke browser Co-Pilot apply | P1 | done | feature: patch+merge+update |
+| T11 | Ekspor materi multi-format (PDF/Word/MD) | P1 | done | `MaterialExportController` & `MaterialExportTest` |
+| T12 | Aksi massal penghapusan materi | P1 | done | `MaterialController@bulkDestroy` & `MaterialBulkActionTest` |

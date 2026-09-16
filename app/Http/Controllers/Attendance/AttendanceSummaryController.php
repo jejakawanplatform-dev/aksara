@@ -75,13 +75,12 @@ class AttendanceSummaryController extends Controller
 
             if ($class !== null) {
                 $summaryData = $class->students()
+                    ->with(['attendances' => fn ($q) => $q->whereIn('plan_id', $planIdsForSummary)])
                     ->orderBy('name')
                     ->paginate($perPage)
                     ->withQueryString()
-                    ->through(function ($student) use ($planIdsForSummary) {
-                        $records = $student->attendances()
-                            ->whereIn('plan_id', $planIdsForSummary)
-                            ->get();
+                    ->through(function ($student) {
+                        $records = $student->attendances;
 
                         $hadir = $records->where('status', AttendanceStatus::Present)->count();
                         $total = $records->count();

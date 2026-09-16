@@ -27,15 +27,15 @@ class LearningMaterialFactory extends Factory
     public function definition(): array
     {
         return [
-            'plan_id'      => LearningPlan::factory(),
-            'content'      => [
-                'title'              => fake()->sentence(3),
-                'sections'           => [
+            'plan_id' => LearningPlan::factory(),
+            'content' => [
+                'title' => fake()->sentence(3),
+                'sections' => [
                     ['heading' => 'Pengantar', 'body' => '<p>'.fake()->paragraph().'</p>'],
                 ],
                 'reflectionQuestion' => fake()->sentence().'?',
             ],
-            'status'       => MaterialStatus::Draft,
+            'status' => MaterialStatus::Draft,
             'published_at' => null,
         ];
     }
@@ -43,7 +43,7 @@ class LearningMaterialFactory extends Factory
     public function published(): static
     {
         return $this->state([
-            'status'       => MaterialStatus::Published,
+            'status' => MaterialStatus::Published,
             'published_at' => now(),
         ]);
     }
@@ -51,7 +51,7 @@ class LearningMaterialFactory extends Factory
     public function draft(): static
     {
         return $this->state([
-            'status'       => MaterialStatus::Draft,
+            'status' => MaterialStatus::Draft,
             'published_at' => null,
         ]);
     }

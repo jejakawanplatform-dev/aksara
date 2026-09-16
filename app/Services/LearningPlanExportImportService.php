@@ -18,6 +18,7 @@ use App\Models\LearningPlan;
 use App\Models\SchoolClass;
 use App\Models\Semester;
 use App\Models\Subject;
+use App\Support\Spreadsheet\SpreadsheetSanitizer;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -67,19 +68,19 @@ class LearningPlanExportImportService
         $no = 1;
         foreach ($plans as $plan) {
             $sheet->setCellValue("A{$row}", $no++);
-            $sheet->setCellValue("B{$row}", $plan->topic);
-            $sheet->setCellValue("C{$row}", $plan->subject->name ?? '—');
-            $sheet->setCellValue("D{$row}", $plan->subject->code ?? '—');
-            $sheet->setCellValue("E{$row}", $plan->class->name ?? '—');
+            $sheet->setCellValue("B{$row}", SpreadsheetSanitizer::sanitize($plan->topic));
+            $sheet->setCellValue("C{$row}", SpreadsheetSanitizer::sanitize($plan->subject->name ?? '—'));
+            $sheet->setCellValue("D{$row}", SpreadsheetSanitizer::sanitize($plan->subject->code ?? '—'));
+            $sheet->setCellValue("E{$row}", SpreadsheetSanitizer::sanitize($plan->class->name ?? '—'));
             $sheet->setCellValue("F{$row}", $plan->grade);
-            $sheet->setCellValue("G{$row}", $plan->phase);
+            $sheet->setCellValue("G{$row}", SpreadsheetSanitizer::sanitize($plan->phase));
             $sheet->setCellValue("H{$row}", $plan->duration_minutes);
-            $sheet->setCellValue("I{$row}", $plan->learning_objectives);
-            $sheet->setCellValue("J{$row}", $plan->curriculum_reference);
-            $sheet->setCellValue("K{$row}", $plan->status->label());
-            $sheet->setCellValue("L{$row}", $plan->teacher->name ?? '—');
-            $sheet->setCellValue("M{$row}", $plan->academicYear->name ?? '—');
-            $sheet->setCellValue("N{$row}", $plan->semester->name ?? '—');
+            $sheet->setCellValue("I{$row}", SpreadsheetSanitizer::sanitize($plan->learning_objectives));
+            $sheet->setCellValue("J{$row}", SpreadsheetSanitizer::sanitize($plan->curriculum_reference));
+            $sheet->setCellValue("K{$row}", SpreadsheetSanitizer::sanitize($plan->status->label()));
+            $sheet->setCellValue("L{$row}", SpreadsheetSanitizer::sanitize($plan->teacher->name ?? '—'));
+            $sheet->setCellValue("M{$row}", SpreadsheetSanitizer::sanitize($plan->academicYear->name ?? '—'));
+            $sheet->setCellValue("N{$row}", SpreadsheetSanitizer::sanitize($plan->semester->name ?? '—'));
             $row++;
         }
 

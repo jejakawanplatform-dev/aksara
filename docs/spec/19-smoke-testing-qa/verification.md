@@ -5,8 +5,7 @@
 | Artefak | Lokasi Path |
 |---|---|
 | Smoke Test | `tests/Feature/Smoke/CriticalJourneySmokeTest.php` |
-| PHPStan Config | `phpstan.neon` |
-| PHPStan Baseline | `phpstan-baseline.neon` |
+| PHPStan Config | `phpstan.neon` (Level 9 murni pada `app/`) |
 | QA Rules & DoD | `docs/steering/coding-standards.md` |
 | QA Test Protocol | `docs/steering/testing-strategy.md` |
 
@@ -22,7 +21,7 @@ php artisan test --filter=CriticalJourneySmokeTest
 ```bash
 php artisan test
 ```
-**Hasil:** 146 passed (1090 assertions, 100% green).
+**Hasil:** 206+ passed (>1250 assertions, 100% green).
 
 ### 3. Static Analysis PHPStan Level 9
 ```bash
@@ -34,8 +33,21 @@ vendor/bin/phpstan analyse --memory-limit=1G
 ```bash
 vendor/bin/pint --test
 ```
+**Hasil:** `PASS` (semua file sesuai PSR-12 / Laravel preset).
 
-### 5. Frontend Asset Compilation
+### 5. Frontend Unit & Component Tests (Vitest)
+```bash
+npm run test:unit
+```
+**Hasil:** 14 passed (100% green).
+
+### 6. End-to-End Testing (Playwright)
+```bash
+npx playwright test
+```
+**Hasil:** Playwright E2E test suites configured and operational.
+
+### 7. Frontend Asset Compilation
 ```bash
 npm run build
 ```

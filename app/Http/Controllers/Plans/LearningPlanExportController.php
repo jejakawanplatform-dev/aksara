@@ -10,13 +10,17 @@
  * See the LICENSE file in the project root.
  */
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Plans;
 
+use App\Http\Controllers\Controller;
 use App\Models\LearningPlan;
 use App\Services\LearningPlanExportImportService;
 use App\Services\SettingService;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class LearningPlanExportController extends Controller
 {
@@ -25,7 +29,7 @@ class LearningPlanExportController extends Controller
     /**
      * Batch export filtered Learning Plans (Excel, Word, PDF)
      */
-    public function export(Request $request, string $format): \Symfony\Component\HttpFoundation\Response|\Illuminate\Contracts\View\View
+    public function export(Request $request, string $format): Response|View
     {
         $user = Auth::user();
         if (! $user) {
@@ -93,7 +97,7 @@ class LearningPlanExportController extends Controller
     /**
      * Export single Learning Plan (Excel, Word, PDF)
      */
-    public function exportSingle(LearningPlan $plan, string $format): \Symfony\Component\HttpFoundation\Response|\Illuminate\Contracts\View\View
+    public function exportSingle(LearningPlan $plan, string $format): Response|View
     {
         $user = Auth::user();
         if (! $user) {
@@ -146,7 +150,7 @@ class LearningPlanExportController extends Controller
     /**
      * Download Excel template for import
      */
-    public function downloadTemplate(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function downloadTemplate(): BinaryFileResponse
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
         if ($tempFile === false) {

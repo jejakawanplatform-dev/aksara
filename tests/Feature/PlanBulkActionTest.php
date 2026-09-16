@@ -36,13 +36,13 @@ class PlanBulkActionTest extends TestCase
         // Buat 2 RPP draf milik guru ini
         $planA = LearningPlan::factory()->create([
             'teacher_id' => $guru->id,
-            'topic'      => 'Topik Dummy A',
-            'status'     => PlanStatus::Draft,
+            'topic' => 'Topik Dummy A',
+            'status' => PlanStatus::Draft,
         ]);
         $planB = LearningPlan::factory()->create([
             'teacher_id' => $guru->id,
-            'topic'      => 'Topik Dummy B',
-            'status'     => PlanStatus::Draft,
+            'topic' => 'Topik Dummy B',
+            'status' => PlanStatus::Draft,
         ]);
 
         $response = $this->actingAs($guru)
@@ -63,8 +63,8 @@ class PlanBulkActionTest extends TestCase
 
         $plan = LearningPlan::factory()->create([
             'teacher_id' => $guru->id,
-            'topic'      => 'RPP Published',
-            'status'     => PlanStatus::Published,
+            'topic' => 'RPP Published',
+            'status' => PlanStatus::Published,
         ]);
 
         $response = $this->actingAs($guru)
@@ -80,13 +80,13 @@ class PlanBulkActionTest extends TestCase
 
     public function test_guru_tidak_bisa_bulk_delete_rpp_milik_guru_lain(): void
     {
-        $guru    = User::where('email', 'naya@aksara.test')->firstOrFail();
-        $guruB   = User::where('email', 'admin@aksara.test')->firstOrFail();
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
+        $guruB = User::where('email', 'admin@aksara.test')->firstOrFail();
 
         $plan = LearningPlan::factory()->create([
             'teacher_id' => $guruB->id,
-            'topic'      => 'RPP Guru Lain',
-            'status'     => PlanStatus::Draft,
+            'topic' => 'RPP Guru Lain',
+            'status' => PlanStatus::Draft,
         ]);
 
         $response = $this->actingAs($guru)
@@ -103,12 +103,12 @@ class PlanBulkActionTest extends TestCase
     public function test_admin_bisa_bulk_delete_rpp_draf_siapapun(): void
     {
         $admin = User::where('email', 'admin@aksara.test')->firstOrFail();
-        $guru  = User::where('email', 'naya@aksara.test')->firstOrFail();
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
 
         $plan = LearningPlan::factory()->create([
             'teacher_id' => $guru->id,
-            'topic'      => 'RPP Guru untuk Admin Delete',
-            'status'     => PlanStatus::Draft,
+            'topic' => 'RPP Guru untuk Admin Delete',
+            'status' => PlanStatus::Draft,
         ]);
 
         $response = $this->actingAs($admin)

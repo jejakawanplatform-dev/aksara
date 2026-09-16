@@ -14,6 +14,7 @@ namespace App\Models;
 
 use App\Enums\PlanStatus;
 use App\Traits\ScopesTeacherOrAdmin;
+use Database\Factories\LearningPlanFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -54,7 +55,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class LearningPlan extends Model
 {
-    /** @use HasFactory<\Database\Factories\LearningPlanFactory> */
+    /** @use HasFactory<LearningPlanFactory> */
     use HasFactory, ScopesTeacherOrAdmin, SoftDeletes;
 
     protected $fillable = [

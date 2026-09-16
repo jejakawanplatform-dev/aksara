@@ -142,14 +142,15 @@ npm run build
 
 ## 🗺️ 5. Peta Navigasi Dokumentasi Internal
 
-Dokumentasi Aksara terbagi secara modular ke dalam 3 folder terarah di bawah `docs/`:
+Dokumentasi Aksara terbagi secara modular ke dalam 4 folder terarah di bawah `docs/`:
 
 ```text
 docs/
 ├── README.md                  # Halaman yang sedang Anda baca (Technical Hub)
 ├── steering/                  # Aturan kemudi permanen & tata kelola proyek
 ├── spec/                      # Spesifikasi teknis bertahap (Tahap 01 s/d 19)
-└── discussions/               # Forum kolaborasi, ide, dan RFC antar agent/human
+├── discussions/               # Forum kolaborasi, ide, dan RFC antar agent/human
+└── audit/                     # Laporan audit keselarasan kode & dokumentasi
 ```
 
 ### 🧭 5.1. Steering Directory (`docs/steering/`)
@@ -157,7 +158,7 @@ Aturan permanen yang tidak boleh dilanggar tanpa Architecture Decision Record (A
 * [**`product-brief.md`**](steering/product-brief.md): Visi produk, profil pengguna, dan ringkasan batasan sistem.
 * [**`business-rules.md`**](steering/business-rules.md): Aturan bisnis inti alur RPP, materi, otorisasi, dan AI.
 * [**`coding-standards.md`**](steering/coding-standards.md): Standar penamaan, pola Vue/Inertia, DoD, dan **Protokol QA Wajib**.
-* [**`decision-log.md`**](steering/decision-log.md): Buku catatan keputusan arsitektur (**ADR-001 s/d ADR-013**).
+* [**`decision-log.md`**](steering/decision-log.md): Buku catatan keputusan arsitektur (**ADR-001 s/d ADR-016**).
 * [**`demo-accounts.md`**](steering/demo-accounts.md): Kredensial dan daftar akun demo untuk seluruh peran.
 * [**`handover.md`**](steering/handover.md): Status operasional dan catatan handoff antar developer / agent.
 * [**`testing-strategy.md`**](steering/testing-strategy.md): Lapisan strategi pengujian dari unit, feature, hingga smoke test.
@@ -167,6 +168,7 @@ Aturan permanen yang tidak boleh dilanggar tanpa Architecture Decision Record (A
 Dokumentasi granular 19 tahap kemampuan produk (masing-masing memuat `plan.md`, `tasks.md`, `implementation.md`, dan `verification.md`):
 * [**Daftar Lengkap Spek 01 s/d 19**](spec/README.md)
 * *Sorotan Utama:*
+  * [Tahap 14: Sistem Ekspor Multi-Format & PDF Resmi](spec/14-exports-pdf/)
   * [Tahap 15: TipTap Rich Editor & KaTeX](spec/15-tiptap-editor/)
   * [Tahap 16: Context-Scoped Media](spec/16-context-media/)
   * [Tahap 17: Design System Vue SoT](spec/17-design-system/)
@@ -178,6 +180,9 @@ Forum terbuka untuk merumuskan trade-off teknis sebelum keputusan diresmikan:
 * [**Pedoman Diskusi & Daftar Thread**](discussions/README.md)
 * [2026-09-15: Fitur Bulk Actions pada Data Table](discussions/2026-09-15-fitur-bulk-actions-tabel.md) (`ADOPTED`)
 * [2026-09-15: Evaluasi Kesenjangan Test Suite & Smoke Test](discussions/2026-09-15-strategi-smoke-test-dan-gap-test-suite.md) (`ADOPTED`)
+* [2026-09-16: Fitur Export / Import Data Pengguna Menggunakan Excel](discussions/2026-09-16-fitur-export-import-data-pengguna-excel.md) (`ADOPTED`)
+* [2026-09-16: Fitur Download / Ekspor Materi Pembelajaran](discussions/2026-09-16-fitur-download-dan-ekspor-materi-pembelajaran.md) (`ADOPTED`)
+* [2026-09-16: Analisis, Evaluasi & Penyempurnaan Fitur Daftar Hadir](discussions/2026-09-16-analisis-dan-penyempurnaan-fitur-daftar-hadir.md) (`ADOPTED`)
 
 ---
 

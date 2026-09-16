@@ -50,6 +50,15 @@ class AiProvider extends Model
         'is_custom',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'api_key',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -64,7 +73,7 @@ class AiProvider extends Model
     }
 
     /**
-     * @param Builder<AiProvider> $query
+     * @param  Builder<AiProvider>  $query
      * @return Builder<AiProvider>
      */
     public function scopeActive(Builder $query): Builder
@@ -73,7 +82,7 @@ class AiProvider extends Model
     }
 
     /**
-     * @param Builder<AiProvider> $query
+     * @param  Builder<AiProvider>  $query
      * @return Builder<AiProvider>
      */
     public function scopeOrdered(Builder $query): Builder

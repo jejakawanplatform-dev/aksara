@@ -13,42 +13,54 @@ import Icon from '@/Components/ui/Icon.vue';
 
 const props = defineProps({
     open: { type: Boolean, default: false },
+    modelValue: { type: Boolean, default: null },
     title: { type: String, default: 'Konfirmasi Aksi Massal' },
     description: { type: String, default: '' },
     count: { type: Number, default: 0 },
     itemLabel: { type: String, default: 'item' },
     confirmWord: { type: String, default: '' }, // misal: "HAPUS"
+    dangerWord: { type: String, default: '' },  // alias untuk confirmWord
     danger: { type: Boolean, default: true },
     processing: { type: Boolean, default: false },
+    loading: { type: Boolean, default: false }, // alias untuk processing
     confirmButtonText: { type: String, default: 'Konfirmasi' },
 });
 
-const emit = defineEmits(['close', 'confirm']);
+const emit = defineEmits(['close', 'confirm', 'update:modelValue']);
+
+const isOpen = computed(() => (props.modelValue !== null ? props.modelValue : props.open));
+const effectiveWord = computed(() => props.confirmWord || props.dangerWord || '');
+const isProcessing = computed(() => props.processing || props.loading);
 
 const typedConfirmation = ref('');
 
 watch(
-    () => props.open,
-    (isOpen) => {
-        if (isOpen) {
+    isOpen,
+    (val) => {
+        if (val) {
             typedConfirmation.value = '';
         }
     },
 );
 
 const isConfirmed = computed(() => {
-    if (!props.confirmWord) return true;
-    return typedConfirmation.value.trim().toUpperCase() === props.confirmWord.trim().toUpperCase();
+    if (!effectiveWord.value) return true;
+    return typedConfirmation.value.trim().toUpperCase() === effectiveWord.value.trim().toUpperCase();
 });
 
+function handleClose() {
+    emit('close');
+    emit('update:modelValue', false);
+}
+
 function handleConfirm() {
-    if (!isConfirmed.value || props.processing) return;
+    if (!isConfirmed.value || isProcessing.value) return;
     emit('confirm');
 }
 </script>
 
 <template>
-    <Modal :open="open" :title="title" max-width="md" @close="emit('close')">
+    <Modal :open="isOpen" :title="title" max-width="md" @close="handleClose">
         <div class="space-y-4 text-sm text-aksara-ink">
             <div
                 v-if="danger"
@@ -67,16 +79,16 @@ function handleConfirm() {
                 {{ description }}
             </p>
 
-            <div v-if="confirmWord" class="space-y-1.5 pt-1">
+            <div v-if="effectiveWord" class="space-y-1.5 pt-1">
                 <label class="block text-xs font-medium text-aksara-ink">
-                    Ketik <span class="rounded bg-aksara-mist px-1.5 py-0.5 font-mono font-bold text-aksara-danger">{{ confirmWord }}</span> untuk konfirmasi:
+                    Ketik <span class="rounded bg-aksara-mist px-1.5 py-0.5 font-mono font-bold text-aksara-danger">{{ effectiveWord }}</span> untuk konfirmasi:
                 </label>
                 <input
                     v-model="typedConfirmation"
                     type="text"
                     class="aksara-input text-sm"
-                    :placeholder="`Ketik '${confirmWord}'`"
-                    :disabled="processing"
+                    :placeholder="`Ketik '${effectiveWord}'`"
+                    :disabled="isProcessing"
                     @keydown.enter.prevent="handleConfirm"
                 />
             </div>
@@ -88,8 +100,8 @@ function handleConfirm() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    :disabled="processing"
-                    @click="emit('close')"
+                    :disabled="isProcessing"
+                    @click="handleClose"
                 >
                     Batal
                 </Btn>
@@ -97,10 +109,10 @@ function handleConfirm() {
                     type="button"
                     :variant="danger ? 'danger' : 'primary'"
                     size="sm"
-                    :disabled="!isConfirmed || processing"
+                    :disabled="!isConfirmed || isProcessing"
                     @click="handleConfirm"
                 >
-                    <Icon v-if="processing" name="spinner" class="h-3.5 w-3.5 animate-spin" />
+                    <Icon v-if="isProcessing" name="spinner" class="h-3.5 w-3.5 animate-spin" />
                     {{ confirmButtonText }}
                 </Btn>
             </div>

@@ -15,6 +15,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\SchoolClass;
 use App\Models\User;
+use App\Services\UserExportImportService;
 use Database\Seeders\DemoDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -39,7 +40,7 @@ class UserExportImportTest extends TestCase
      */
     private function createSpreadsheetFile(array $headers, array $rows): UploadedFile
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->fromArray([$headers, ...$rows]);
         $writer = new Xlsx($spreadsheet);
@@ -273,7 +274,7 @@ class UserExportImportTest extends TestCase
 
     public function test_service_sanitize_cell_mencegah_formula_injection(): void
     {
-        $service = app(\App\Services\UserExportImportService::class);
+        $service = app(UserExportImportService::class);
 
         $this->assertSame("'=SUM(1,2)", $service->sanitizeCell('=SUM(1,2)'));
         $this->assertSame("'+cmd|' /C calc'!A0", $service->sanitizeCell("+cmd|' /C calc'!A0"));

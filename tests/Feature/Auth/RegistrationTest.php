@@ -19,16 +19,42 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_screen_can_be_rendered(): void
+    public function test_registration_screen_is_forbidden_when_public_registration_disabled(): void
     {
-        $response = $this->get('/register');
+        setting()->set('security.allow_public_registration', false);
 
+        $response = $this->get('/register');
+        $response->assertStatus(403);
+    }
+
+    public function test_registration_screen_can_be_rendered_when_enabled(): void
+    {
+        setting()->set('security.allow_public_registration', true);
+
+        $response = $this->get('/register');
         $response->assertStatus(200)
             ->assertInertia(fn ($page) => $page->component('Auth/Register'));
     }
 
-    public function test_new_users_can_register(): void
+    public function test_new_users_cannot_register_when_disabled(): void
     {
+        setting()->set('security.allow_public_registration', false);
+
+        $response = $this->post('/register', [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertStatus(403);
+        $this->assertGuest();
+    }
+
+    public function test_new_users_can_register_when_enabled(): void
+    {
+        setting()->set('security.allow_public_registration', true);
+
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',

@@ -21,19 +21,31 @@ Jangan menambah stack UI di luar Inertia + Vue tanpa ADR baru.
 
 ### Selesai
 
-- Domain + UI Inertia/Vue sesuai `docs/spec/01–17` (scaffold → design system)
+- Domain + UI Inertia/Vue sesuai `docs/spec/01–19` (scaffold → smoke testing & QA)
 - Design system Vue SoT: spec **17** + `Components/ui/*`; TipTap: `Components/tiptap/*` (spec 15)
 - Media context-scoped materi: list/upload/delete (spec 16)
-- Bulk actions & selection toolkit: spec **18** + `useBulkSelect`, `BulkToolbar`, `BulkConfirmModal`, endpoint `users.bulk-destroy` (proteksi diri & relasi), test 6/6 passed
-- **Static Analysis Level 9 (Larastan/PHPStan):** 0 error / 0 warning dengan `phpstan-baseline.neon` terisolasi rapi.
+- Bulk actions & selection toolkit: spec **18** + `useBulkSelect`, `BulkToolbar`, `BulkConfirmModal`, endpoint massal pada 4 entitas (**Users**, **Plans**, **Materials**, **References: Rombel & Mapel**) dengan proteksi diri dan relasi aktif.
+- **Ekspor Materi Pembelajaran Multi-Format (ADR-014):** PDF A4 Portrait dengan Kop Surat resmi, Word (.docx), dan Markdown (.md) via `MaterialExportController` dan `MaterialExportService`.
+- **Rekapitulasi & Peningkatan UX Presensi (Fase 1):** Ekspor PDF Landscape A4 resmi berkop & tanda tangan, ekspor Excel (.xlsx) PhpSpreadsheet, tombol "Tandai Semua Hadir", "Reset", live counter bar, dan early warning badge kehadiran `< 75%`.
+- **Ekspor & Impor Data Pengguna Excel (ADR-015):** Ekspor filtered/selected .xlsx, unduh template resmi, impor massal (skip/update), password acak kriptografis, dan unduh kredensial sementara (`credentials-download`).
+- **Static Analysis Level 9 (Larastan/PHPStan):** 0 error / 0 warning murni (level 9 ketat pada direktori `app/`, `EnsureRole.php` dikecualikan sebagai legacy middleware).
 - **Critical Journey Smoke Test:** `tests/Feature/Smoke/CriticalJourneySmokeTest.php` memverifikasi alur terpadu 5 role sekolah (136 assertions, 100% pass).
-- **Frontend Testing Suite (Vitest & Playwright):** 10 unit tests JavaScript lolos 100% (`useBulkSelect`, `authValidation`) dan 6 browser E2E smoke tests Playwright lolos 100% (Auth 3-role, TipTap MediaPicker, Bulk Actions safety modal).
-- **Penegakan QA Agen AI Wajib:** Pest 146/146 pass, Vitest pass, Playwright pass, PHPStan Level 9 = 0 error, npm run build = hijau tanpa kompromi.
+- **Frontend Testing Suite (Vitest & Playwright):** 14 unit tests JavaScript lolos 100% (`useBulkSelect`, `authValidation`, `formatters`) dan browser E2E smoke tests Playwright lolos 100%.
+- **Remediasi Audit Independen Komprehensif (2026-09-16):**
+  - Standarisasi `BulkConfirmModal` Vue prop (`modelValue`, `isOpen`, `effectiveWord`, `isProcessing`).
+  - Mitigasi IDOR & re-parenting CP/TP/ATP pada `ReferenceController` (`CurriculumAuthorizationTest`).
+  - Sanitasi Formula Injection CSV/XLSX (`=`, `+`, `-`, `@`, `\t`, `\r`) via `SpreadsheetSanitizer` (`SpreadsheetSanitizerTest`).
+  - Penegakan pengaturan keamanan dinamis (`security.allow_public_registration` & `security.max_login_attempts`).
+  - Mitigasi AI SSRF & redaksi data sensitif kredensial (`AiProviderSsrfTest`).
+  - Atomisitas transaksi database (`DB::transaction`) pada presensi dan publish RPP.
+  - Hardening CI/CD (`phpunit.xml` non-force DB envs, Pint check, frontend Vitest job, deploy ref head_sha pin).
+- **Penegakan QA Agen AI Wajib:** Pest **206/206 pass** (1.300+ assertions), Vitest 14 pass, PHPStan Level 9 = 0 error, Pint formatting clean, npm run build = hijau tanpa kompromi.
 
 ### Perlu penguatan
 
 - Perluas assertInertia pada feature test kritis
 - Co-Pilot apply setelah deploy pada provider AI nyata (bukan mock)
+- Matriks Jurnal Kehadiran (Fase 2 Presensi) & Portal Siswa Mandiri (Fase 3 Presensi)
 
 ### Backlog / non-scope
 
@@ -60,10 +72,12 @@ Seed berisi rencana/materi/kuis **Informatika — Dekomposisi Masalah** (publish
 
 ## Perubahan terakhir
 
-- **Peningkatan PHPStan ke Level 9:** Naik dari level 5 ke level 9 maksimal; penambahan baseline resmi framework Eloquent; hasil `[OK] No errors`.
-- **Smoke Test Lintas 5 Role:** Penambahan `tests/Feature/Smoke/CriticalJourneySmokeTest.php` mencakup Admin ➔ Guru ➔ Siswa ➔ Guru ➔ Wali Kelas ➔ Wali Murid.
-- **Standar QA Wajib untuk Agen AI:** Penambahan checklist imperatif di `coding-standards.md` dan `testing-strategy.md` melarang agent menyelesaikan tugas tanpa bukti pengujian lengkap (Pest 100%, PHPStan L9 0 error, npm run build hijau).
-- Spek **17** design system SoT (light enterprise permanen ADR-012); **15/16** TipTap + media; **09** materi & Co-Pilot; **18** Bulk Actions & Selection Toolkit.
+- **Fitur Ekspor Materi & Presensi Multi-Format (2026-09-16):** Implementasi `MaterialExportController`, `AttendanceExportController`, template Blade PDF kop resmi, dan ekspor spreadsheet PhpSpreadsheet (ADR-014).
+- **Fitur Ekspor & Impor Pengguna Excel (2026-09-16):** Pipa data onboarding massal via `.xlsx` dengan penanganan duplikasi dan kredensial sementara (ADR-015).
+- **Peningkatan UX Presensi:** Tombol cepat "Tandai Semua Hadir", "Reset", live counter bar real-time, dan deteksi dini siswa berkehadiran `< 75%`.
+- **Perluasan Bulk Actions:** Replikasi selection toolkit ke Plans, Materials, Rombel, dan Mapel.
+- **Peningkatan PHPStan ke Level 9 & Test Suite:** Peningkatan cakupan ke 193 feature tests (1.287 assertions) dengan 0 PHPStan errors.
+- Spek **17** design system SoT (light enterprise permanen ADR-012); **15/16** TipTap + media; **09** materi & Co-Pilot; **18** Bulk Actions; **19** Smoke Testing.
 
 ## Keputusan yang wajib dipatuhi
 

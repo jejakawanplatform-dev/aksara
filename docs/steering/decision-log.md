@@ -183,6 +183,56 @@ Catat keputusan arsitektur/produk yang mengubah arah kerja. Format mengikuti ADR
 
 ---
 
+## ADR-014: Standarisasi Ekspor Dokumen Multi-Format Sekolah (PDF Blade Berkop, Excel PhpSpreadsheet, DOCX & Markdown)
+
+- **Tanggal:** 2026-09-16
+- **Status:** diterima
+- **Konteks:** Kebutuhan cetak fisik dan pengarsipan digital sekolah (RPP, Materi Pembelajaran, Rekap Kehadiran, Kurikulum CP/TP/ATP). Kebutuhan cetak resmi menuntut Kop Surat sekolah dinamis dan tanda tangan; kebutuhan data analitis menuntut Excel (.xlsx); kebutuhan offline menuntut Word (.docx) dan Markdown (.md).
+- **Keputusan:**
+  1. Standar PDF menggunakan Blade view cetak A4 (Portrait untuk RPP/Materi/Kurikulum, Landscape untuk Rekap Kehadiran) dengan partial kop surat resmi (`resources/views/exports/partials/kop.blade.php`), konfigurasi `@page`, styling CSS print-optimized, dan blok tanda tangan guru/kepala sekolah.
+  2. Standar Spreadsheet menggunakan `PhpOffice\PhpSpreadsheet` murni untuk format `.xlsx` dengan styling header Aksara Teal (`#0D9488`), auto-column sizing, auto-filter, dan format persentase.
+  3. Standar Word menggunakan MIME `application/vnd.ms-word` dengan markup dokumen yang kompatibel dengan Microsoft Word; Markdown murni (`.md`) untuk transfer konten portabel.
+  4. Seluruh antarmuka ekspor menggunakan komponen UI tunggal `ExportMenu.vue` (popup menu dengan opsi format) yang membaca filter aktif via URL query parameters.
+- **Alasan:** Menghilangkan dependensi biner headless browser yang berat di server lokal/cloud, menghasilkan dokumen cetak yang sesuai format tata naskah dinas sekolah Indonesia, dan menjaga konsistensi UX.
+- **Alternatif:** Headless Chrome/Puppeteer PDF — ditolak karena kebutuhan resource berat; CSV generik — ditolak karena kurang rapi untuk administrasi sekolah.
+- **Dampak:** Controller `MaterialExportController`, `AttendanceExportController`, `LearningPlanExportController`, `CurriculumExportController`; service domain terkait; Blade templates di `resources/views/exports/*`.
+
+---
+
+## ADR-015: Manajemen Pengguna Massal, Pipa Impor Excel Terpandu, & Tata Kelola Kredensial Acak
+
+- **Tanggal:** 2026-09-16
+- **Status:** diterima
+- **Konteks:** Onboarding ratusan siswa dan guru di awal tahun ajaran baru memakan waktu jika dilakukan satu per satu. Diperlukan fitur impor massal via Excel dengan template standar, opsi penanganan duplikasi, dan distribusi kredensial yang aman.
+- **Keputusan:**
+  1. Format impor/ekspor menggunakan Excel `.xlsx` dengan validasi struktur header ketat dan template resmi (`/users/template`).
+  2. Kebijakan duplikasi: Admin dapat memilih `skip` (abaikan baris yang emailnya sudah terdaftar) atau `update` (perbarui nama dan role).
+  3. Password akun baru dapat dipilih seragam (mis. password default sekolah) atau acak kriptografis (8 karakter unik per akun).
+  4. Kredensial acak sementara disimpan dalam session flash dan dapat diunduh langsung (`/users/credentials-download`) sebelum sesi berakhir demi privasi data dan kepatuhan audit.
+  5. Aksi massal penghapusan (`bulkDestroy`) wajib mematuhi guardrails: tidak boleh menghapus diri sendiri (`Auth::id()`), dan tidak boleh menghapus akun guru dengan RPP aktif serta wali kelas dengan rombel aktif.
+- **Alasan:** Efisiensi operasional admin sekolah tanpa mengorbankan integritas data relasional dan keamanan kredensial siswa/guru.
+- **Alternatif:** Import CSV tanpa validasi duplikasi — ditolak; kirim password via email publik — ditolak untuk workshop offline.
+- **Dampak:** Controller `UserExportImportController`, service `UserExportImportService`, modal `UserImportModal.vue`, composable `useBulkSelect.js`, toolbar `BulkToolbar.vue`, dan modal konfirmasi `BulkConfirmModal.vue`.
+
+---
+
+## ADR-016: Protokol Penegakan QA Berlapis, PHPStan Level 9, & Smoke Test Multi-Role
+
+- **Tanggal:** 2026-09-16
+- **Status:** diterima
+- **Konteks:** Kompleksitas aplikasi dengan 5 peran pengguna dan integrasi AI menuntut jaminan kualitas tinggi agar regresi tidak lolos ke tahap rilis.
+- **Keputusan:**
+  1. Static Analysis wajib lulus **PHPStan / Larastan Level 9** dengan 0 error dan 0 baseline additions baru.
+  2. Pengujian otomatis backend wajib 100% lulus via Pest (`php artisan test`).
+  3. Pengujian alur kritis wajib melalui `CriticalJourneySmokeTest.php` yang mensimulasikan satu alur bersambung lintas 5 peran (Admin ➔ Guru ➔ Siswa ➔ Guru ➔ Wali Kelas ➔ Wali Murid).
+  4. Pengujian frontend unit dijalankan via Vitest (`npm run test:unit`) dan E2E browser via Playwright (`npm run test:e2e`).
+  5. Build aset frontend Vite wajib bersih tanpa error sintaks/warning (`npm run build`).
+- **Alasan:** Memberikan perlindungan komprehensif terhadap regresi logika bisnis, celah otorisasi antar role, dan kompatibilitas tipe data.
+- **Alternatif:** QA manual saja — ditolak; PHPStan Level 5 — ditingkatkan ke Level 9.
+- **Dampak:** `tests/Feature/Smoke/CriticalJourneySmokeTest.php`, `phpstan.neon`, `phpstan-baseline.neon`, workflow CI GitHub Actions, dan aturan coding standards.
+
+---
+
 ## Template entri baru
 
 ```markdown

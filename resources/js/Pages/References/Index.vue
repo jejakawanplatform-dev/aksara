@@ -61,9 +61,11 @@ const atpRows = computed(() => props.atp?.data ?? []);
 // ── Bulk Select (Rombel & Mapel) ──────────────────────────────
 const rombelBulk = useBulkSelect();
 const showRombelBulkModal = ref(false);
+const isBulkDeletingRombel = ref(false);
 
 const mapelBulk = useBulkSelect();
 const showMapelBulkModal = ref(false);
+const isBulkDeletingMapel = ref(false);
 
 watch(() => props.rombels?.data, () => rombelBulk.clearSelection());
 watch(() => props.subjects?.data, () => mapelBulk.clearSelection());
@@ -74,6 +76,7 @@ watch(() => props.tab, () => {
 
 function submitBulkDeleteRombel() {
     if (!props.urls.rombelsBulkDestroy) return;
+    isBulkDeletingRombel.value = true;
     router.post(
         props.urls.rombelsBulkDestroy,
         { ids: rombelBulk.selectedIds.value },
@@ -83,12 +86,16 @@ function submitBulkDeleteRombel() {
                 showRombelBulkModal.value = false;
                 rombelBulk.clearSelection();
             },
+            onFinish: () => {
+                isBulkDeletingRombel.value = false;
+            },
         }
     );
 }
 
 function submitBulkDeleteMapel() {
     if (!props.urls.mapelBulkDestroy) return;
+    isBulkDeletingMapel.value = true;
     router.post(
         props.urls.mapelBulkDestroy,
         { ids: mapelBulk.selectedIds.value },
@@ -97,6 +104,9 @@ function submitBulkDeleteMapel() {
             onSuccess: () => {
                 showMapelBulkModal.value = false;
                 mapelBulk.clearSelection();
+            },
+            onFinish: () => {
+                isBulkDeletingMapel.value = false;
             },
         }
     );
@@ -1102,18 +1112,30 @@ const formTitle = computed(() => {
         </Modal>
 
         <BulkConfirmModal
-            v-model="showRombelBulkModal"
+            :open="showRombelBulkModal"
+            title="Hapus Rombel Terpilih"
+            description="Rombel yang dipilih akan dihapus. Rombel yang masih memiliki siswa aktif akan dilewati demi integritas data."
             :count="rombelBulk.getSelectedCount(rombels.total)"
             item-label="rombel"
-            danger-word="HAPUS"
+            confirm-word="HAPUS"
+            :danger="true"
+            :processing="isBulkDeletingRombel"
+            confirm-button-text="Ya, Hapus Sekarang"
+            @close="showRombelBulkModal = false"
             @confirm="submitBulkDeleteRombel"
         />
 
         <BulkConfirmModal
-            v-model="showMapelBulkModal"
+            :open="showMapelBulkModal"
+            title="Hapus Mapel Terpilih"
+            description="Mata pelajaran yang dipilih akan dihapus secara permanen."
             :count="mapelBulk.getSelectedCount(subjects.total)"
             item-label="mata pelajaran"
-            danger-word="HAPUS"
+            confirm-word="HAPUS"
+            :danger="true"
+            :processing="isBulkDeletingMapel"
+            confirm-button-text="Ya, Hapus Sekarang"
+            @close="showMapelBulkModal = false"
             @confirm="submitBulkDeleteMapel"
         />
     </AppLayout>

@@ -13,18 +13,18 @@ use App\Http\Controllers\Access\AccessController;
 use App\Http\Controllers\Attendance\AttendanceController;
 use App\Http\Controllers\Attendance\AttendanceExportController;
 use App\Http\Controllers\Attendance\AttendanceSummaryController;
-use App\Http\Controllers\CurriculumExportController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Evaluation\EvaluationController;
 use App\Http\Controllers\Evaluation\EvaluationMonitoringController;
-use App\Http\Controllers\LearningPlanExportController;
 use App\Http\Controllers\Materials\MaterialController;
 use App\Http\Controllers\Materials\MaterialEditController;
 use App\Http\Controllers\Materials\MaterialExportController;
+use App\Http\Controllers\Plans\LearningPlanExportController;
 use App\Http\Controllers\Plans\PlanController;
 use App\Http\Controllers\Plans\PlanQuizController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Quiz\QuizAttemptController;
+use App\Http\Controllers\References\CurriculumExportController;
 use App\Http\Controllers\References\ReferenceController;
 use App\Http\Controllers\References\ReferenceImportController;
 use App\Http\Controllers\Reports\TeacherReportController;
@@ -83,7 +83,9 @@ Route::middleware(['auth', 'permission:materials.read|plans.manage'])->prefix('m
     Route::delete('/{material}/media/{filename}', [MaterialEditController::class, 'destroyMedia'])
         ->where('filename', '[^/]+')
         ->name('media.destroy');
-    Route::post('/{material}/copilot', [MaterialEditController::class, 'copilot'])->name('copilot');
+    Route::post('/{material}/copilot', [MaterialEditController::class, 'copilot'])
+        ->middleware('throttle:15,1')
+        ->name('copilot');
 });
 
 Route::middleware(['auth', 'permission:users.manage'])->prefix('users')->name('users.')->group(function () {
@@ -113,7 +115,9 @@ Route::middleware(['auth', 'permission:settings.manage'])->prefix('settings')->n
     Route::get('/', [SettingsController::class, 'index'])->name('index');
     Route::put('/', [SettingsController::class, 'save'])->name('save');
     Route::post('/providers', [SettingsController::class, 'storeProvider'])->name('providers.store');
-    Route::post('/providers/test', [SettingsController::class, 'testConnection'])->name('providers.test');
+    Route::post('/providers/test', [SettingsController::class, 'testConnection'])
+        ->middleware('throttle:15,1')
+        ->name('providers.test');
     Route::put('/providers/{provider}', [SettingsController::class, 'updateProvider'])->name('providers.update');
     Route::delete('/providers/{provider}', [SettingsController::class, 'destroyProvider'])->name('providers.destroy');
     Route::post('/providers/{provider}/toggle', [SettingsController::class, 'toggleProvider'])->name('providers.toggle');

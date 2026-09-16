@@ -116,4 +116,69 @@ class SystemSettingsTest extends TestCase
 
         $this->assertEquals('SMP Aksara Nusantara', setting('school.name'));
     }
+
+    public function test_api_key_disensor_saat_dikirim_ke_frontend(): void
+    {
+        $admin = User::where('email', 'admin@aksara.test')->firstOrFail();
+        $provider = AiProvider::where('vendor_key', 'groq')->firstOrFail();
+        $provider->update(['api_key' => 'gsk_secret_token_12345']);
+
+        $this->actingAs($admin)
+            ->get(route('settings.index', ['tab' => 'ai']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Settings/Index')
+                ->where('providers', function ($providers) {
+                    $groq = collect($providers)->firstWhere('vendor_key', 'groq');
+
+                    return str_starts_with((string) $groq['api_key'], '••••')
+                        && ! str_contains((string) $groq['api_key'], 'secret_token')
+                        && $groq['has_api_key'] === true;
+                })
+            );
+    }
+
+    public function test_update_provider_tidak_menimpa_kunci_jika_berisi_karakter_sensor(): void
+    {
+        $admin = User::where('email', 'admin@aksara.test')->firstOrFail();
+        $provider = AiProvider::where('vendor_key', 'groq')->firstOrFail();
+        $provider->update(['api_key' => 'original_secret_token_12345']);
+
+        $this->actingAs($admin)
+            ->put(route('settings.providers.update', $provider), [
+                'name' => 'Groq Super Fast',
+                'is_active' => true,
+                'api_key' => '••••••••2345',
+                'base_url' => 'https://api.groq.com/openai/v1',
+                'model' => 'llama-3.3-70b-versatile',
+                'max_tokens' => 4096,
+                'temperature' => 0.7,
+                'timeout' => 30,
+            ])
+            ->assertRedirect();
+
+        $provider->refresh();
+        $this->assertEquals('Groq Super Fast', $provider->name);
+        $this->assertEquals('original_secret_token_12345', $provider->api_key);
+    }
+
+    public function test_rate_limiter_aktif_pada_endpoint_test_koneksi(): void
+    {
+        $admin = User::where('email', 'admin@aksara.test')->firstOrFail();
+
+        for ($i = 0; $i < 15; $i++) {
+            $this->actingAs($admin)
+                ->postJson(route('settings.providers.test'), [
+                    'vendor_key' => 'mock',
+                ])
+                ->assertOk();
+        }
+
+        // Request ke-16 harus ditolak oleh rate limiter (HTTP 429)
+        $this->actingAs($admin)
+            ->postJson(route('settings.providers.test'), [
+                'vendor_key' => 'mock',
+            ])
+            ->assertStatus(429);
+    }
 }

@@ -13,7 +13,7 @@
 
 ## 1. Konteks & Masalah
 
-Saat ini, modul Materi Pembelajaran ([`LearningMaterial`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/app/Models/LearningMaterial.php)) di Aksara telah mendukung:
+Saat ini, modul Materi Pembelajaran ([`LearningMaterial`](../../app/Models/LearningMaterial.php)) di Aksara telah mendukung:
 1. Pembuatan draf materi otomatis melalui AI Co-Pilot dan penyuntingan visual TipTap editor (`Materials/Edit.vue`).
 2. Pembacaan materi interaktif di layar bagi siswa terdaftar (`Materials/Show.vue`).
 
@@ -60,9 +60,9 @@ Solusi dirancang dengan mengikuti pola arsitektur ekspor yang sudah teruji di mo
 
 ### C. Integrasi Antarmuka Pengguna (UI)
 
-1. **Halaman Baca Materi ([`Materials/Show.vue`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Materials/Show.vue)):**
-   - Tambahkan tombol menu dropdown **"Unduh Materi"** di bagian header menggunakan komponen [`ExportMenu.vue`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Components/ui/ExportMenu.vue) dengan opsi PDF, Word, dan Markdown.
-2. **Halaman Daftar Materi ([`Materials/Index.vue`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Materials/Index.vue)):**
+1. **Halaman Baca Materi ([`Materials/Show.vue`](../../resources/js/Pages/Materials/Show.vue)):**
+   - Tambahkan tombol menu dropdown **"Unduh Materi"** di bagian header menggunakan komponen [`ExportMenu.vue`](../../resources/js/Components/ui/ExportMenu.vue) dengan opsi PDF, Word, dan Markdown.
+2. **Halaman Daftar Materi ([`Materials/Index.vue`](../../resources/js/Pages/Materials/Index.vue)):**
    - Tambahkan `ExportMenu` pada kolom aksi setiap baris tabel sehingga guru dan siswa dapat mengunduh materi secara instan.
 
 ---

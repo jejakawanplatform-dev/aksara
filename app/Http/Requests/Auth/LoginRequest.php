@@ -70,7 +70,9 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        $rawAttempts = setting('security.max_login_attempts', 5);
+        $maxAttempts = is_numeric($rawAttempts) ? (int) $rawAttempts : 5;
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), $maxAttempts > 0 ? $maxAttempts : 5)) {
             return;
         }
 

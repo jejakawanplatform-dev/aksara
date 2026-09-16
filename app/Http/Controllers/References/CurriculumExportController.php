@@ -10,20 +10,23 @@
  * See the LICENSE file in the project root.
  */
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\References;
 
+use App\Http\Controllers\Controller;
 use App\Models\CurriculumAtpItem;
 use App\Models\CurriculumCp;
 use App\Models\Subject;
 use App\Services\CurriculumExportImportService;
 use App\Services\SettingService;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CurriculumExportController extends Controller
 {
     public function __construct(protected CurriculumExportImportService $exportService) {}
 
-    public function exportCpTp(Request $request, Subject $subject, string $format): \Symfony\Component\HttpFoundation\Response|\Illuminate\Contracts\View\View
+    public function exportCpTp(Request $request, Subject $subject, string $format): Response|View
     {
         $safeCode = preg_replace('/[^A-Za-z0-9_-]/', '', $subject->code ?: 'MAPEL');
         $filename = "CP_TP_{$safeCode}_".now()->format('Ymd_His');
@@ -69,7 +72,7 @@ class CurriculumExportController extends Controller
         abort(404);
     }
 
-    public function exportAtp(Request $request, Subject $subject, string $format): \Symfony\Component\HttpFoundation\Response|\Illuminate\Contracts\View\View
+    public function exportAtp(Request $request, Subject $subject, string $format): Response|View
     {
         $grade = $request->query('grade') ? (int) $request->query('grade') : null;
         $safeCode = preg_replace('/[^A-Za-z0-9_-]/', '', $subject->code ?: 'MAPEL');

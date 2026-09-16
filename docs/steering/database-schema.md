@@ -136,8 +136,11 @@ Spatie Permission tables juga ada. Gate fitur memakai middleware `permission:*`;
 
 | Kolom | Catatan |
 |---|---|
-| `name`, `driver`, `api_key`, `base_url`, `model` | Konfigurasi vendor |
-| `priority_order`, `is_active` | Failover router |
+| `vendor_key`, `name` | Kunci unik vendor (mis. `openai`, `gemini`, `anthropic`, `ollama`) & nama tampilan |
+| `is_active`, `priority_order` | Status aktif & urutan prioritas failover router |
+| `api_key`, `base_url`, `model` | Kredensial, endpoint dasar (opsional/custom), dan nama model |
+| `max_tokens`, `temperature`, `timeout_seconds` | Parameter inferensi & batasan batas waktu |
+| `custom_headers`, `is_custom` | Header kustom (JSON) & penanda apakah provider kustom |
 | Kapabilitas | Katalog kode `supports_image_generation` (OpenAI/Gemini); dipakai Co-Pilot Vue |
 
 ### `ai_usage_logs`
@@ -212,6 +215,7 @@ Pivot guru pengampu ↔ mapel (referensi / plotting).
 | `2026_08_09_061811_create_activity_tables.php` | attendance, events, quizzes, evaluations |
 | `2026_08_09_170000_create_curriculum_reference_tables.php` | CP/TP/ATP |
 | `2026_08_09_171500_create_semesters_table.php` | semesters |
+| `2026_08_09_180000_add_curriculum_tp_id_to_learning_plans.php` | relasi FK `curriculum_tp_id` pada plans |
 | `2026_08_09_183000_create_system_settings_table.php` | settings |
 | `2026_08_09_190000_create_ai_usage_logs_table.php` | usage logs |
 | `2026_08_09_200000_create_ai_providers_table.php` | AI providers |
@@ -219,10 +223,15 @@ Pivot guru pengampu ↔ mapel (referensi / plotting).
 
 > Daftar lengkap: `database/migrations/`. Perubahan skema **hanya** lewat migration baru.
 
-## Data demo
+## Data demo & kurikulum
 
 Perintah: `php artisan migrate:fresh --seed` atau `php artisan aksara:seed-demo`.  
 Detail akun: tabel demo di `README.md`.
+
+- `DemoDataSeeder.php`: Mengisi akun 5 peran, data kelas binaan, siswa rombel, dan relasi orang tua.
+- `InformatikaCurriculumSeeder.php`: Mengisi data CP/TP/ATP resmi mata pelajaran Informatika Fase D kelas 7, 8, dan 9.
+- `SystemSettingSeeder.php`: Mengisi identitas sekolah demo (SMP Bintang Nusantara, NPSN, alamat, kepala sekolah).
+- `AiProviderSeeder.php`: Mengisi konfigurasi default provider AI dengan failover.
 
 | Role | Email | Password |
 |---|---|---|

@@ -117,16 +117,16 @@ class MaterialController extends Controller
         abort_if($user->isStudent(), 403);
 
         $validated = $request->validate([
-            'ids'                 => ['required_without:select_all_matching', 'array'],
-            'ids.*'               => ['integer', 'exists:learning_materials,id'],
+            'ids' => ['required_without:select_all_matching', 'array'],
+            'ids.*' => ['integer', 'exists:learning_materials,id'],
             'select_all_matching' => ['nullable', 'boolean'],
-            'search'              => ['nullable', 'string'],
-            'status'              => ['nullable', 'string'],
+            'search' => ['nullable', 'string'],
+            'status' => ['nullable', 'string'],
         ]);
 
         // Scope ke materi yang boleh diakses user ini (plan milik sendiri / admin semua)
         $planIds = LearningPlan::query()->forCurrentUser()->pluck('id');
-        $query   = LearningMaterial::query()->whereIn('plan_id', $planIds);
+        $query = LearningMaterial::query()->whereIn('plan_id', $planIds);
 
         if (! empty($validated['select_all_matching'])) {
             $search = (string) ($validated['search'] ?? '');
@@ -144,12 +144,13 @@ class MaterialController extends Controller
             return back()->with('error', 'Tidak ada materi yang dipilih untuk dihapus.');
         }
 
-        $deletedCount     = 0;
+        $deletedCount = 0;
         $skippedPublished = 0;
 
         foreach ($materials as $material) {
             if ($material->events->isNotEmpty()) {
                 $skippedPublished++;
+
                 continue;
             }
 

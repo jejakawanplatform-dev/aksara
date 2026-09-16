@@ -31,34 +31,34 @@ class LearningPlanFactory extends Factory
         // Gunakan SchoolClass & Subject yang sudah ada, atau buat yang baru secara inline
         $classId = SchoolClass::query()->value('id')
             ?? SchoolClass::query()->create([
-                'name'  => 'VII-A',
+                'name' => 'VII-A',
                 'grade' => 7,
             ])->id;
 
         $subjectId = Subject::query()->value('id')
             ?? Subject::query()->create([
-                'name'  => 'Informatika',
-                'code'  => 'INF',
+                'name' => 'Informatika',
+                'code' => 'INF',
                 'phase' => 'D',
                 'jenjang' => 'SMP',
             ])->id;
 
         return [
-            'teacher_id'           => User::factory(),
-            'academic_year_id'     => null,
-            'semester_id'          => null,
-            'class_id'             => $classId,
-            'subject_id'           => $subjectId,
-            'curriculum_cp_id'     => null,
-            'curriculum_tp_id'     => null,
-            'phase'                => fake()->randomElement(['A', 'B', 'C', 'D', 'E', 'F']),
-            'grade'                => fake()->numberBetween(1, 12),
-            'topic'                => fake()->sentence(4),
-            'duration_minutes'     => fake()->randomElement([40, 60, 80, 90]),
-            'learning_objectives'  => fake()->paragraph(),
-            'student_needs'        => null,
+            'teacher_id' => User::factory(),
+            'academic_year_id' => null,
+            'semester_id' => null,
+            'class_id' => $classId,
+            'subject_id' => $subjectId,
+            'curriculum_cp_id' => null,
+            'curriculum_tp_id' => null,
+            'phase' => fake()->randomElement(['A', 'B', 'C', 'D', 'E', 'F']),
+            'grade' => fake()->numberBetween(1, 12),
+            'topic' => fake()->sentence(4),
+            'duration_minutes' => fake()->randomElement([40, 60, 80, 90]),
+            'learning_objectives' => fake()->paragraph(),
+            'student_needs' => null,
             'curriculum_reference' => '-',
-            'status'               => PlanStatus::Draft,
+            'status' => PlanStatus::Draft,
         ];
     }
 

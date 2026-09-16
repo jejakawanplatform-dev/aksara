@@ -13,10 +13,10 @@
 
 ## 1. Konteks & Analisis Fitur Eksisting
 
-Modul Kehadiran ([`AttendanceRecord`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/app/Models/AttendanceRecord.php)) saat ini memiliki pondasi backend dan frontend yang sudah berjalan:
+Modul Kehadiran ([`AttendanceRecord`](../../app/Models/AttendanceRecord.php)) saat ini memiliki pondasi backend dan frontend yang sudah berjalan:
 1. **Model & Skema Database:**
    - Tabel `attendance_records` memiliki kunci unik komposit `(plan_id, student_id)`.
-   - Status kehadiran berbasis enum [`AttendanceStatus`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/app/Enums/AttendanceStatus.php): `present` (Hadir), `excused` (Izin), `sick` (Sakit), `absent` (Alpha).
+   - Status kehadiran berbasis enum [`AttendanceStatus`](../../app/Enums/AttendanceStatus.php): `present` (Hadir), `excused` (Izin), `sick` (Sakit), `absent` (Alpha).
    - Mendukung catatan opsional (`notes`) per baris kehadiran siswa.
 2. **Form Pengisian Presensi (`Attendance/Form.vue`):**
    - Guru pemilik rencana ajar (`$plan->teacher_id === Auth::id()`) dapat mengisi dan menyimpan presensi per pertemuan kelas secara *upsert*.
@@ -28,8 +28,8 @@ Modul Kehadiran ([`AttendanceRecord`](file:///c:/Users/jejak/Documents/www/Bimte
      - **Guru Mapel:** Hanya dapat melihat kelas dan rencana ajar miliknya.
      - **Administrator:** Memiliki hak akses menyeluruh ke seluruh kelas dan rencana ajar.
 4. **Integrasi Dashboard:**
-   - Ringkasan kehadiran rombel ditampilkan pada Dashboard Wali Kelas ([`WaliKelas.vue`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Dashboard/WaliKelas.vue)).
-   - Ringkasan kehadiran anak ditampilkan pada Dashboard Wali Murid ([`WaliMurid.vue`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Dashboard/WaliMurid.vue)).
+   - Ringkasan kehadiran rombel ditampilkan pada Dashboard Wali Kelas ([`WaliKelas.vue`](../../resources/js/Pages/Dashboard/WaliKelas.vue)).
+   - Ringkasan kehadiran anak ditampilkan pada Dashboard Wali Murid ([`WaliMurid.vue`](../../resources/js/Pages/Dashboard/WaliMurid.vue)).
 
 ---
 
@@ -38,7 +38,7 @@ Modul Kehadiran ([`AttendanceRecord`](file:///c:/Users/jejak/Documents/www/Bimte
 Berdasarkan audit alur operasional sekolah di Indonesia (SMP/SMA/Kurikulum Merdeka), ditemukan beberapa kesenjangan krusial:
 
 ### A. Ketiadaan Fitur Ekspor / Cetak Rekap Presensi (PDF & Excel)
-* **Kondisi Saat Ini:** Halaman rekapitulasi ([`Summary.vue`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Pages/Attendance/Summary.vue)) hanya dapat dilihat di layar browser. Tidak tersedia tombol unduh atau cetak.
+* **Kondisi Saat Ini:** Halaman rekapitulasi ([`Summary.vue`](../../resources/js/Pages/Attendance/Summary.vue)) hanya dapat dilihat di layar browser. Tidak tersedia tombol unduh atau cetak.
 * **Kebutuhan Lapangan:** Guru mapel dan wali kelas diwajibkan secara administratif untuk mencetak:
   1. **Cetak PDF Resmi A4 Ber-Kop Sekolah:** Sebagai lampiran fisik perangkat ajar, bukti pelaksanaan pembelajaran, serta laporan pertanggungjawaban bulanan kepada Kepala Sekolah.
   2. **Ekspor Excel (.xlsx):** Untuk pengolahan data nilai akhir, sinkronisasi dengan aplikasi e-Rapor Dikdasmen, dan rekapitulasi semesteran.
@@ -100,7 +100,7 @@ graph TD
   - Tabel: No, NISN, Nama Siswa, Hadir (H), Izin (I), Sakit (S), Alpha (A), Total Pertemuan, % Kehadiran, Status Keterangan.
   - Tanda tangan Guru Pengampu / Wali Kelas dan Kepala Sekolah.
 - **Frontend Integration:**
-  - Mengintegrasikan komponen [`ExportMenu.vue`](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/resources/js/Components/ui/ExportMenu.vue) pada header `Attendance/Summary.vue`.
+  - Mengintegrasikan komponen [`ExportMenu.vue`](../../resources/js/Components/ui/ExportMenu.vue) pada header `Attendance/Summary.vue`.
 
 ### 2. Peningkatan UX Form Input Presensi (`Attendance/Form.vue`)
 - Tombol cepat di header tabel:

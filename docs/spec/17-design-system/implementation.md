@@ -73,6 +73,8 @@
 | `IconButton` | aksi ikon; tooltip hover / keyboard focus-visible saja |
 | `ExportMenu` | satu tombol → popup Excel/Word/PDF |
 | `PasswordInput` | auth password + toggle |
+| `BulkToolbar` | bar aksi kontekstual seleksi tabel multi-baris |
+| `BulkConfirmModal` | dialog konfirmasi aksi massal dengan guard input kata |
 
 ### Overlay / dialog / surface / toolbar
 

@@ -15,7 +15,6 @@ namespace App\Http\Controllers\Reports;
 use App\Enums\AttendanceStatus;
 use App\Http\Controllers\Controller;
 use App\Models\LearningPlan;
-use App\Models\TeacherEvaluation;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,11 +34,11 @@ class TeacherReportController extends Controller
         }
 
         $reportData = LearningPlan::where('teacher_id', $teacher->id)
-            ->with(['class', 'subject', 'attendance', 'quizzes.attempts'])
+            ->with(['class', 'subject', 'attendance', 'quizzes.attempts', 'evaluation'])
             ->latest()
             ->paginate($perPage)
             ->withQueryString()
-            ->through(function (LearningPlan $plan) use ($teacher) {
+            ->through(function (LearningPlan $plan) {
                 $attendances = $plan->attendance;
                 $totalSiswa = $attendances->count();
                 $hadirCount = $attendances->where('status', AttendanceStatus::Present)->count();
@@ -48,9 +47,7 @@ class TeacherReportController extends Controller
                 $rawAvg = $attempts->avg('score');
                 $avgScore = ($attempts->count() > 0 && is_numeric($rawAvg)) ? (int) round((float) $rawAvg) : null;
 
-                $evaluation = TeacherEvaluation::where('plan_id', $plan->id)
-                    ->where('teacher_id', $teacher->id)
-                    ->first();
+                $evaluation = $plan->evaluation;
 
                 return [
                     'planId' => $plan->id,

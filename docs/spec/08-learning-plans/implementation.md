@@ -5,14 +5,15 @@
 | Area | Path |
 |---|---|
 | Controller | `app/Http/Controllers/Plans/PlanController.php` |
-| Export | `LearningPlanExportController`, `LearningPlanExportImportService` |
+| Export | `app/Http/Controllers/Plans/LearningPlanExportController.php`, `LearningPlanExportImportService` |
 | AI | `app/Services/AiDraftService.php` |
 | Pages | `Pages/Plans/{Index,Create,Edit,Draft}.vue` |
 | UI list | `Pagination`, `IconButton`, `ExportMenu`; ekspor single Excel/Word/PDF |
 | Models | `LearningPlan`, `AiGeneration`, `AiUsageLog`, `LearningMaterial` |
 | Enum | `PlanStatus` (`draft`/`reviewed`/`published`) |
 | Trait | `app/Traits/ScopesTeacherOrAdmin.php` |
-| Tests | `LearningPipelineTest`, `CreatePlanTpTest`, `LearningPlanExportImportTest` |
+| Bulk Action | `POST /plans/bulk-destroy` (`plans.bulk-destroy`) |
+| Tests | `LearningPipelineTest`, `CreatePlanTpTest`, `LearningPlanExportImportTest`, `PlanBulkActionTest` |
 
 ## Alur
 

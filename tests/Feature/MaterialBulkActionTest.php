@@ -38,11 +38,11 @@ class MaterialBulkActionTest extends TestCase
 
         $matA = LearningMaterial::factory()->create([
             'plan_id' => $plan->id,
-            'status'  => MaterialStatus::Draft,
+            'status' => MaterialStatus::Draft,
         ]);
         $matB = LearningMaterial::factory()->create([
             'plan_id' => $plan->id,
-            'status'  => MaterialStatus::Draft,
+            'status' => MaterialStatus::Draft,
         ]);
 
         $response = $this->actingAs($guru)
@@ -59,21 +59,21 @@ class MaterialBulkActionTest extends TestCase
 
     public function test_materi_published_yang_sudah_dibaca_siswa_dilindungi(): void
     {
-        $guru    = User::where('email', 'naya@aksara.test')->firstOrFail();
+        $guru = User::where('email', 'naya@aksara.test')->firstOrFail();
         $student = User::where('email', 'adit@aksara.test')->firstOrFail();
-        $plan    = LearningPlan::factory()->create(['teacher_id' => $guru->id]);
+        $plan = LearningPlan::factory()->create(['teacher_id' => $guru->id]);
 
         $material = LearningMaterial::factory()->create([
             'plan_id' => $plan->id,
-            'status'  => MaterialStatus::Published,
+            'status' => MaterialStatus::Published,
         ]);
 
         // Simulasikan siswa sudah membaca materi
         LearningEvent::create([
-            'material_id'  => $material->id,
-            'student_id'   => $student->id,
-            'event_type'   => 'material_opened',
-            'occurred_at'  => now(),
+            'material_id' => $material->id,
+            'student_id' => $student->id,
+            'event_type' => 'material_opened',
+            'occurred_at' => now(),
         ]);
 
         $response = $this->actingAs($guru)
@@ -95,7 +95,7 @@ class MaterialBulkActionTest extends TestCase
 
         $material = LearningMaterial::factory()->create([
             'plan_id' => $plan->id,
-            'status'  => MaterialStatus::Published,
+            'status' => MaterialStatus::Published,
         ]);
 
         $response = $this->actingAs($guru)

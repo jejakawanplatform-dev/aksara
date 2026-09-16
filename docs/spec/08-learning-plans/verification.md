@@ -9,13 +9,14 @@
 | AI | `app/Services/AiDraftService.php` |
 | Pages | `resources/js/Pages/Plans/{Index,Create,Edit,Draft}.vue` |
 | Models | `LearningPlan`, `AiGeneration`, `AiUsageLog` |
-| Tests | `LearningPipelineTest`, `CreatePlanTpTest`, `LearningPlanExportImportTest` |
+| Tests | `LearningPipelineTest`, `CreatePlanTpTest`, `LearningPlanExportImportTest`, `PlanBulkActionTest` |
 
 ## Checklist
 
 - [x] Dual-mode create + draft approve/publish
 - [x] Scoping guru/admin
-- [x] Tests pipeline/export hijau
+- [x] Bulk actions (`plans.bulk-destroy`) dengan otorisasi & bypass supervisor admin
+- [x] Tests pipeline/export/bulk hijau
 
 ## Perintah
 
@@ -23,6 +24,7 @@
 php artisan test --filter=LearningPipelineTest
 php artisan test --filter=CreatePlanTpTest
 php artisan test --filter=LearningPlanExportImportTest
+php artisan test --filter=PlanBulkActionTest
 ```
 
 ## Uji manual

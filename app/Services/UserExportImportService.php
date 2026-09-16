@@ -15,6 +15,7 @@ namespace App\Services;
 use App\Enums\UserRole;
 use App\Models\SchoolClass;
 use App\Models\User;
+use App\Support\Spreadsheet\SpreadsheetSanitizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -38,12 +39,7 @@ class UserExportImportService
      */
     public function sanitizeCell(mixed $value): string
     {
-        $str = is_scalar($value) ? trim((string) $value) : '';
-        if ($str !== '' && in_array($str[0], ['=', '+', '-', '@'], true)) {
-            return "'".$str;
-        }
-
-        return $str;
+        return SpreadsheetSanitizer::sanitize($value);
     }
 
     /**
@@ -97,8 +93,8 @@ class UserExportImportService
             $sheet->setCellValue("B{$row}", $this->sanitizeCell($user->name));
             $sheet->setCellValue("C{$row}", $this->sanitizeCell($user->email));
             $sheet->setCellValue("D{$row}", $roleLabel);
-            $sheet->setCellValue("E{$row}", $classList !== '' ? $classList : '—');
-            $sheet->setCellValue("F{$row}", $childrenList !== '' ? $childrenList : '—');
+            $sheet->setCellValue("E{$row}", $this->sanitizeCell($classList !== '' ? $classList : '—'));
+            $sheet->setCellValue("F{$row}", $this->sanitizeCell($childrenList !== '' ? $childrenList : '—'));
             $sheet->setCellValue("G{$row}", $isVerified);
             $sheet->setCellValue("H{$row}", $createdAt);
 

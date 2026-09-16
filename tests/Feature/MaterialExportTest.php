@@ -13,7 +13,6 @@
 namespace Tests\Feature;
 
 use App\Enums\MaterialStatus;
-use App\Models\LearningEvent;
 use App\Models\LearningMaterial;
 use App\Models\LearningPlan;
 use App\Models\SchoolClass;

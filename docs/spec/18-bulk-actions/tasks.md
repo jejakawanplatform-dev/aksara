@@ -11,4 +11,6 @@ Checklist deliverable tahap 18.
 | T05 | Method `UserController::bulkDestroy` | P0 | done | Self-protection & relasi check dalam DB transaction |
 | T06 | Integrasi UI `resources/js/Pages/Users/Index.vue` | P0 | done | Checkbox header/row + modal konfirmasi |
 | T07 | Feature test `tests/Feature/UserBulkActionTest.php` | P0 | done | 6 test case lengkap (admin, non-admin, self, relasi) |
-| T08 | Replikasi ke `Materials/Index.vue` (bulk publish/archive) | P2 | todo | Dapat dilanjutkan sebagai sub-tahap berikutnya |
+| T08 | Replikasi ke `Materials/Index.vue` & Controller | P1 | done | `MaterialController@bulkDestroy` & `MaterialBulkActionTest` |
+| T09 | Replikasi ke `Plans/Index.vue` & Controller | P1 | done | `PlanController@bulkDestroy` & `PlanBulkActionTest` |
+| T10 | Replikasi ke `References/Index.vue` (Rombel & Mapel) | P1 | done | `ReferenceController@bulkDestroy*` & `ReferenceBulkActionTest` |

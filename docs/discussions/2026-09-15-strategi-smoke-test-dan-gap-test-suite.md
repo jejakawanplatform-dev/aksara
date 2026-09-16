@@ -18,7 +18,7 @@ Aksara saat ini memiliki fondasi backend testing yang sangat solid:
 * **Static Analysis:** PHPStan / Larastan Level 5 lolos (0 errors).
 * **Asset Bundler:** Vite build stabil tanpa warning kompilasi.
 
-Namun, mengacu pada bagian *"Yang sengaja ditunda"* di [testing-strategy.md](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/docs/steering/testing-strategy.md) dan catatan *"Perlu penguatan"* di [handover.md](file:///c:/Users/jejak/Documents/www/Bimtek/aksara/docs/steering/handover.md), proyek ini masih memiliki beberapa **kesenjangan pengujian (test suite gaps)** yang berisiko menimbulkan regresi tak terdeteksi.
+Namun, mengacu pada bagian *"Yang sengaja ditunda"* di [testing-strategy.md](../steering/testing-strategy.md) dan catatan *"Perlu penguatan"* di [handover.md](../steering/handover.md), proyek ini masih memiliki beberapa **kesenjangan pengujian (test suite gaps)** yang berisiko menimbulkan regresi tak terdeteksi.
 
 ---
 

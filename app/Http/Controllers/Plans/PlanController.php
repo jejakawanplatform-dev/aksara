@@ -31,6 +31,7 @@ use App\Services\LearningPlanExportImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -298,20 +299,20 @@ class PlanController extends Controller
         }
 
         $validated = $request->validate([
-            'ids'                 => ['required_without:select_all_matching', 'array'],
-            'ids.*'               => ['integer', 'exists:learning_plans,id'],
+            'ids' => ['required_without:select_all_matching', 'array'],
+            'ids.*' => ['integer', 'exists:learning_plans,id'],
             'select_all_matching' => ['nullable', 'boolean'],
-            'search'              => ['nullable', 'string'],
-            'status'              => ['nullable', 'string'],
-            'teacher'             => ['nullable', 'string'],
-            'subject'             => ['nullable', 'string'],
+            'search' => ['nullable', 'string'],
+            'status' => ['nullable', 'string'],
+            'teacher' => ['nullable', 'string'],
+            'subject' => ['nullable', 'string'],
         ]);
 
         $query = LearningPlan::query()->forCurrentUser();
 
         if (! empty($validated['select_all_matching'])) {
-            $search  = (string) ($validated['search'] ?? '');
-            $status  = (string) ($validated['status'] ?? '');
+            $search = (string) ($validated['search'] ?? '');
+            $status = (string) ($validated['status'] ?? '');
             $teacher = (string) ($validated['teacher'] ?? '');
             $subject = (string) ($validated['subject'] ?? '');
 
@@ -330,25 +331,31 @@ class PlanController extends Controller
             return back()->with('error', 'Tidak ada rencana pembelajaran yang dipilih untuk dihapus.');
         }
 
-        $skippedPublished = 0;
-        $skippedForbidden = 0;
-        $deletedCount     = 0;
+        [$deletedCount, $skippedPublished, $skippedForbidden] = DB::transaction(function () use ($plans, $user): array {
+            $skippedPublished = 0;
+            $skippedForbidden = 0;
+            $deletedCount = 0;
 
-        foreach ($plans as $plan) {
-            // Guru hanya bisa hapus milik sendiri (admin bisa semua)
-            if (! $user->isAdmin() && $plan->teacher_id !== $user->id) {
-                $skippedForbidden++;
-                continue;
-            }
-            // Lindungi RPP yang sudah diterbitkan (status = published)
-            if ($plan->isPublished()) {
-                $skippedPublished++;
-                continue;
+            foreach ($plans as $plan) {
+                // Guru hanya bisa hapus milik sendiri (admin bisa semua)
+                if (! $user->isAdmin() && $plan->teacher_id !== $user->id) {
+                    $skippedForbidden++;
+
+                    continue;
+                }
+                // Lindungi RPP yang sudah diterbitkan (status = published)
+                if ($plan->isPublished()) {
+                    $skippedPublished++;
+
+                    continue;
+                }
+
+                $plan->delete();
+                $deletedCount++;
             }
 
-            $plan->delete();
-            $deletedCount++;
-        }
+            return [$deletedCount, $skippedPublished, $skippedForbidden];
+        });
 
         $messages = [];
         if ($deletedCount > 0) {
@@ -365,7 +372,6 @@ class PlanController extends Controller
 
         return redirect()->route('plans.index')->with($flashType, implode(' ', $messages));
     }
-
 
     public function openMaterial(LearningPlan $plan): RedirectResponse
     {
@@ -481,29 +487,31 @@ class PlanController extends Controller
             'lesson_plan' => $lessonPlan,
         ];
 
-        $plan->material()->updateOrCreate(
-            ['plan_id' => $plan->id],
-            [
-                'content' => $materialContent,
-                'status' => MaterialStatus::Draft,
-            ]
-        );
+        DB::transaction(function () use ($plan, $materialContent, $generation, $cpDraft, $tpDraft, $atpDraft, $lessonPlan, $materialDraft, $reviewNotes) {
+            $plan->material()->updateOrCreate(
+                ['plan_id' => $plan->id],
+                [
+                    'content' => $materialContent,
+                    'status' => MaterialStatus::Draft,
+                ]
+            );
 
-        $plan->update(['status' => PlanStatus::Reviewed]);
+            $plan->update(['status' => PlanStatus::Reviewed]);
 
-        $generation->update([
-            'review_status' => 'approved',
-            'reviewed_at' => now(),
-            'reviewed_by' => Auth::id(),
-            'output' => array_merge($generation->output ?? [], [
-                'cpDraft' => $cpDraft,
-                'tpDraft' => $tpDraft,
-                'atpDraft' => $atpDraft,
-                'lessonPlanDraft' => $lessonPlan,
-                'learningMaterialDraft' => $materialDraft,
-                'reviewNotes' => $reviewNotes,
-            ]),
-        ]);
+            $generation->update([
+                'review_status' => 'approved',
+                'reviewed_at' => now(),
+                'reviewed_by' => Auth::id(),
+                'output' => array_merge($generation->output ?? [], [
+                    'cpDraft' => $cpDraft,
+                    'tpDraft' => $tpDraft,
+                    'atpDraft' => $atpDraft,
+                    'lessonPlanDraft' => $lessonPlan,
+                    'learningMaterialDraft' => $materialDraft,
+                    'reviewNotes' => $reviewNotes,
+                ]),
+            ]);
+        });
 
         return back()->with('message', 'Draf berhasil disimpan! Silakan review kembali sebelum diterbitkan.');
     }
@@ -516,11 +524,13 @@ class PlanController extends Controller
             && $plan->material()->exists();
         abort_unless($canPublish, 403);
 
-        $plan->update(['status' => PlanStatus::Published]);
-        $plan->material()->update([
-            'status' => MaterialStatus::Published,
-            'published_at' => now(),
-        ]);
+        DB::transaction(function () use ($plan) {
+            $plan->update(['status' => PlanStatus::Published]);
+            $plan->material()->update([
+                'status' => MaterialStatus::Published,
+                'published_at' => now(),
+            ]);
+        });
 
         return back()->with('message', 'Rencana pembelajaran berhasil diterbitkan! Siswa sudah bisa mengakses materi.');
     }

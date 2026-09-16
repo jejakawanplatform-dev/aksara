@@ -20,6 +20,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -81,19 +82,21 @@ class AttendanceController extends Controller
             'attendance.*.notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        foreach ($validated['attendance'] as $studentId => $row) {
-            if (! in_array((int) $studentId, $studentIds, true)) {
-                continue;
-            }
+        DB::transaction(function () use ($validated, $studentIds, $plan) {
+            foreach ($validated['attendance'] as $studentId => $row) {
+                if (! in_array((int) $studentId, $studentIds, true)) {
+                    continue;
+                }
 
-            AttendanceRecord::updateOrCreate(
-                ['plan_id' => $plan->id, 'student_id' => (int) $studentId],
-                [
-                    'status' => AttendanceStatus::from($row['status']),
-                    'notes' => $row['notes'] ?? null,
-                ]
-            );
-        }
+                AttendanceRecord::updateOrCreate(
+                    ['plan_id' => $plan->id, 'student_id' => (int) $studentId],
+                    [
+                        'status' => AttendanceStatus::from($row['status']),
+                        'notes' => $row['notes'] ?? null,
+                    ]
+                );
+            }
+        });
 
         return back()->with('message', 'Absensi berhasil disimpan.');
     }

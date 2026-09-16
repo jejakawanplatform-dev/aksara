@@ -41,13 +41,21 @@ class SettingsController extends Controller
         $providers = AiProvider::ordered()->get()->map(function (AiProvider $p) {
             $meta = $p->catalogMeta();
 
+            $maskedKey = null;
+            if (! empty($p->api_key)) {
+                $maskedKey = strlen($p->api_key) > 4
+                    ? '••••••••'.substr($p->api_key, -4)
+                    : '••••••••';
+            }
+
             return [
                 'id' => $p->id,
                 'vendor_key' => $p->vendor_key,
                 'name' => $p->name,
                 'is_active' => (bool) $p->is_active,
                 'priority_order' => $p->priority_order,
-                'api_key' => $p->api_key,
+                'api_key' => $maskedKey,
+                'has_api_key' => ! empty($p->api_key),
                 'base_url' => $p->base_url,
                 'model' => $p->model,
                 'max_tokens' => $p->max_tokens,
@@ -177,16 +185,24 @@ class SettingsController extends Controller
 
         $data = $this->validateProvider($request);
 
-        $provider->update([
+        $updateData = [
             'name' => $data['name'],
             'is_active' => $data['is_active'],
-            'api_key' => $data['api_key'] ?: null,
             'base_url' => $data['base_url'] ?: null,
             'model' => $data['model'],
             'max_tokens' => $data['max_tokens'],
             'temperature' => $data['temperature'],
             'timeout_seconds' => $data['timeout'],
-        ]);
+        ];
+
+        $apiKey = is_string($data['api_key'] ?? null) ? $data['api_key'] : null;
+        if (! empty($apiKey) && ! str_starts_with($apiKey, '••••')) {
+            $updateData['api_key'] = $apiKey;
+        } elseif (empty($apiKey)) {
+            $updateData['api_key'] = null;
+        }
+
+        $provider->update($updateData);
 
         return back()->with('message', 'Parameter vendor AI berhasil disimpan ke database!');
     }
@@ -251,11 +267,18 @@ class SettingsController extends Controller
             'timeout' => 'nullable|integer|min:5|max:120',
         ]);
 
-        $vendorKey = $data['vendor_key'];
-        $name = $data['name'] ?: $vendorKey;
-        $apiKey = $data['api_key'] ?? '';
-        $baseUrl = $data['base_url'] ?? '';
-        $timeout = $data['timeout'] ?? 30;
+        $vendorKey = is_string($data['vendor_key'] ?? null) ? $data['vendor_key'] : '';
+        $name = (isset($data['name']) && is_string($data['name']) && $data['name'] !== '') ? $data['name'] : $vendorKey;
+        $apiKey = is_string($data['api_key'] ?? null) ? $data['api_key'] : '';
+        $baseUrl = is_string($data['base_url'] ?? null) ? $data['base_url'] : '';
+        $timeout = is_numeric($data['timeout'] ?? null) ? (int) $data['timeout'] : 30;
+
+        if (! empty($apiKey) && str_starts_with($apiKey, '••••')) {
+            $existing = AiProvider::where('vendor_key', $vendorKey)->first();
+            if ($existing && ! empty($existing->api_key)) {
+                $apiKey = $existing->api_key;
+            }
+        }
 
         if ($vendorKey === 'mock') {
             return response()->json([
@@ -270,6 +293,50 @@ class SettingsController extends Controller
                 'type' => 'danger',
                 'message' => "API Key untuk vendor {$name} belum diisi.",
             ]);
+        }
+
+        if (! empty($baseUrl)) {
+            $parsed = parse_url($baseUrl);
+            if ($parsed === false || empty($parsed['scheme']) || empty($parsed['host'])) {
+                return response()->json([
+                    'type' => 'danger',
+                    'message' => 'Format Base URL tidak valid.',
+                ]);
+            }
+
+            $scheme = strtolower($parsed['scheme']);
+            $host = strtolower($parsed['host']);
+
+            if (! empty($parsed['user']) || ! empty($parsed['pass'])) {
+                return response()->json([
+                    'type' => 'danger',
+                    'message' => 'User-info pada Base URL tidak diizinkan.',
+                ]);
+            }
+
+            $isLocalHost = in_array($host, ['localhost', '127.0.0.1', '::1'], true);
+            if ($scheme !== 'https' && ! ($scheme === 'http' && $isLocalHost && app()->environment('local', 'testing'))) {
+                return response()->json([
+                    'type' => 'danger',
+                    'message' => 'Base URL wajib menggunakan protokol HTTPS yang aman.',
+                ]);
+            }
+
+            $blockedHosts = ['169.254.169.254', 'metadata.google.internal', 'metadata.internal', 'instance-data'];
+            if (in_array($host, $blockedHosts, true)) {
+                return response()->json([
+                    'type' => 'danger',
+                    'message' => 'Host tujuan tidak diizinkan demi keamanan (SSRF Protection).',
+                ]);
+            }
+
+            $ip = filter_var($host, FILTER_VALIDATE_IP);
+            if ($ip && ! app()->environment('local', 'testing') && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+                return response()->json([
+                    'type' => 'danger',
+                    'message' => 'Alamat IP privat tidak diizinkan sebagai Base URL publik.',
+                ]);
+            }
         }
 
         try {
@@ -296,10 +363,12 @@ class SettingsController extends Controller
                 'type' => 'danger',
                 'message' => "Gagal terhubung ke {$name} (HTTP {$response->status()}). Periksa API Key dan Base URL.",
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $errorMsg = preg_replace('/key=[^&\s]+/i', 'key=••••', $e->getMessage()) ?: 'Kesalahan koneksi jaringan.';
+
             return response()->json([
                 'type' => 'danger',
-                'message' => 'Gagal terhubung: '.$e->getMessage(),
+                'message' => 'Gagal terhubung: '.$errorMsg,
             ]);
         }
     }

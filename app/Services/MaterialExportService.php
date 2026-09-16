@@ -13,8 +13,8 @@
 namespace App\Services;
 
 use App\Models\LearningMaterial;
-use App\Models\LearningPlan;
 use App\Support\MaterialContentHtml;
+use PhpOffice\PhpWord\Element\Section;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\SimpleType\Jc;
@@ -285,7 +285,7 @@ class MaterialExportService
     /**
      * Mengonversi potongan HTML menjadi elemen paragraf Word.
      *
-     * @param  \PhpOffice\PhpWord\Element\Section  $section
+     * @param  Section  $section
      */
     private function renderHtmlToWord($section, string $html): void
     {

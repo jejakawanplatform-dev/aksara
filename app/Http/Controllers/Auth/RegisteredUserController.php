@@ -33,6 +33,8 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
+        abort_unless((bool) setting('security.allow_public_registration', false), 403, 'Pendaftaran publik sedang dinonaktifkan.');
+
         return Inertia::render('Auth/Register');
     }
 
@@ -43,6 +45,7 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless((bool) setting('security.allow_public_registration', false), 403, 'Pendaftaran publik sedang dinonaktifkan.');
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],

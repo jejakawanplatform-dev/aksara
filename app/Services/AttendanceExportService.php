@@ -13,10 +13,10 @@
 namespace App\Services;
 
 use App\Enums\AttendanceStatus;
-use App\Models\AttendanceRecord;
 use App\Models\LearningPlan;
 use App\Models\SchoolClass;
 use App\Models\User;
+use App\Support\Spreadsheet\SpreadsheetSanitizer;
 use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -34,7 +34,10 @@ class AttendanceExportService
      */
     public function buildSummaryRows(SchoolClass $class, Collection $planIds): array
     {
-        $students = $class->students()->orderBy('name')->get();
+        $students = $class->students()
+            ->with(['attendances' => fn ($q) => $q->whereIn('plan_id', $planIds)])
+            ->orderBy('name')
+            ->get();
 
         if ($planIds->isEmpty() || $students->isEmpty()) {
             return [];
@@ -44,10 +47,7 @@ class AttendanceExportService
         $rows = [];
 
         foreach ($students as $student) {
-            $records = AttendanceRecord::query()
-                ->where('student_id', $student->id)
-                ->whereIn('plan_id', $planIds)
-                ->get();
+            $records = $student->attendances;
 
             $hadir = $records->where('status', AttendanceStatus::Present)->count();
             $izin = $records->where('status', AttendanceStatus::Excused)->count();
@@ -147,15 +147,15 @@ class AttendanceExportService
         foreach ($summaryRows as $row) {
             $sheet->setCellValue("A{$dataRow}", $no++);
             $sheet->setCellValue("B{$dataRow}", '#'.$row['studentId']);
-            $sheet->setCellValue("C{$dataRow}", $row['studentName']);
-            $sheet->setCellValue("D{$dataRow}", $row['studentEmail']);
+            $sheet->setCellValue("C{$dataRow}", SpreadsheetSanitizer::sanitize($row['studentName']));
+            $sheet->setCellValue("D{$dataRow}", SpreadsheetSanitizer::sanitize($row['studentEmail']));
             $sheet->setCellValue("E{$dataRow}", $row['hadir']);
             $sheet->setCellValue("F{$dataRow}", $row['izin']);
             $sheet->setCellValue("G{$dataRow}", $row['sakit']);
             $sheet->setCellValue("H{$dataRow}", $row['alpha']);
             $sheet->setCellValue("I{$dataRow}", $row['total']);
             $sheet->setCellValue("J{$dataRow}", $row['pct'].'%');
-            $sheet->setCellValue("K{$dataRow}", $row['status']);
+            $sheet->setCellValue("K{$dataRow}", SpreadsheetSanitizer::sanitize($row['status']));
 
             // Alignments
             $sheet->getStyle("A{$dataRow}:B{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);

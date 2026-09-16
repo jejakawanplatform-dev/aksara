@@ -431,11 +431,16 @@ function exportItems(plan) {
         </Modal>
 
         <BulkConfirmModal
-            v-model="showBulkDeleteModal"
+            :open="showBulkDeleteModal"
+            title="Hapus RPP Terpilih"
+            description="Rencana pembelajaran yang dipilih akan dihapus. RPP yang sudah diterbitkan (published) akan dilewati demi integritas data."
             :count="bulk.getSelectedCount(plans.total)"
-            :loading="isBulkDeleting"
             item-label="rencana pembelajaran"
-            danger-word="HAPUS"
+            confirm-word="HAPUS"
+            :danger="true"
+            :processing="isBulkDeleting"
+            confirm-button-text="Ya, Hapus Sekarang"
+            @close="showBulkDeleteModal = false"
             @confirm="submitBulkDelete"
         />
     </AppLayout>

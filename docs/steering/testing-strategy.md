@@ -72,14 +72,20 @@ Bukan pengganti feature test otorisasi.
 | Smoke Test Terpadu | `tests/Feature/Smoke/CriticalJourneySmokeTest.php` |
 | Dasar / role / seed | `tests/Feature/AksaraTest.php`, `AksaraHardeningTest.php` |
 | Auth Breeze | `tests/Feature/Auth/*`, `ProfileTest.php` |
-| Materi + Co-Pilot | `MaterialAiCopilotTest.php`, `MaterialAuthoringTest.php` |
-| HTML sanitasi | `tests/Unit/MaterialContentHtmlTest.php` |
+| Materi + Co-Pilot | `MaterialAiCopilotTest.php`, `MaterialAuthoringTest.php`, `MaterialMediaTest.php` |
+| Ekspor Materi Multi-Format | `tests/Feature/MaterialExportTest.php` |
+| Aksi Massal (Bulk Actions) | `UserBulkActionTest.php`, `PlanBulkActionTest.php`, `MaterialBulkActionTest.php`, `ReferenceBulkActionTest.php` |
+| Ekspor/Impor Pengguna Excel | `tests/Feature/UserExportImportTest.php` |
+| HTML sanitasi | `tests/Unit/MaterialContentHtmlTest.php`, `MaterialCopilotPatchTest.php` |
 | AI model | `tests/Unit/AiModelResolutionTest.php` |
-| Plans / pipeline | `CreatePlanTpTest.php`, `LearningPipelineTest.php`, `LearningPlanExportImportTest.php` |
+| Atribusi & Merek | `tests/Unit/BrandAttributionTest.php` |
+| Plans / pipeline | `CreatePlanTpTest.php`, `LearningPipelineTest.php`, `PlanQuizTest.php`, `LearningPlanExportImportTest.php` |
 | Referensi | `ReferenceCrudTest.php`, `ReferenceExportImportTest.php` |
 | Users / RBAC / settings | `UserManagementTest.php`, `RbacMatrixTest.php`, `SystemSettingsTest.php` |
-| Oversight | `AdminOversightTest.php` |
-| Absensi & Evaluasi | `AttendanceEvaluationInertiaTest.php` |
+| Oversight & Wali Kelas | `AdminOversightTest.php`, `HomeroomDashboardTest.php` |
+| Absensi & Evaluasi | `AttendanceEvaluationInertiaTest.php`, `AttendanceSummaryTest.php` |
+| Ekspor Rekap Kehadiran | `tests/Feature/AttendanceExportTest.php` |
+| Frontend Unit (Vitest) | `tests/Unit/js/authValidation.test.js`, `formatters.test.js`, `useBulkSelect.test.js` |
 
 ## Cara menjalankan lokal (QA Gate Wajib)
 
