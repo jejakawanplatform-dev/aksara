@@ -27,15 +27,17 @@ export function useBulkSelect() {
         }
     }
 
+    const getId = (item) => (typeof item === 'object' && item !== null ? item.id : item);
+
     function isAllSelected(items = []) {
         if (!items || items.length === 0) return false;
-        return items.every((item) => selectedIds.value.includes(item.id));
+        return items.every((item) => selectedIds.value.includes(getId(item)));
     }
 
     function isIndeterminate(items = []) {
         if (!items || items.length === 0) return false;
-        const someSelected = items.some((item) => selectedIds.value.includes(item.id));
-        const allSelected = items.every((item) => selectedIds.value.includes(item.id));
+        const someSelected = items.some((item) => selectedIds.value.includes(getId(item)));
+        const allSelected = items.every((item) => selectedIds.value.includes(getId(item)));
         return someSelected && !allSelected;
     }
 
@@ -43,12 +45,12 @@ export function useBulkSelect() {
         if (!items || items.length === 0) return;
 
         if (isAllSelected(items)) {
-            const itemIds = new Set(items.map((i) => i.id));
+            const itemIds = new Set(items.map(getId));
             selectedIds.value = selectedIds.value.filter((id) => !itemIds.has(id));
             isAllMatching.value = false;
         } else {
             const currentSet = new Set(selectedIds.value);
-            items.forEach((item) => currentSet.add(item.id));
+            items.forEach((item) => currentSet.add(getId(item)));
             selectedIds.value = Array.from(currentSet);
         }
     }

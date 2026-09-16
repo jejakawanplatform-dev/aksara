@@ -590,10 +590,10 @@ const formTitle = computed(() => {
                                         <input
                                             type="checkbox"
                                             class="aksara-checkbox"
-                                            :checked="rombelBulk.isAllSelected(rombelRows.map(r => r.id))"
-                                            :indeterminate.prop="rombelBulk.isIndeterminate(rombelRows.map(r => r.id))"
+                                            :checked="rombelBulk.isAllSelected(rombelRows)"
+                                            :indeterminate.prop="rombelBulk.isIndeterminate(rombelRows)"
                                             aria-label="Pilih semua rombel di halaman ini"
-                                            @change="rombelBulk.toggleSelectAll(rombelRows.map(r => r.id))"
+                                            @change="rombelBulk.toggleSelectAll(rombelRows)"
                                         />
                                     </th>
                                     <th class="aksara-th">Nama</th>
@@ -712,10 +712,10 @@ const formTitle = computed(() => {
                                         <input
                                             type="checkbox"
                                             class="aksara-checkbox"
-                                            :checked="mapelBulk.isAllSelected(subjectRows.map(s => s.id))"
-                                            :indeterminate.prop="mapelBulk.isIndeterminate(subjectRows.map(s => s.id))"
+                                            :checked="mapelBulk.isAllSelected(subjectRows)"
+                                            :indeterminate.prop="mapelBulk.isIndeterminate(subjectRows)"
                                             aria-label="Pilih semua mata pelajaran di halaman ini"
-                                            @change="mapelBulk.toggleSelectAll(subjectRows.map(s => s.id))"
+                                            @change="mapelBulk.toggleSelectAll(subjectRows)"
                                         />
                                     </th>
                                     <th class="aksara-th">Nama</th>

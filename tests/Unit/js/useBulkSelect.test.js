@@ -72,4 +72,19 @@ describe('useBulkSelect composable', () => {
         expect(hasSelection.value).toBe(false);
         expect(getSelectedCount(150)).toBe(0);
     });
+
+    it('mendukung array item berupa scalar id langsung maupun objek { id }', () => {
+        const { selectedIds, toggleSelectAll, isAllSelected, isIndeterminate } = useBulkSelect();
+        const idList = [101, 102, 103];
+
+        expect(isAllSelected(idList)).toBe(false);
+        toggleSelectAll(idList);
+        expect(selectedIds.value).toEqual([101, 102, 103]);
+        expect(isAllSelected(idList)).toBe(true);
+        expect(isIndeterminate(idList)).toBe(false);
+
+        toggleSelectAll(idList);
+        expect(selectedIds.value).toEqual([]);
+        expect(isAllSelected(idList)).toBe(false);
+    });
 });
