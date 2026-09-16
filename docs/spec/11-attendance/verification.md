@@ -19,6 +19,7 @@
 ## Perintah
 
 ```bash
+php artisan test --filter=AttendanceExportTest
 php artisan test --filter=AttendanceSummaryTest
 php artisan test --filter=AttendanceEvaluationInertiaTest
 php artisan test --filter=LearningPipelineTest

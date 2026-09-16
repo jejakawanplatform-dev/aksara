@@ -87,6 +87,9 @@ class MaterialController extends Controller
                     'durationMinutes' => $plan ? $plan->duration_minutes : 0,
                     'showUrl' => route('materials.show', $m),
                     'editUrl' => route('materials.edit', $m),
+                    'exportPdf' => route('materials.export.single', [$m, 'pdf']),
+                    'exportWord' => route('materials.export.single', [$m, 'word']),
+                    'exportMarkdown' => route('materials.export.single', [$m, 'markdown']),
                 ];
             });
 
@@ -277,6 +280,9 @@ class MaterialController extends Controller
                 'index' => route('materials.index'),
                 'edit' => route('materials.edit', $material),
                 'quizAttempt' => $publishedQuiz ? route('quiz.attempt', $publishedQuiz) : null,
+                'exportPdf' => route('materials.export.single', [$material, 'pdf']),
+                'exportWord' => route('materials.export.single', [$material, 'word']),
+                'exportMarkdown' => route('materials.export.single', [$material, 'markdown']),
             ],
         ]);
     }

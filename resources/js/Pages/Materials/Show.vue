@@ -6,12 +6,13 @@
   See the LICENSE file in the project root.
 -->
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import PageHeader from '@/Components/ui/PageHeader.vue';
 import StatusBadge from '@/Components/ui/StatusBadge.vue';
 import Btn from '@/Components/ui/Btn.vue';
 import Icon from '@/Components/ui/Icon.vue';
+import ExportMenu from '@/Components/ui/ExportMenu.vue';
 
 const props = defineProps({
     material: { type: Object, required: true },
@@ -23,6 +24,12 @@ const props = defineProps({
 const contentRoot = ref(null);
 
 const statusLabel = props.material.status === 'published' ? 'Diterbitkan' : 'Draf';
+
+const exportItems = computed(() => [
+    { label: 'PDF / Cetak', href: props.urls.exportPdf, icon: 'pdf', target: '_blank' },
+    { label: 'Word (.docx)', href: props.urls.exportWord, icon: 'document' },
+    { label: 'Markdown (.md)', href: props.urls.exportMarkdown, icon: 'download' },
+]);
 
 onMounted(async () => {
     if (!props.isStem || !contentRoot.value) return;
@@ -49,6 +56,10 @@ onMounted(async () => {
                     <StatusBadge v-if="!isStudent" :status="material.status" :label="statusLabel" />
                 </template>
                 <template #actions>
+                    <ExportMenu
+                        :items="exportItems"
+                        label="Unduh Materi"
+                    />
                     <Btn :href="urls.index" variant="secondary" size="sm" class="gap-1.5">
                         <Icon name="material" class="h-3.5 w-3.5" />
                         Daftar Materi

@@ -18,6 +18,7 @@ import IconButton from '@/Components/ui/IconButton.vue';
 import Icon from '@/Components/ui/Icon.vue';
 import BulkToolbar from '@/Components/ui/BulkToolbar.vue';
 import BulkConfirmModal from '@/Components/ui/BulkConfirmModal.vue';
+import ExportMenu from '@/Components/ui/ExportMenu.vue';
 import { useBulkSelect } from '@/Composables/useBulkSelect';
 
 const props = defineProps({
@@ -98,6 +99,14 @@ watch(
     () => props.materials.data,
     () => bulk.clearSelection(),
 );
+
+function exportItems(material) {
+    return [
+        { label: 'PDF / Cetak', href: material.exportPdf, icon: 'pdf', target: '_blank' },
+        { label: 'Word (.docx)', href: material.exportWord, icon: 'document' },
+        { label: 'Markdown (.md)', href: material.exportMarkdown, icon: 'download' },
+    ];
+}
 // ─────────────────────────────────────────────────────────────
 </script>
 
@@ -195,7 +204,7 @@ watch(
                                 <th class="aksara-th">Judul</th>
                                 <th class="aksara-th">Mapel / Kelas</th>
                                 <th v-if="!isStudent" class="aksara-th">Status</th>
-                                <th class="aksara-th w-28 text-right">Aksi</th>
+                                <th class="aksara-th w-36 text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -244,6 +253,11 @@ watch(
                                             icon="pencil"
                                             label="Edit"
                                             :href="material.editUrl"
+                                        />
+                                        <ExportMenu
+                                            label="Ekspor"
+                                            icon="download"
+                                            :items="exportItems(material)"
                                         />
                                     </div>
                                 </td>

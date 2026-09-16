@@ -4,15 +4,16 @@
 
 | Area | Path |
 |---|---|
-| Controllers | `Materials/MaterialController`, `MaterialEditController` |
+| Controllers | `Materials/MaterialController`, `MaterialEditController`, `MaterialExportController` |
 | Pages | `Pages/Materials/{Index,Show,Edit}.vue` |
-| UI Index | Pagination + filter search/status; IconButton aksi baris |
-| Services | `AiDraftService`, `MaterialImageService` (media → spec 16) |
+| UI Index | Pagination + filter search/status; IconButton + ExportMenu aksi baris |
+| Services | `AiDraftService`, `MaterialImageService` (media → spec 16), `MaterialExportService` |
+| Exports | `resources/views/exports/material-pdf.blade.php` (PDF/Cetak), Word (.docx), Markdown (.md) |
 | Support | `MaterialContentHtml`, `MaterialCopilotPatch`, `SubjectContext` |
 | Models | `LearningMaterial`, `LearningEvent`, `AiProvider` |
 | Editor (global) | Spec **15** — `Components/tiptap/*` |
 | Media context | Spec **16** — list/upload/delete `materials/{id}/` |
-| Tests | `MaterialAuthoringTest`, `MaterialAiCopilotTest`, `Unit/MaterialContentHtmlTest`, `Unit/MaterialCopilotPatchTest`, `AiModelResolutionTest` |
+| Tests | `MaterialAuthoringTest`, `MaterialAiCopilotTest`, `MaterialExportTest`, `Unit/MaterialContentHtmlTest`, `Unit/MaterialCopilotPatchTest`, `AiModelResolutionTest` |
 
 ## UI Edit (2026-08-11)
 

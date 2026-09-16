@@ -12,6 +12,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import PageHeader from '@/Components/ui/PageHeader.vue';
 import Field from '@/Components/ui/Field.vue';
 import Pagination from '@/Components/ui/Pagination.vue';
+import ExportMenu from '@/Components/ui/ExportMenu.vue';
 
 const props = defineProps({
     classes: { type: Array, default: () => [] },
@@ -19,6 +20,7 @@ const props = defineProps({
     summaryData: { type: Object, required: true },
     filters: { type: Object, default: () => ({}) },
     indexUrl: { type: String, required: true },
+    exportBaseUrl: { type: String, default: '/attendance/export' },
 });
 
 const local = reactive({
@@ -37,6 +39,32 @@ const filterQuery = computed(() => ({
 }));
 
 const rows = computed(() => props.summaryData.data ?? []);
+
+const exportItems = computed(() => {
+    if (!local.classId) return [];
+
+    const qs = new URLSearchParams();
+    qs.set('classId', local.classId);
+    if (local.planId) {
+        qs.set('planId', local.planId);
+    }
+
+    const base = props.exportBaseUrl || '/attendance/export';
+
+    return [
+        {
+            label: 'PDF / Cetak',
+            href: `${base}/pdf?${qs.toString()}`,
+            icon: 'pdf',
+            target: '_blank',
+        },
+        {
+            label: 'Excel (.xlsx)',
+            href: `${base}/excel?${qs.toString()}`,
+            icon: 'download',
+        },
+    ];
+});
 
 watch(
     () => local.classId,
@@ -83,7 +111,15 @@ function pctClass(pct) {
             <PageHeader
                 title="Rekap Kehadiran Siswa"
                 description="Ringkasan kehadiran per siswa berdasarkan kelas dan rencana pembelajaran."
-            />
+            >
+                <template #actions>
+                    <ExportMenu
+                        label="Ekspor Rekap"
+                        :items="exportItems"
+                        :disabled="!local.classId || !rows.length"
+                    />
+                </template>
+            </PageHeader>
 
             <div class="aksara-surface p-4 sm:p-5">
                 <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -128,6 +164,7 @@ function pctClass(pct) {
                                 <th class="aksara-th text-center text-aksara-warn">Sakit</th>
                                 <th class="aksara-th text-center text-aksara-danger">Alpha</th>
                                 <th class="aksara-th text-center">% Hadir</th>
+                                <th class="aksara-th text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -140,9 +177,24 @@ function pctClass(pct) {
                                 <td class="aksara-td text-center">{{ row.hadir }}</td>
                                 <td class="aksara-td text-center">{{ row.izin }}</td>
                                 <td class="aksara-td text-center">{{ row.sakit }}</td>
-                                <td class="aksara-td text-center">{{ row.alpha }}</td>
+                                <td class="aksara-td text-center" :class="{ 'font-semibold text-aksara-danger': row.alpha > 0 }">{{ row.alpha }}</td>
                                 <td class="aksara-td text-center font-bold" :class="pctClass(row.pct)">
                                     {{ row.pct }}%
+                                </td>
+                                <td class="aksara-td text-center">
+                                    <span
+                                        v-if="row.total > 0 && row.pct < 75"
+                                        class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/20"
+                                    >
+                                        Perlu Perhatian
+                                    </span>
+                                    <span
+                                        v-else-if="row.total > 0"
+                                        class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
+                                    >
+                                        Baik
+                                    </span>
+                                    <span v-else class="text-xs text-aksara-muted">—</span>
                                 </td>
                             </tr>
                         </tbody>

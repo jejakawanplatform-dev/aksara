@@ -113,6 +113,7 @@ class AttendanceSummaryController extends Controller
                 'per_page' => $perPage,
             ],
             'indexUrl' => route('attendance.summary'),
+            'exportBaseUrl' => url('/attendance/export'),
         ]);
     }
 

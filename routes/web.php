@@ -11,6 +11,7 @@
  */
 use App\Http\Controllers\Access\AccessController;
 use App\Http\Controllers\Attendance\AttendanceController;
+use App\Http\Controllers\Attendance\AttendanceExportController;
 use App\Http\Controllers\Attendance\AttendanceSummaryController;
 use App\Http\Controllers\CurriculumExportController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Evaluation\EvaluationMonitoringController;
 use App\Http\Controllers\LearningPlanExportController;
 use App\Http\Controllers\Materials\MaterialController;
 use App\Http\Controllers\Materials\MaterialEditController;
+use App\Http\Controllers\Materials\MaterialExportController;
 use App\Http\Controllers\Plans\PlanController;
 use App\Http\Controllers\Plans\PlanQuizController;
 use App\Http\Controllers\ProfileController;
@@ -70,6 +72,7 @@ Route::middleware(['auth', 'permission:materials.read|plans.manage'])->prefix('m
     Route::get('/', [MaterialController::class, 'index'])->name('index');
     Route::post('/bulk-destroy', [MaterialController::class, 'bulkDestroy'])->name('bulk-destroy');
     Route::get('/{material}', [MaterialController::class, 'show'])->name('show');
+    Route::get('/{material}/export/{format}', [MaterialExportController::class, 'exportSingle'])->name('export.single');
 
     /** Inertia + Vue TipTap editor (Tahap 18) */
     Route::get('/{material}/edit', [MaterialEditController::class, 'edit'])->name('edit');
@@ -184,6 +187,7 @@ Route::middleware(['auth', 'permission:reports.teacher'])->group(function () {
 
 Route::middleware(['auth', 'permission:attendance.summary'])->group(function () {
     Route::get('/attendance/summary', [AttendanceSummaryController::class, 'index'])->name('attendance.summary');
+    Route::get('/attendance/export/{format}', [AttendanceExportController::class, 'export'])->name('attendance.export');
 });
 
 Route::middleware(['auth', 'permission:quiz.attempt'])->group(function () {
