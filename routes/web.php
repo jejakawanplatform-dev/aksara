@@ -28,6 +28,7 @@ use App\Http\Controllers\References\ReferenceImportController;
 use App\Http\Controllers\Reports\TeacherReportController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Users\UserController;
+use App\Http\Controllers\Users\UserExportImportController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -86,6 +87,10 @@ Route::middleware(['auth', 'permission:users.manage'])->prefix('users')->name('u
     Route::get('/', [UserController::class, 'index'])->name('index');
     Route::post('/', [UserController::class, 'store'])->name('store');
     Route::post('/bulk-destroy', [UserController::class, 'bulkDestroy'])->name('bulk-destroy');
+    Route::get('/export', [UserExportImportController::class, 'export'])->name('export');
+    Route::get('/template', [UserExportImportController::class, 'template'])->name('template');
+    Route::post('/import', [UserExportImportController::class, 'import'])->name('import');
+    Route::get('/credentials-download', [UserExportImportController::class, 'downloadCredentials'])->name('credentials-download');
     Route::put('/{user}', [UserController::class, 'update'])->name('update');
     Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     Route::post('/{user}/attach-class', [UserController::class, 'attachClass'])->name('attach-class');

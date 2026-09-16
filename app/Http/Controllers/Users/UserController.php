@@ -117,7 +117,13 @@ class UserController extends Controller
                 'attachChild' => route('users.attach-child', ['user' => '__ID__']),
                 'detachChild' => route('users.detach-child', ['user' => '__UID__', 'child' => '__CID__']),
                 'homeroom' => route('users.homeroom', ['user' => '__ID__']),
+                'export' => route('users.export'),
+                'template' => route('users.template'),
+                'import' => route('users.import'),
+                'credentialsDownload' => route('users.credentials-download'),
             ],
+            'importErrors' => session('import_errors'),
+            'hasCredentials' => (bool) session('has_credentials'),
         ]);
     }
 

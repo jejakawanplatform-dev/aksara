@@ -18,6 +18,7 @@ import Pagination from '@/Components/ui/Pagination.vue';
 import Modal from '@/Components/ui/Modal.vue';
 import BulkToolbar from '@/Components/ui/BulkToolbar.vue';
 import BulkConfirmModal from '@/Components/ui/BulkConfirmModal.vue';
+import UserImportModal from '@/Components/users/UserImportModal.vue';
 import { useBulkSelect } from '@/Composables/useBulkSelect';
 
 const props = defineProps({
@@ -29,6 +30,8 @@ const props = defineProps({
     students: { type: Array, default: () => [] },
     linksUser: { type: Object, default: null },
     urls: { type: Object, required: true },
+    importErrors: { type: Array, default: () => [] },
+    hasCredentials: { type: Boolean, default: false },
 });
 
 const localFilters = reactive({
@@ -74,6 +77,28 @@ function submitBulkDelete() {
             },
         },
     );
+}
+
+const showImportModal = ref(props.importErrors?.length > 0);
+
+function exportFiltered() {
+    const params = new URLSearchParams();
+    if (localFilters.search) params.append('search', localFilters.search);
+    if (localFilters.role) params.append('role', localFilters.role);
+    const qs = params.toString();
+    window.location.href = props.urls.export + (qs ? `?${qs}` : '');
+}
+
+function exportSelected() {
+    const params = new URLSearchParams();
+    if (bulk.isAllMatching.value) {
+        if (localFilters.search) params.append('search', localFilters.search);
+        if (localFilters.role) params.append('role', localFilters.role);
+    } else {
+        bulk.selectedIds.value.forEach((id) => params.append('ids[]', String(id)));
+    }
+    const qs = params.toString();
+    window.location.href = props.urls.export + (qs ? `?${qs}` : '');
 }
 
 let filterTimer = null;
@@ -234,12 +259,46 @@ function saveHomeroom() {
                 description="Pengelolaan akun pengguna, penetapan role, dan penautan wali kelas/ortu."
             >
                 <template #actions>
-                    <Btn type="button" size="sm" class="gap-1.5" @click="openCreate">
-                        <Icon name="plus" class="h-3.5 w-3.5" />
-                        Tambah pengguna
-                    </Btn>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Btn type="button" variant="secondary" size="sm" class="gap-1.5" @click="showImportModal = true">
+                            <Icon name="upload" class="h-3.5 w-3.5 text-aksara-primary" />
+                            Impor Excel
+                        </Btn>
+                        <Btn type="button" variant="secondary" size="sm" class="gap-1.5" @click="exportFiltered">
+                            <Icon name="download" class="h-3.5 w-3.5 text-aksara-primary" />
+                            Ekspor Excel
+                        </Btn>
+                        <Btn type="button" size="sm" class="gap-1.5" @click="openCreate">
+                            <Icon name="plus" class="h-3.5 w-3.5" />
+                            Tambah pengguna
+                        </Btn>
+                    </div>
                 </template>
             </PageHeader>
+
+            <!-- Banner Kredensial Baru Tersedia Pasca-Impor -->
+            <div
+                v-if="hasCredentials"
+                class="flex flex-col gap-3 rounded-xl border border-aksara-ok/30 bg-aksara-ok/10 p-4 text-sm text-aksara-ink sm:flex-row sm:items-center sm:justify-between"
+            >
+                <div class="flex items-center gap-2.5">
+                    <Icon name="check" class="h-5 w-5 shrink-0 text-aksara-ok" />
+                    <div>
+                        <p class="font-semibold text-aksara-ok">Impor Pengguna Berhasil Diproses!</p>
+                        <p class="text-xs text-aksara-muted">
+                            Kata sandi acak telah dibuat untuk akun baru. Silakan unduh rekap kredensial sebelum meninggalkan sesi ini.
+                        </p>
+                    </div>
+                </div>
+                <a
+                    :href="urls.credentialsDownload"
+                    class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-aksara-primary px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-aksara-primary/90"
+                    download
+                >
+                    <Icon name="download" class="h-4 w-4" />
+                    Unduh Rekap Kredensial (.xlsx)
+                </a>
+            </div>
 
             <!-- Contextual Toolbar: Swap antara Filter biasa dan Aksi Massal -->
             <BulkToolbar
@@ -254,16 +313,28 @@ function saveHomeroom() {
                 @clear-matching="bulk.isAllMatching.value = false"
             >
                 <template #actions>
-                    <Btn
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        class="gap-1.5"
-                        @click="openBulkDelete"
-                    >
-                        <Icon name="trash" class="h-3.5 w-3.5" />
-                        Hapus terpilih ({{ bulk.getSelectedCount(users.total) }})
-                    </Btn>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Btn
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            class="gap-1.5"
+                            @click="exportSelected"
+                        >
+                            <Icon name="download" class="h-3.5 w-3.5" />
+                            Ekspor terpilih ({{ bulk.getSelectedCount(users.total) }})
+                        </Btn>
+                        <Btn
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            class="gap-1.5"
+                            @click="openBulkDelete"
+                        >
+                            <Icon name="trash" class="h-3.5 w-3.5" />
+                            Hapus terpilih ({{ bulk.getSelectedCount(users.total) }})
+                        </Btn>
+                    </div>
                 </template>
             </BulkToolbar>
 
@@ -464,6 +535,14 @@ function saveHomeroom() {
             confirm-button-text="Ya, Hapus Sekarang"
             @close="showBulkDeleteModal = false"
             @confirm="submitBulkDelete"
+        />
+
+        <UserImportModal
+            :open="showImportModal"
+            :import-url="urls.import"
+            :template-url="urls.template"
+            :server-errors="importErrors"
+            @close="showImportModal = false"
         />
     </AppLayout>
 </template>

@@ -2,7 +2,7 @@
 
 * **Tanggal Inisiasi:** 2026-09-16
 * **Inisiator:** Antigravity AI (Pair Programming Assistant) & Developer
-* **Status:** `OPEN` <!-- Pilihan: DRAFT | OPEN | CONSENSUS | ADOPTED | REJECTED -->
+* **Status:** `ADOPTED` <!-- Pilihan: DRAFT | OPEN | CONSENSUS | ADOPTED | REJECTED -->
 * **Terkait Dokumen:**
   - [`docs/spec/05-users/`](../spec/05-users/) (Spesifikasi Modul Manajemen Pengguna)
   - [`docs/steering/business-rules.md`](../steering/business-rules.md) (Aturan Hak Akses & Integritas Data)
