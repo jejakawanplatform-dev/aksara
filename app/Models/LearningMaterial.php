@@ -32,6 +32,7 @@ use Illuminate\Support\Carbon;
  */
 class LearningMaterial extends Model
 {
+    /** @use HasFactory<\Database\Factories\LearningMaterialFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = ['plan_id', 'content', 'status', 'published_at'];

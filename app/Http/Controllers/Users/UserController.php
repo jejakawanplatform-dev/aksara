@@ -32,7 +32,7 @@ class UserController extends Controller
 {
     public function index(Request $request): Response
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $search = (string) $request->query('search', '');
         $roleFilter = (string) $request->query('role', '');
@@ -66,7 +66,7 @@ class UserController extends Controller
 
         $linksUser = null;
         if ($linksUserId) {
-            $lu = User::query()->with(['classes', 'children', 'homeroomClasses'])->find($linksUserId);
+            $lu = User::query()->with(['classes', 'children', 'homeroomClasses'])->whereKey($linksUserId)->first();
             if ($lu) {
                 $linksUser = [
                     'id' => $lu->id,
@@ -123,7 +123,7 @@ class UserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -148,7 +148,7 @@ class UserController extends Controller
 
     public function update(Request $request, User $user): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -177,7 +177,7 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         if ($user->id === Auth::id()) {
             return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
@@ -203,7 +203,7 @@ class UserController extends Controller
 
     public function bulkDestroy(Request $request): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $validated = $request->validate([
             'ids' => ['required_without:select_all_matching', 'array'],
@@ -290,7 +290,7 @@ class UserController extends Controller
 
     public function attachClass(Request $request, User $user): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $data = $request->validate([
             'class_id' => 'required|exists:school_classes,id',
@@ -309,7 +309,7 @@ class UserController extends Controller
 
     public function detachClass(User $user, SchoolClass $class): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $user->classes()->detach($class->id);
 
@@ -320,7 +320,7 @@ class UserController extends Controller
 
     public function attachChild(Request $request, User $user): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $data = $request->validate([
             'child_id' => 'required|exists:users,id',
@@ -330,7 +330,7 @@ class UserController extends Controller
             return back()->with('error', 'Hanya akun wali murid yang bisa ditautkan ke anak.');
         }
 
-        $child = User::query()->findOrFail($data['child_id']);
+        $child = User::query()->whereKey($data['child_id'])->firstOrFail();
         if (! $child->isStudent()) {
             return back()->with('error', 'Anak harus ber-role siswa.');
         }
@@ -344,7 +344,7 @@ class UserController extends Controller
 
     public function detachChild(User $user, User $child): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $user->children()->detach($child->id);
 
@@ -355,7 +355,7 @@ class UserController extends Controller
 
     public function saveHomeroom(Request $request, User $user): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
+        $this->ensureCanManage();
 
         if (! $user->isHomeroomTeacher()) {
             return back()->with('error', 'Hanya wali kelas yang bisa ditetapkan sebagai homeroom.');
@@ -381,5 +381,10 @@ class UserController extends Controller
         return redirect()
             ->route('users.index', ['linksUserId' => $user->id])
             ->with('message', $message);
+    }
+
+    private function ensureCanManage(): void
+    {
+        abort_unless((bool) Auth::user()?->can(PermissionCatalog::USERS_MANAGE), 403);
     }
 }

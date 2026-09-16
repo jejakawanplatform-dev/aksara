@@ -40,7 +40,10 @@ class PlanController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $isAdmin = (bool) $user?->isAdmin();
+        if (! $user) {
+            abort(401);
+        }
+        $isAdmin = $user->isAdmin();
 
         $search = (string) $request->query('search', '');
         $status = (string) $request->query('status', '');
@@ -148,7 +151,8 @@ class PlanController extends Controller
         $todayCount = AiGeneration::where('created_by', Auth::id())
             ->whereDate('created_at', now()->today())
             ->count();
-        $dailyLimit = (int) setting('ai.daily_limit_per_teacher', 20);
+        $dailyLimitSetting = setting('ai.daily_limit_per_teacher', 20);
+        $dailyLimit = is_numeric($dailyLimitSetting) ? (int) $dailyLimitSetting : 20;
 
         return Inertia::render('Plans/Create', [
             'mode' => in_array($request->query('mode'), ['ai', 'manual'], true)
@@ -179,7 +183,8 @@ class PlanController extends Controller
         $todayCount = AiGeneration::where('created_by', Auth::id())
             ->whereDate('created_at', now()->today())
             ->count();
-        $dailyLimit = (int) setting('ai.daily_limit_per_teacher', 20);
+        $dailyLimitSetting = setting('ai.daily_limit_per_teacher', 20);
+        $dailyLimit = is_numeric($dailyLimitSetting) ? (int) $dailyLimitSetting : 20;
 
         if ($todayCount >= $dailyLimit) {
             return back()
@@ -189,7 +194,7 @@ class PlanController extends Controller
 
         try {
             $plan = $this->createPlan($validated);
-            $subjectModel = Subject::find($validated['subject_id']);
+            $subjectModel = Subject::query()->whereKey($validated['subject_id'])->first();
             $subject = $subjectModel !== null ? $subjectModel->name : 'Umum';
 
             $output = $aiDraftService->generateDraft([
@@ -288,6 +293,9 @@ class PlanController extends Controller
     public function bulkDestroy(Request $request): RedirectResponse
     {
         $user = Auth::user();
+        if (! $user) {
+            abort(401);
+        }
 
         $validated = $request->validate([
             'ids'                 => ['required_without:select_all_matching', 'array'],
@@ -394,7 +402,12 @@ class PlanController extends Controller
             'importFile.max' => 'Ukuran berkas maksimal 5MB.',
         ]);
 
-        $res = $service->importPlans($request->file('importFile'), Auth::id());
+        $teacherId = Auth::id();
+        if (! is_numeric($teacherId)) {
+            abort(401);
+        }
+
+        $res = $service->importPlans($request->file('importFile'), (int) $teacherId);
 
         if ($res['success']) {
             return redirect()
@@ -534,7 +547,7 @@ class PlanController extends Controller
         ]);
 
         if (! empty($validated['curriculum_tp_id'])) {
-            $tp = CurriculumTp::with('cp')->find($validated['curriculum_tp_id']);
+            $tp = CurriculumTp::query()->with('cp')->whereKey($validated['curriculum_tp_id'])->first();
             if ($tp) {
                 $validated['curriculum_cp_id'] = $tp->curriculum_cp_id;
                 if ($tp->grade) {
@@ -595,11 +608,12 @@ class PlanController extends Controller
     private function resolveCreateDefaults(): array
     {
         $activeYear = AcademicYear::active();
-        $academicYearId = $activeYear !== null
+        $academicYearVal = $activeYear
             ? $activeYear->id
-            : (AcademicYear::query()->value('id') ?? 0);
+            : AcademicYear::query()->value('id');
+        $academicYearId = is_numeric($academicYearVal) ? (int) $academicYearVal : 0;
 
-        $semesterId = $this->resolveDefaultSemesterId((int) $academicYearId);
+        $semesterId = $this->resolveDefaultSemesterId($academicYearId);
 
         $subjectId = 0;
         $phase = 'D';
@@ -610,13 +624,13 @@ class PlanController extends Controller
         }
 
         $class = SchoolClass::query()
-            ->when($academicYearId, fn ($q) => $q->where('academic_year_id', $academicYearId))
+            ->when($academicYearId > 0, fn ($q) => $q->where('academic_year_id', $academicYearId))
             ->orderBy('name')
             ->first();
 
         return [
-            'academic_year_id' => (int) $academicYearId,
-            'semester_id' => (int) $semesterId,
+            'academic_year_id' => $academicYearId,
+            'semester_id' => $semesterId,
             'class_id' => (int) ($class !== null ? $class->id : 0),
             'subject_id' => (int) $subjectId,
             'curriculum_cp_id' => null,
@@ -639,19 +653,22 @@ class PlanController extends Controller
             return (int) ($active !== null ? $active->id : 0);
         }
 
-        return (int) (Semester::query()
+        $semesterVal = Semester::query()
             ->where('academic_year_id', $academicYearId)
             ->orderByDesc('is_active')
             ->orderBy('number')
-            ->value('id') ?? 0);
+            ->value('id');
+
+        return is_numeric($semesterVal) ? (int) $semesterVal : 0;
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function formOptions(int $academicYearId = 0, int $subjectId = 0): array
+    private function formOptions(?int $academicYearId = 0, ?int $subjectId = 0): array
     {
         $user = Auth::user();
+        $isAdmin = (bool) $user?->isAdmin();
 
         return [
             'academicYears' => AcademicYear::query()
@@ -672,9 +689,9 @@ class PlanController extends Controller
                     'grade' => $c->grade,
                     'academic_year_id' => $c->academic_year_id,
                 ]),
-            'subjects' => $user?->isAdmin()
+            'subjects' => $isAdmin
                 ? Subject::query()->orderBy('name')->get(['id', 'name', 'code', 'phase'])
-                : $user?->taughtSubjects()->orderBy('name')->get(['subjects.id', 'subjects.name', 'subjects.code', 'subjects.phase']),
+                : ($user ? $user->taughtSubjects()->orderBy('name')->get(['subjects.id', 'subjects.name', 'subjects.code', 'subjects.phase']) : collect([])),
             'cps' => CurriculumCp::query()
                 ->orderBy('sequence')
                 ->get()
@@ -700,7 +717,7 @@ class PlanController extends Controller
     }
 
     /**
-     * @return array{cpDraft: string, tpDraft: array, atpDraft: array, lessonPlan: array, materialDraft: array, reviewNotes: array}
+     * @return array{cpDraft: string, tpDraft: array<int|string, mixed>, atpDraft: array<int|string, mixed>, lessonPlan: array<int|string, mixed>, materialDraft: array<int|string, mixed>, reviewNotes: array<int|string, mixed>}
      */
     private function hydrateGenerationOutput(?AiGeneration $generation): array
     {
@@ -715,13 +732,13 @@ class PlanController extends Controller
             $out = $generation->output;
             $rawCp = $out['cpDraft'] ?? '';
             if (is_array($rawCp)) {
-                $cpDraft = isset($rawCp['statement'])
+                $cpDraft = (isset($rawCp['statement']) && is_scalar($rawCp['statement']))
                     ? (string) $rawCp['statement']
                     : implode("\n", array_filter(array_map(
-                        fn ($v) => is_string($v) ? $v : json_encode($v),
+                        fn ($v): string => is_scalar($v) ? (string) $v : (json_encode($v) ?: ''),
                         $rawCp
                     )));
-            } else {
+            } elseif (is_scalar($rawCp)) {
                 $cpDraft = (string) $rawCp;
             }
 
@@ -738,6 +755,9 @@ class PlanController extends Controller
     private function authorizeOwnerOrAdmin(LearningPlan $plan): void
     {
         $user = Auth::user();
+        if (! $user) {
+            abort(401);
+        }
         if (! $user->isAdmin() && $plan->teacher_id !== $user->id) {
             abort(403, 'Anda tidak memiliki hak untuk mengedit rencana pembelajaran ini.');
         }

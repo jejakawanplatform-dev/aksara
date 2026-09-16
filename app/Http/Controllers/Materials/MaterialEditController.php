@@ -17,6 +17,8 @@ use App\Enums\PlanStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AiProvider;
 use App\Models\LearningMaterial;
+use App\Models\LearningPlan;
+use App\Models\User;
 use App\Services\AiDraftService;
 use App\Services\MaterialImageService;
 use App\Support\MaterialContentHtml;
@@ -36,18 +38,25 @@ class MaterialEditController extends Controller
         $this->authorizeEditor($material);
 
         $material->load(['plan.subject', 'plan.class']);
-        $content = is_array($material->content) ? $material->content : [];
-        $topic = $material->plan->topic ?? 'Bahan Ajar';
+        $plan = $material->plan;
+        abort_unless($plan instanceof LearningPlan, 404);
 
-        $rawSections = $content['sections'] ?? ($content['material']['sections'] ?? []);
+        $content = is_array($material->content) ? $material->content : [];
+        $topic = $plan->topic !== '' ? $plan->topic : 'Bahan Ajar';
+        $materialData = (isset($content['material']) && is_array($content['material'])) ? $content['material'] : [];
+
+        $rawSections = (isset($content['sections']) && is_iterable($content['sections']))
+            ? $content['sections']
+            : ((isset($materialData['sections']) && is_iterable($materialData['sections'])) ? $materialData['sections'] : []);
+
         $sections = [];
         foreach ($rawSections as $sec) {
             if (is_array($sec)) {
                 $sections[] = [
-                    'heading' => $sec['heading'] ?? '',
-                    'body' => MaterialContentHtml::sanitizeSectionBody((string) ($sec['body'] ?? '')),
+                    'heading' => isset($sec['heading']) && is_scalar($sec['heading']) ? (string) $sec['heading'] : '',
+                    'body' => MaterialContentHtml::sanitizeSectionBody(isset($sec['body']) && is_string($sec['body']) ? $sec['body'] : ''),
                 ];
-            } else {
+            } elseif (is_scalar($sec)) {
                 $sections[] = [
                     'heading' => (string) $sec,
                     'body' => '',
@@ -62,31 +71,40 @@ class MaterialEditController extends Controller
             ];
         }
 
-        $rawReflections = $content['reflectionQuestion'] ?? ($content['material']['reflectionQuestion'] ?? []);
-        $reflectionsText = is_array($rawReflections)
-            ? implode("\n", $rawReflections)
-            : (string) $rawReflections;
+        $rawReflections = $content['reflectionQuestion'] ?? ($materialData['reflectionQuestion'] ?? []);
+        $reflectionsText = '';
+        if (is_array($rawReflections)) {
+            $refArray = [];
+            foreach ($rawReflections as $r) {
+                if (is_scalar($r)) {
+                    $refArray[] = (string) $r;
+                }
+            }
+            $reflectionsText = implode("\n", $refArray);
+        } elseif (is_scalar($rawReflections)) {
+            $reflectionsText = (string) $rawReflections;
+        }
 
         $canGenerateImages = AiProvider::hasConfiguredImageGeneration();
 
         return Inertia::render('Materials/Edit', [
             'material' => [
                 'id' => $material->id,
-                'status' => $material->status->value ?? 'draft',
+                'status' => $material->status->value,
                 'plan' => [
-                    'id' => $material->plan->id,
+                    'id' => $plan->id,
                     'topic' => $topic,
-                    'grade' => $material->plan->grade,
-                    'subject' => $material->plan->subject?->name,
-                    'className' => $material->plan->class?->name,
+                    'grade' => $plan->grade,
+                    'subject' => $plan->subject?->name,
+                    'className' => $plan->class?->name,
                 ],
             ],
             'form' => [
-                'title' => $content['title'] ?? $topic,
+                'title' => (isset($content['title']) && is_scalar($content['title'])) ? (string) $content['title'] : $topic,
                 'sections' => $sections,
                 'reflectionsText' => $reflectionsText,
             ],
-            'isStem' => SubjectContext::isStem($material->plan->subject),
+            'isStem' => SubjectContext::isStem($plan->subject),
             'canGenerateImages' => $canGenerateImages,
             'activeModelLabel' => $aiService->resolveActiveModelLabel(AiDraftService::FEATURE_MATERIAL),
             'modelChoices' => $aiService->listMaterialModelChoices(),
@@ -173,9 +191,11 @@ class MaterialEditController extends Controller
             'published_at' => now(),
         ]);
 
-        $material->plan->update([
-            'status' => PlanStatus::Published,
-        ]);
+        if ($material->plan) {
+            $material->plan->update([
+                'status' => PlanStatus::Published,
+            ]);
+        }
 
         return redirect()
             ->route('materials.show', $material)
@@ -220,6 +240,8 @@ class MaterialEditController extends Controller
     {
         $this->authorizeEditor($material);
         $material->load('plan.subject');
+        $plan = $material->plan;
+        abort_unless($plan instanceof LearningPlan, 404);
 
         $validated = $request->validate([
             'message' => 'required|string|max:8000',
@@ -262,15 +284,23 @@ class MaterialEditController extends Controller
         $intent = $this->detectCopilotIntent($input, $sections);
         $editorContext = $this->buildEditorContext($intent, $title, $sections, $reflectionsText);
 
-        $history = array_map(static fn ($m) => [
-            'role' => $m['role'],
-            'content' => $m['content'],
-        ], $validated['history'] ?? []);
+        /** @var list<array{role: string, content: string}> $history */
+        $history = [];
+        if (isset($validated['history']) && is_array($validated['history'])) {
+            foreach ($validated['history'] as $m) {
+                if (is_array($m) && isset($m['role'], $m['content'])) {
+                    $history[] = [
+                        'role' => is_scalar($m['role']) ? (string) $m['role'] : '',
+                        'content' => is_scalar($m['content']) ? (string) $m['content'] : '',
+                    ];
+                }
+            }
+        }
 
         $history[] = ['role' => 'user', 'content' => $input];
 
         $res = $aiService->chatRefineMaterial(
-            $material->plan,
+            $plan,
             $history,
             $input,
             $templates,
@@ -282,7 +312,17 @@ class MaterialEditController extends Controller
         $illustrationTips = is_array($res['illustrationTips'] ?? null) ? $res['illustrationTips'] : [];
 
         if (is_array($materialData) && isset($materialData['sections']) && is_array($materialData['sections'])) {
-            $extracted = MaterialContentHtml::extractIllustrationTipsFromSections($materialData['sections']);
+            /** @var array<int, array{heading?: string, body?: string}> $rawSecs */
+            $rawSecs = [];
+            foreach ($materialData['sections'] as $s) {
+                if (is_array($s)) {
+                    $rawSecs[] = [
+                        'heading' => isset($s['heading']) && is_scalar($s['heading']) ? (string) $s['heading'] : '',
+                        'body' => isset($s['body']) && is_string($s['body']) ? $s['body'] : '',
+                    ];
+                }
+            }
+            $extracted = MaterialContentHtml::extractIllustrationTipsFromSections($rawSecs);
             $materialData['sections'] = $extracted['sections'];
             foreach ($extracted['tips'] as $tip) {
                 $illustrationTips[] = [
@@ -315,7 +355,10 @@ class MaterialEditController extends Controller
     private function authorizeEditor(LearningMaterial $material): void
     {
         $user = Auth::user();
-        abort_unless($user && ($user->isAdmin() || $material->plan->teacher_id === $user->id), 403);
+        abort_unless($user instanceof User, 401);
+        $plan = $material->plan;
+        abort_unless($plan instanceof LearningPlan, 404);
+        abort_unless($user->isAdmin() || $plan->teacher_id === $user->id, 403);
     }
 
     /**

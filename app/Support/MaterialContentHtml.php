@@ -537,7 +537,8 @@ final class MaterialContentHtml
             return true;
         }
 
-        $appUrl = rtrim((string) config('app.url'), '/');
+        $rawAppUrl = config('app.url');
+        $appUrl = rtrim(is_string($rawAppUrl) ? $rawAppUrl : '', '/');
         if ($appUrl !== '' && str_starts_with($src, $appUrl.'/storage/')) {
             return true;
         }

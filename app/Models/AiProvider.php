@@ -14,13 +14,27 @@ namespace App\Models;
 
 use App\Support\Ai\AiVendorProviderCatalog;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @phpstan-import-type VendorCatalogMeta from \App\Support\Ai\AiVendorProviderCatalog
+ *
+ * @property int $id
+ * @property string $vendor_key
+ * @property string $name
+ * @property bool $is_active
+ * @property int $priority_order
+ * @property string|null $api_key
+ * @property string|null $base_url
+ * @property string|null $model
+ * @property int|null $max_tokens
+ * @property float|null $temperature
+ * @property int|null $timeout_seconds
+ * @property array<string, mixed>|null $custom_headers
+ * @property bool $is_custom
+ */
 class AiProvider extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'vendor_key',
         'name',
@@ -49,16 +63,27 @@ class AiProvider extends Model
         ];
     }
 
+    /**
+     * @param Builder<AiProvider> $query
+     * @return Builder<AiProvider>
+     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
+    /**
+     * @param Builder<AiProvider> $query
+     * @return Builder<AiProvider>
+     */
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('priority_order', 'asc');
     }
 
+    /**
+     * @return VendorCatalogMeta|null
+     */
     public function catalogMeta(): ?array
     {
         return AiVendorProviderCatalog::get($this->vendor_key);

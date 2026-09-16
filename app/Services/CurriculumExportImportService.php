@@ -280,7 +280,8 @@ class CurriculumExportImportService
             // Find start row (header contains "Kode Elemen" or row >= 4)
             $startRowIndex = 1;
             foreach ($rows as $idx => $r) {
-                if (isset($r[1]) && (str_contains(strtolower((string) $r[1]), 'elemen') || str_contains(strtolower((string) $r[1]), 'kode'))) {
+                $cell = isset($r[1]) && is_scalar($r[1]) ? (string) $r[1] : '';
+                if ($cell !== '' && (str_contains(strtolower($cell), 'elemen') || str_contains(strtolower($cell), 'kode'))) {
                     $startRowIndex = $idx + 1;
                     break;
                 }
@@ -288,18 +289,21 @@ class CurriculumExportImportService
 
             for ($i = $startRowIndex; $i < count($rows); $i++) {
                 $row = $rows[$i];
-                $elemCode = trim((string) ($row[1] ?? ''));
-                $elemName = trim((string) ($row[2] ?? ''));
-                $cpStatement = trim((string) ($row[3] ?? ''));
-                $sourceNote = trim((string) ($row[4] ?? ''));
-                $tpCode = trim((string) ($row[5] ?? ''));
-                $tpGrade = (int) ($row[6] ?? 7);
-                $tpSeq = (int) ($row[7] ?? 1);
-                $tpStatement = trim((string) ($row[8] ?? ''));
+                $elemCode = isset($row[1]) && is_scalar($row[1]) ? trim((string) $row[1]) : '';
+                $elemName = isset($row[2]) && is_scalar($row[2]) ? trim((string) $row[2]) : '';
+                $cpStatement = isset($row[3]) && is_scalar($row[3]) ? trim((string) $row[3]) : '';
+                $sourceNote = isset($row[4]) && is_scalar($row[4]) ? trim((string) $row[4]) : '';
+                $tpCode = isset($row[5]) && is_scalar($row[5]) ? trim((string) $row[5]) : '';
+                $tpGrade = isset($row[6]) && is_numeric($row[6]) ? (int) $row[6] : 7;
+                $tpSeq = isset($row[7]) && is_numeric($row[7]) ? (int) $row[7] : 1;
+                $tpStatement = isset($row[8]) && is_scalar($row[8]) ? trim((string) $row[8]) : '';
 
                 if (! $elemCode || ! $cpStatement) {
                     continue;
                 }
+
+                $maxSeq = CurriculumCp::where('subject_id', $subjectId)->max('sequence');
+                $nextSeq = (is_numeric($maxSeq) ? (int) $maxSeq : 0) + 1;
 
                 $cp = CurriculumCp::firstOrCreate(
                     [
@@ -311,7 +315,7 @@ class CurriculumExportImportService
                         'element_name' => $elemName ?: $elemCode,
                         'statement' => $cpStatement,
                         'source_note' => $sourceNote ?: null,
-                        'sequence' => (int) (CurriculumCp::where('subject_id', $subjectId)->max('sequence') ?? 0) + 1,
+                        'sequence' => $nextSeq,
                     ]
                 );
 
@@ -357,7 +361,8 @@ class CurriculumExportImportService
         DB::transaction(function () use ($rows, $subjectId, $activeYear, &$importedCount) {
             $startRowIndex = 1;
             foreach ($rows as $idx => $r) {
-                if (isset($r[4]) && (str_contains(strtolower((string) $r[4]), 'kode') || str_contains(strtolower((string) $r[4]), 'tp'))) {
+                $cell = isset($r[4]) && is_scalar($r[4]) ? (string) $r[4] : '';
+                if ($cell !== '' && (str_contains(strtolower($cell), 'kode') || str_contains(strtolower($cell), 'tp'))) {
                     $startRowIndex = $idx + 1;
                     break;
                 }
@@ -365,12 +370,12 @@ class CurriculumExportImportService
 
             for ($i = $startRowIndex; $i < count($rows); $i++) {
                 $row = $rows[$i];
-                $seq = (int) ($row[0] ?? ($i - $startRowIndex + 1));
-                $grade = (int) ($row[1] ?? 7);
-                $semName = trim((string) ($row[2] ?? ''));
-                $unitTitle = trim((string) ($row[3] ?? ''));
-                $tpCode = trim((string) ($row[4] ?? ''));
-                $estimated = (int) ($row[6] ?? 2);
+                $seq = isset($row[0]) && is_numeric($row[0]) ? (int) $row[0] : ($i - $startRowIndex + 1);
+                $grade = isset($row[1]) && is_numeric($row[1]) ? (int) $row[1] : 7;
+                $semName = isset($row[2]) && is_scalar($row[2]) ? trim((string) $row[2]) : '';
+                $unitTitle = isset($row[3]) && is_scalar($row[3]) ? trim((string) $row[3]) : '';
+                $tpCode = isset($row[4]) && is_scalar($row[4]) ? trim((string) $row[4]) : '';
+                $estimated = isset($row[6]) && is_numeric($row[6]) ? (int) $row[6] : 2;
 
                 if (! $tpCode) {
                     continue;

@@ -13,8 +13,10 @@
 namespace App\Http\Controllers\Quiz;
 
 use App\Http\Controllers\Controller;
+use App\Models\LearningPlan;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
+use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,12 +29,15 @@ class QuizAttemptController extends Controller
     public function show(Quiz $quiz): Response
     {
         $user = Auth::user();
+        abort_unless($user instanceof User, 401);
+
+        $quiz->load('plan');
+        $plan = $quiz->plan;
+        abort_unless($plan instanceof LearningPlan, 404);
 
         abort_unless($user->isStudent(), 403);
         abort_unless($quiz->isPublished(), 403);
-        abort_unless($user->belongsToClass($quiz->plan->class_id), 403);
-
-        $quiz->load('plan');
+        abort_unless($user->belongsToClass($plan->class_id), 403);
 
         $existing = QuizAttempt::where('quiz_id', $quiz->id)
             ->where('student_id', $user->id)
@@ -40,11 +45,24 @@ class QuizAttemptController extends Controller
 
         $justSubmitted = (bool) session()->pull('quiz_just_submitted', false);
 
-        $questions = collect($quiz->questions ?? [])->map(fn ($q, $i) => [
-            'index' => $i,
-            'question' => $q['question'] ?? '',
-            'options' => array_values($q['options'] ?? []),
-        ])->values();
+        /** @var array<int|string, mixed> $rawQuestions */
+        $rawQuestions = is_array($quiz->questions) ? $quiz->questions : [];
+        $questions = collect($rawQuestions)->map(function ($q, $i) {
+            $questionText = is_array($q) && isset($q['question']) && is_scalar($q['question']) ? (string) $q['question'] : '';
+            $rawOptions = is_array($q) && isset($q['options']) && is_array($q['options']) ? $q['options'] : [];
+            $options = [];
+            foreach ($rawOptions as $opt) {
+                if (is_scalar($opt)) {
+                    $options[] = (string) $opt;
+                }
+            }
+
+            return [
+                'index' => $i,
+                'question' => $questionText,
+                'options' => $options,
+            ];
+        })->values();
 
         return Inertia::render('Quiz/Attempt', [
             'quiz' => [
@@ -64,10 +82,15 @@ class QuizAttemptController extends Controller
     public function submit(Request $request, Quiz $quiz): RedirectResponse
     {
         $user = Auth::user();
+        abort_unless($user instanceof User, 401);
+
+        $quiz->load('plan');
+        $plan = $quiz->plan;
+        abort_unless($plan instanceof LearningPlan, 404);
 
         abort_unless($user->isStudent(), 403);
         abort_unless($quiz->isPublished(), 403);
-        abort_unless($user->belongsToClass($quiz->plan->class_id), 403);
+        abort_unless($user->belongsToClass($plan->class_id), 403);
 
         $existing = QuizAttempt::where('quiz_id', $quiz->id)
             ->where('student_id', $user->id)
@@ -83,11 +106,15 @@ class QuizAttemptController extends Controller
         ]);
 
         $answers = $validated['answers'];
-        $total = count($quiz->questions ?? []);
+        $rawQuestions = is_array($quiz->questions) ? $quiz->questions : [];
+        $total = count($rawQuestions);
         $correct = 0;
 
-        foreach ($quiz->questions ?? [] as $i => $question) {
-            if (($answers[$i] ?? '') === ($question['correct_answer'] ?? '__none__')) {
+        foreach ($rawQuestions as $i => $question) {
+            $expected = is_array($question) && isset($question['correct_answer']) && is_string($question['correct_answer'])
+                ? $question['correct_answer']
+                : '__none__';
+            if (($answers[$i] ?? '') === $expected) {
                 $correct++;
             }
         }

@@ -33,6 +33,27 @@ class SettingService
         return $settings[$key];
     }
 
+    public function getString(string $key, string $default = ''): string
+    {
+        $val = $this->get($key, $default);
+
+        return is_string($val) ? $val : (is_scalar($val) ? (string) $val : $default);
+    }
+
+    public function getInt(string $key, int $default = 0): int
+    {
+        $val = $this->get($key, $default);
+
+        return is_numeric($val) ? (int) $val : $default;
+    }
+
+    public function getBool(string $key, bool $default = false): bool
+    {
+        $val = $this->get($key, $default);
+
+        return (bool) $val;
+    }
+
     /**
      * Simpan / Perbarui nilai setting dan bersihkan cache.
      */
@@ -47,10 +68,10 @@ class SettingService
             $setting->value = (string) $value;
             $setting->type = $type ?? (is_float($value) ? 'float' : 'integer');
         } elseif (is_array($value) || is_object($value)) {
-            $setting->value = json_encode($value);
+            $setting->value = json_encode($value) ?: null;
             $setting->type = $type ?? 'json';
         } else {
-            $setting->value = (string) $value;
+            $setting->value = is_scalar($value) ? (string) $value : null;
             $setting->type = $type ?? 'string';
         }
 
@@ -91,7 +112,7 @@ class SettingService
                     'boolean' => filter_var($val, FILTER_VALIDATE_BOOLEAN),
                     'integer' => (int) $val,
                     'float' => (float) $val,
-                    'json' => json_decode($val, true) ?? [],
+                    'json' => is_string($val) ? (json_decode($val, true) ?? []) : [],
                     default => $val,
                 };
             }

@@ -17,6 +17,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LearningEvent;
 use App\Models\LearningMaterial;
 use App\Models\LearningPlan;
+use App\Models\User;
 use App\Support\MaterialContentHtml;
 use App\Support\SubjectContext;
 use Illuminate\Http\RedirectResponse;
@@ -30,6 +31,10 @@ class MaterialController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        if (! $user) {
+            abort(401);
+        }
+
         $search = (string) $request->query('search', '');
         $status = (string) $request->query('status', '');
         $perPage = (int) $request->query('per_page', 10);
@@ -65,17 +70,25 @@ class MaterialController extends Controller
             )
             ->paginate($perPage)
             ->withQueryString()
-            ->through(fn (LearningMaterial $m) => [
-                'id' => $m->id,
-                'title' => $m->content['title'] ?? $m->plan->topic,
-                'status' => $m->status->value ?? 'draft',
-                'statusLabel' => $m->status->label(),
-                'subject' => $m->plan->subject->name ?? '-',
-                'className' => $m->plan->class->name ?? $m->plan->grade,
-                'durationMinutes' => $m->plan->duration_minutes,
-                'showUrl' => route('materials.show', $m),
-                'editUrl' => route('materials.edit', $m),
-            ]);
+            ->through(function (LearningMaterial $m) {
+                $plan = $m->plan;
+                $content = is_array($m->content) ? $m->content : [];
+                $title = (isset($content['title']) && is_scalar($content['title']))
+                    ? (string) $content['title']
+                    : ($plan ? $plan->topic : 'Materi');
+
+                return [
+                    'id' => $m->id,
+                    'title' => $title,
+                    'status' => $m->status->value,
+                    'statusLabel' => $m->status->label(),
+                    'subject' => $plan && $plan->subject ? $plan->subject->name : '-',
+                    'className' => $plan && $plan->class ? $plan->class->name : ($plan && $plan->grade ? (string) $plan->grade : '-'),
+                    'durationMinutes' => $plan ? $plan->duration_minutes : 0,
+                    'showUrl' => route('materials.show', $m),
+                    'editUrl' => route('materials.edit', $m),
+                ];
+            });
 
         return Inertia::render('Materials/Index', [
             'materials' => $materials,
@@ -93,6 +106,9 @@ class MaterialController extends Controller
     public function bulkDestroy(Request $request): RedirectResponse
     {
         $user = Auth::user();
+        if (! $user) {
+            abort(401);
+        }
 
         // Hanya Admin dan Guru yang boleh melakukan aksi massal
         abort_if($user->isStudent(), 403);
@@ -125,12 +141,11 @@ class MaterialController extends Controller
             return back()->with('error', 'Tidak ada materi yang dipilih untuk dihapus.');
         }
 
-        $skippedPublished = 0;
         $deletedCount     = 0;
+        $skippedPublished = 0;
 
         foreach ($materials as $material) {
-            // Materi yang sudah diterbitkan dan sudah pernah dibaca siswa dilindungi
-            if ($material->status === MaterialStatus::Published && $material->events->isNotEmpty()) {
+            if ($material->events->isNotEmpty()) {
                 $skippedPublished++;
                 continue;
             }
@@ -144,27 +159,31 @@ class MaterialController extends Controller
             $messages[] = "{$deletedCount} materi berhasil dihapus.";
         }
         if ($skippedPublished > 0) {
-            $messages[] = "{$skippedPublished} materi yang sudah dibaca siswa dilewati demi integritas data.";
+            $messages[] = "{$skippedPublished} materi dilewati karena sudah dibaca oleh siswa.";
         }
 
-        $flashType = $deletedCount > 0 ? 'message' : 'error';
-
-        return redirect()->route('materials.index')->with($flashType, implode(' ', $messages));
+        return redirect()->route('materials.index')->with(
+            $deletedCount > 0 ? 'message' : 'error',
+            implode(' ', $messages)
+        );
     }
-
 
     public function show(LearningMaterial $material): Response
     {
         $user = Auth::user();
-        $isTeacherOwner = $user->isTeacher() && $material->plan?->teacher_id === $user->id;
-        $isAdmin = $user->isAdmin();
+        abort_unless($user instanceof User, 401);
+
+        $plan = $material->plan;
+        abort_unless($plan instanceof LearningPlan, 404);
+
         $isStudent = $user->isStudent();
+        $isTeacherOwner = $plan->teacher_id === $user->id;
+        $isAdmin = $user->isAdmin();
 
         if ($isStudent) {
             abort_unless($material->status === MaterialStatus::Published, 403);
-            abort_unless($user->belongsToClass($material->plan->class_id), 403);
-
-            LearningEvent::create([
+            abort_unless($user->belongsToClass($plan->class_id), 403);
+            LearningEvent::firstOrCreate([
                 'material_id' => $material->id,
                 'student_id' => $user->id,
                 'event_type' => 'material_opened',
@@ -176,28 +195,39 @@ class MaterialController extends Controller
 
         $material->load(['plan.subject', 'plan.quizzes', 'plan.class']);
         $content = is_array($material->content) ? $material->content : [];
-        $rawSections = $content['sections'] ?? ($content['material']['sections'] ?? []);
+        $materialData = (isset($content['material']) && is_array($content['material'])) ? $content['material'] : [];
+
+        $rawSections = (isset($content['sections']) && is_iterable($content['sections']))
+            ? $content['sections']
+            : ((isset($materialData['sections']) && is_iterable($materialData['sections'])) ? $materialData['sections'] : []);
+
         $sections = [];
         foreach ($rawSections as $section) {
-            $heading = is_array($section) ? ($section['heading'] ?? '') : (string) $section;
-            $body = is_array($section) ? (string) ($section['body'] ?? '') : '';
+            $heading = '';
+            $body = '';
+            if (is_array($section)) {
+                $heading = isset($section['heading']) && is_scalar($section['heading']) ? (string) $section['heading'] : '';
+                $body = isset($section['body']) && is_string($section['body']) ? $section['body'] : '';
+            } elseif (is_scalar($section)) {
+                $heading = (string) $section;
+            }
             if ($body !== '') {
                 $body = MaterialContentHtml::forStudent($body);
             }
             $sections[] = ['heading' => $heading, 'body' => $body];
         }
 
-        $rawReflection = $content['reflectionQuestion'] ?? ($content['material']['reflectionQuestion'] ?? null);
+        $rawReflection = $content['reflectionQuestion'] ?? ($materialData['reflectionQuestion'] ?? null);
         $reflectionList = is_array($rawReflection)
             ? $rawReflection
             : (is_string($rawReflection) && trim($rawReflection) !== '' ? [$rawReflection] : []);
 
-        $publishedQuiz = $material->plan->quizzes->firstWhere('status', 'published')
-            ?? $material->plan->quizzes->firstWhere('status.value', 'published');
+        $publishedQuiz = $plan->quizzes->firstWhere('status', 'published')
+            ?? $plan->quizzes->firstWhere('status.value', 'published');
 
         // Enum cast may make status an enum
         if (! $publishedQuiz) {
-            $publishedQuiz = $material->plan->quizzes->first(function ($q) {
+            $publishedQuiz = $plan->quizzes->first(function ($q) {
                 $status = $q->status;
                 $value = $status instanceof \BackedEnum ? $status->value : (string) $status;
 
@@ -205,24 +235,43 @@ class MaterialController extends Controller
             });
         }
 
+        $materialTitle = $plan->topic;
+        if (isset($content['title']) && is_string($content['title']) && $content['title'] !== '') {
+            $materialTitle = $content['title'];
+        } elseif (isset($materialData['title']) && is_string($materialData['title']) && $materialData['title'] !== '') {
+            $materialTitle = $materialData['title'];
+        }
+
+        $reflections = [];
+        foreach ($reflectionList as $item) {
+            if (is_array($item)) {
+                $scalars = [];
+                foreach ($item as $subItem) {
+                    if (is_scalar($subItem)) {
+                        $scalars[] = (string) $subItem;
+                    }
+                }
+                $reflections[] = implode('; ', $scalars);
+            } elseif (is_scalar($item)) {
+                $reflections[] = (string) $item;
+            }
+        }
+
         return Inertia::render('Materials/Show', [
             'material' => [
                 'id' => $material->id,
-                'title' => $content['title'] ?? ($content['material']['title'] ?? $material->plan->topic),
-                'status' => $material->status->value ?? 'draft',
+                'title' => $materialTitle,
+                'status' => $material->status->value,
                 'sections' => $sections,
-                'reflections' => array_map(
-                    fn ($item) => is_array($item) ? implode('; ', $item) : (string) $item,
-                    $reflectionList
-                ),
+                'reflections' => $reflections,
                 'plan' => [
-                    'topic' => $material->plan->topic,
-                    'grade' => $material->plan->grade,
-                    'subject' => $material->plan->subject->name ?? '-',
-                    'className' => $material->plan->class->name ?? $material->plan->grade,
+                    'topic' => $plan->topic,
+                    'grade' => $plan->grade,
+                    'subject' => $plan->subject->name ?? '-',
+                    'className' => $plan->class->name ?? (string) $plan->grade,
                 ],
             ],
-            'isStem' => SubjectContext::isStem($material->plan->subject),
+            'isStem' => SubjectContext::isStem($plan->subject),
             'isStudent' => $isStudent,
             'urls' => [
                 'index' => route('materials.index'),

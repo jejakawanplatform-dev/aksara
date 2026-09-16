@@ -29,7 +29,7 @@ class SettingsController extends Controller
 {
     public function index(Request $request, SettingService $service): Response
     {
-        abort_unless(auth()->user()?->can(PermissionCatalog::SETTINGS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $tab = (string) $request->query('tab', 'ai');
         if (! in_array($tab, ['ai', 'security', 'features'], true)) {
@@ -69,19 +69,19 @@ class SettingsController extends Controller
             'pageTitle' => 'Pengaturan Sistem Global',
             'activeTab' => $tab,
             'settings' => [
-                'ai_provider' => (string) $service->get('ai.provider', 'gemini'),
-                'ai_daily_limit_per_teacher' => (int) $service->get('ai.daily_limit_per_teacher', 20),
-                'ai_anonymize_student_data' => (bool) $service->get('ai.anonymize_student_data', true),
-                'ai_model_plan' => (string) $service->get('ai.model_plan', $recs['plan']['default']),
-                'ai_model_material' => (string) $service->get('ai.model_material', $recs['material']['default']),
-                'ai_model_improve' => (string) $service->get('ai.model_improve', $recs['improve']['default']),
-                'ai_model_quiz' => (string) $service->get('ai.model_quiz', $recs['quiz']['default']),
-                'security_allow_public_registration' => (bool) $service->get('security.allow_public_registration', false),
-                'security_session_timeout_minutes' => (int) $service->get('security.session_timeout_minutes', 60),
-                'security_max_login_attempts' => (int) $service->get('security.max_login_attempts', 5),
-                'features_quiz_module' => (bool) $service->get('features.quiz_module', true),
-                'features_parent_portal' => (bool) $service->get('features.parent_portal', true),
-                'system_maintenance_mode' => (bool) $service->get('system.maintenance_mode', false),
+                'ai_provider' => $service->getString('ai.provider', 'gemini'),
+                'ai_daily_limit_per_teacher' => $service->getInt('ai.daily_limit_per_teacher', 20),
+                'ai_anonymize_student_data' => $service->getBool('ai.anonymize_student_data', true),
+                'ai_model_plan' => $service->getString('ai.model_plan', $recs['plan']['default']),
+                'ai_model_material' => $service->getString('ai.model_material', $recs['material']['default']),
+                'ai_model_improve' => $service->getString('ai.model_improve', $recs['improve']['default']),
+                'ai_model_quiz' => $service->getString('ai.model_quiz', $recs['quiz']['default']),
+                'security_allow_public_registration' => $service->getBool('security.allow_public_registration', false),
+                'security_session_timeout_minutes' => $service->getInt('security.session_timeout_minutes', 60),
+                'security_max_login_attempts' => $service->getInt('security.max_login_attempts', 5),
+                'features_quiz_module' => $service->getBool('features.quiz_module', true),
+                'features_parent_portal' => $service->getBool('features.parent_portal', true),
+                'system_maintenance_mode' => $service->getBool('system.maintenance_mode', false),
             ],
             'providers' => $providers,
             'usage' => [
@@ -109,7 +109,7 @@ class SettingsController extends Controller
 
     public function save(Request $request, SettingService $service): RedirectResponse
     {
-        abort_unless(auth()->user()?->can(PermissionCatalog::SETTINGS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $data = $request->validate([
             'ai_provider' => 'required|string|max:50',
@@ -148,16 +148,17 @@ class SettingsController extends Controller
 
     public function storeProvider(Request $request): RedirectResponse
     {
-        abort_unless(auth()->user()?->can(PermissionCatalog::SETTINGS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $data = $this->validateProvider($request);
 
-        $maxPriority = AiProvider::max('priority_order') ?? 0;
+        $maxPriority = AiProvider::max('priority_order');
+        $priorityOrder = (is_numeric($maxPriority) ? (int) $maxPriority : 0) + 1;
         AiProvider::create([
             'vendor_key' => $data['vendor_key'] ?: 'custom_'.time(),
             'name' => $data['name'],
             'is_active' => $data['is_active'],
-            'priority_order' => $maxPriority + 1,
+            'priority_order' => $priorityOrder,
             'api_key' => $data['api_key'] ?: null,
             'base_url' => $data['base_url'] ?: null,
             'model' => $data['model'],
@@ -172,7 +173,7 @@ class SettingsController extends Controller
 
     public function updateProvider(Request $request, AiProvider $provider): RedirectResponse
     {
-        abort_unless(auth()->user()?->can(PermissionCatalog::SETTINGS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $data = $this->validateProvider($request);
 
@@ -192,7 +193,7 @@ class SettingsController extends Controller
 
     public function destroyProvider(AiProvider $provider): RedirectResponse
     {
-        abort_unless(auth()->user()?->can(PermissionCatalog::SETTINGS_MANAGE), 403);
+        $this->ensureCanManage();
 
         if ($provider->is_custom) {
             $provider->delete();
@@ -206,7 +207,7 @@ class SettingsController extends Controller
 
     public function toggleProvider(AiProvider $provider): RedirectResponse
     {
-        abort_unless(auth()->user()?->can(PermissionCatalog::SETTINGS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $provider->update(['is_active' => ! $provider->is_active]);
 
@@ -218,7 +219,7 @@ class SettingsController extends Controller
 
     public function movePriority(Request $request, AiProvider $provider): RedirectResponse
     {
-        abort_unless(auth()->user()?->can(PermissionCatalog::SETTINGS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $direction = $request->validate(['direction' => 'required|in:up,down'])['direction'];
         $targetOrder = $direction === 'up' ? $provider->priority_order - 1 : $provider->priority_order + 1;
@@ -240,7 +241,7 @@ class SettingsController extends Controller
 
     public function testConnection(Request $request): JsonResponse
     {
-        abort_unless(auth()->user()?->can(PermissionCatalog::SETTINGS_MANAGE), 403);
+        $this->ensureCanManage();
 
         $data = $request->validate([
             'vendor_key' => 'required|string|max:100',
@@ -328,5 +329,10 @@ class SettingsController extends Controller
         foreach ($providers as $p) {
             $p->update(['priority_order' => $order++]);
         }
+    }
+
+    private function ensureCanManage(): void
+    {
+        abort_unless((bool) auth()->user()?->can(PermissionCatalog::SETTINGS_MANAGE), 403);
     }
 }

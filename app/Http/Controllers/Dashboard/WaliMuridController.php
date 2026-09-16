@@ -26,7 +26,7 @@ class WaliMuridController extends Controller
     {
         $parent = Auth::user();
 
-        abort_unless($parent?->isParent(), 403);
+        abort_unless($parent instanceof User && $parent->isParent(), 403);
 
         $childIds = DB::table('parent_students')
             ->where('parent_id', $parent->id)
@@ -41,7 +41,8 @@ class WaliMuridController extends Controller
             $pctHadir = $totalAttendance > 0 ? (int) round(($hadirCount / $totalAttendance) * 100) : 0;
 
             $attempts = $child->quizAttempts;
-            $avgScore = $attempts->count() > 0 ? (int) round($attempts->avg('score')) : null;
+            $avg = $attempts->avg('score');
+            $avgScore = ($attempts->count() > 0 && $avg !== null) ? (int) round((float) $avg) : null;
 
             $status = $pctHadir >= 80 && ($avgScore ?? 0) >= 70
                 ? 'Baik'

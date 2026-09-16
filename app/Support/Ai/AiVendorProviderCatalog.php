@@ -14,8 +14,32 @@ namespace App\Support\Ai;
 
 use App\Models\AiProvider;
 
+/**
+ * @phpstan-type VendorCatalogMeta array{
+ *     id: string,
+ *     name: string,
+ *     badge: string,
+ *     badge_color: string,
+ *     default_model: string,
+ *     models: list<string>,
+ *     base_url: string,
+ *     requires_key: bool,
+ *     supports_image_generation?: bool,
+ *     docs_url: string,
+ *     rpm: string,
+ *     tpm: string,
+ *     rpd: string,
+ *     cost_per_1k_input: float,
+ *     cost_per_1k_output: float,
+ *     reset_policy: string,
+ *     guide: string
+ * }
+ */
 class AiVendorProviderCatalog
 {
+    /**
+     * @return array<string, VendorCatalogMeta>
+     */
     public static function all(): array
     {
         return [
@@ -174,6 +198,9 @@ class AiVendorProviderCatalog
         ];
     }
 
+    /**
+     * @return VendorCatalogMeta|null
+     */
     public static function get(string $providerId): ?array
     {
         return static::all()[$providerId] ?? null;
@@ -227,7 +254,7 @@ class AiVendorProviderCatalog
     {
         $ids = [];
         foreach (static::all() as $meta) {
-            foreach ($meta['models'] ?? [] as $model) {
+            foreach ($meta['models'] as $model) {
                 $ids[$model] = $model;
             }
         }
@@ -246,18 +273,19 @@ class AiVendorProviderCatalog
         $ids = [];
 
         foreach ($providers as $provider) {
-            $vendorMeta = $provider->catalogMeta() ?? static::get($provider->vendor_key) ?? [];
+            $vendorMeta = $provider->catalogMeta() ?? static::get($provider->vendor_key);
             $models = $vendorMeta['models'] ?? [];
 
             if ($provider->is_custom || $models === []) {
-                $fallback = trim((string) ($provider->model ?: ($vendorMeta['default_model'] ?? '')));
+                $defaultModel = $vendorMeta['default_model'] ?? '';
+                $fallback = trim($provider->model ?: $defaultModel);
                 $models = $fallback !== '' ? [$fallback] : [];
             }
 
             foreach ($models as $model) {
-                $model = trim((string) $model);
-                if ($model !== '') {
-                    $ids[$model] = $model;
+                $trimmed = trim($model);
+                if ($trimmed !== '') {
+                    $ids[$trimmed] = $trimmed;
                 }
             }
         }

@@ -52,9 +52,9 @@ class RegisteredUserController extends Controller
         Role::firstOrCreate(['name' => UserRole::Student->value, 'guard_name' => 'web']);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $request->string('name')->value(),
+            'email' => $request->string('email')->value(),
+            'password' => Hash::make($request->string('password')->value()),
             'role' => UserRole::Student,
         ]);
         $user->syncAppRole();

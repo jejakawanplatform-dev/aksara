@@ -32,6 +32,8 @@ class LearningPlanExportImportService
 {
     /**
      * Export multiple Learning Plans to Excel (.xlsx)
+     *
+     * @param  Collection<int, LearningPlan>  $plans
      */
     public function exportPlansExcel(Collection $plans): string
     {
@@ -97,6 +99,8 @@ class LearningPlanExportImportService
 
     /**
      * Export multiple Learning Plans to Word (.docx)
+     *
+     * @param  Collection<int, LearningPlan>  $plans
      */
     public function exportPlansWord(Collection $plans, ?string $title = null): string
     {
@@ -220,31 +224,46 @@ class LearningPlanExportImportService
         if ($plan->material) {
             $section->addText('III. MATERI PEMBELAJARAN', ['bold' => true, 'size' => 11, 'color' => '0F766E']);
             $mat = $plan->material;
-            $content = $mat->content ?? [];
+            $content = is_array($mat->content) ? $mat->content : [];
+            $matTitle = isset($content['title']) && is_scalar($content['title']) ? (string) $content['title'] : $plan->topic;
 
-            $section->addText('Judul Materi: '.($content['title'] ?? $plan->topic), ['bold' => true, 'size' => 10]);
+            $section->addText('Judul Materi: '.$matTitle, ['bold' => true, 'size' => 10]);
 
-            if (! empty($content['sections']) && is_array($content['sections'])) {
+            if (! empty($content['sections']) && is_iterable($content['sections'])) {
                 foreach ($content['sections'] as $sec) {
-                    if (! empty($sec['heading'])) {
-                        $heading = is_array($sec['heading']) ? implode(' ', array_map('strval', $sec['heading'])) : (string) $sec['heading'];
-                        $section->addText($heading, ['bold' => true, 'size' => 10, 'color' => '0D9488']);
-                    }
-                    if (! empty($sec['body'])) {
-                        $body = is_array($sec['body']) ? implode("\n", array_map('strval', $sec['body'])) : (string) $sec['body'];
-                        $section->addText(strip_tags($body), ['size' => 10]);
+                    if (is_array($sec)) {
+                        $heading = isset($sec['heading']) && is_scalar($sec['heading']) ? (string) $sec['heading'] : '';
+                        $body = isset($sec['body']) && is_scalar($sec['body']) ? (string) $sec['body'] : '';
+                        if ($heading !== '') {
+                            $section->addText($heading, ['bold' => true, 'size' => 10, 'color' => '0D9488']);
+                        }
+                        if ($body !== '') {
+                            $section->addText(strip_tags($body), ['size' => 10]);
+                        }
                     }
                 }
             }
 
             if (! empty($content['reflectionQuestion'])) {
-                $refQ = is_array($content['reflectionQuestion'])
-                    ? implode('; ', array_map('strval', $content['reflectionQuestion']))
-                    : (string) $content['reflectionQuestion'];
+                $rawRef = $content['reflectionQuestion'];
+                $refQ = '';
+                if (is_array($rawRef)) {
+                    $scalars = [];
+                    foreach ($rawRef as $r) {
+                        if (is_scalar($r)) {
+                            $scalars[] = (string) $r;
+                        }
+                    }
+                    $refQ = implode('; ', $scalars);
+                } elseif (is_scalar($rawRef)) {
+                    $refQ = (string) $rawRef;
+                }
 
-                $section->addTextBreak(1);
-                $section->addText('Pertanyaan Refleksi:', ['bold' => true, 'size' => 10]);
-                $section->addText($refQ, ['italic' => true, 'size' => 10]);
+                if ($refQ !== '') {
+                    $section->addTextBreak(1);
+                    $section->addText('Pertanyaan Refleksi:', ['bold' => true, 'size' => 10]);
+                    $section->addText($refQ, ['italic' => true, 'size' => 10]);
+                }
             }
         }
 
@@ -325,6 +344,8 @@ class LearningPlanExportImportService
 
     /**
      * Import Learning Plans from Excel or CSV file
+     *
+     * @return array{success: bool, imported: int, errors: list<string>}
      */
     public function importPlans(UploadedFile $file, int $teacherId): array
     {
@@ -343,7 +364,13 @@ class LearningPlanExportImportService
         // Find header row (usually row 4 or first row with Topik/Topic)
         $headerIndex = -1;
         foreach ($rows as $idx => $r) {
-            $str = implode(' ', array_filter($r));
+            $rowStrings = [];
+            foreach ($r as $colVal) {
+                if (is_scalar($colVal)) {
+                    $rowStrings[] = (string) $colVal;
+                }
+            }
+            $str = implode(' ', $rowStrings);
             if (stripos($str, 'Topik') !== false || stripos($str, 'Kode Mapel') !== false) {
                 $headerIndex = $idx;
                 break;
@@ -373,19 +400,20 @@ class LearningPlanExportImportService
         try {
             for ($i = $headerIndex + 1; $i < count($rows); $i++) {
                 $row = $rows[$i];
-                $topic = trim((string) ($row[0] ?? ''));
+                $topic = isset($row[0]) && is_scalar($row[0]) ? trim((string) $row[0]) : '';
 
                 if (empty($topic)) {
                     continue; // Skip empty rows
                 }
 
-                $subjectCode = trim((string) ($row[1] ?? 'INF'));
-                $grade = (int) ($row[2] ?? 7);
-                $phase = trim((string) ($row[3] ?? 'D')) ?: 'D';
-                $duration = (int) ($row[4] ?? 80) ?: 80;
-                $objectives = trim((string) ($row[5] ?? ''));
-                $ref = trim((string) ($row[6] ?? ''));
-                $needs = trim((string) ($row[7] ?? ''));
+                $subjectCode = isset($row[1]) && is_scalar($row[1]) ? trim((string) $row[1]) : 'INF';
+                $grade = isset($row[2]) && is_numeric($row[2]) ? (int) $row[2] : 7;
+                $phaseRaw = isset($row[3]) && is_scalar($row[3]) ? trim((string) $row[3]) : 'D';
+                $phase = $phaseRaw !== '' ? $phaseRaw : 'D';
+                $duration = isset($row[4]) && is_numeric($row[4]) ? (int) $row[4] : 80;
+                $objectives = isset($row[5]) && is_scalar($row[5]) ? trim((string) $row[5]) : '';
+                $ref = isset($row[6]) && is_scalar($row[6]) ? trim((string) $row[6]) : '';
+                $needs = isset($row[7]) && is_scalar($row[7]) ? trim((string) $row[7]) : '';
 
                 if (empty($objectives)) {
                     $errors[] = 'Baris '.($i + 1).': Tujuan Pembelajaran wajib diisi.';
@@ -414,16 +442,19 @@ class LearningPlanExportImportService
                     ->where('grade', $grade)
                     ->first();
 
+                $defaultClassVal = SchoolClass::query()->value('id');
+                $defaultClassId = is_numeric($defaultClassVal) ? (int) $defaultClassVal : 1;
+
                 LearningPlan::create([
                     'teacher_id' => $teacherId,
                     'academic_year_id' => $activeYear->id,
                     'semester_id' => $activeSemester->id,
-                    'class_id' => $class !== null ? $class->id : (SchoolClass::query()->value('id') ?? 1),
+                    'class_id' => $class !== null ? $class->id : $defaultClassId,
                     'subject_id' => $subject->id,
                     'phase' => strtoupper($phase),
                     'grade' => $grade ?: 7,
                     'topic' => $topic,
-                    'duration_minutes' => $duration,
+                    'duration_minutes' => $duration ?: 80,
                     'learning_objectives' => $objectives,
                     'curriculum_reference' => $ref ?: "Ref: {$subject->name} - {$topic}",
                     'student_needs' => $needs ?: null,

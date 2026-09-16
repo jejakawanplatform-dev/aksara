@@ -12,14 +12,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LearningEvent extends Model
 {
-    use HasFactory;
-
     protected $fillable = ['material_id', 'student_id', 'event_type', 'occurred_at'];
 
     protected function casts(): array
@@ -29,11 +26,17 @@ class LearningEvent extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<LearningMaterial, $this>
+     */
     public function material(): BelongsTo
     {
         return $this->belongsTo(LearningMaterial::class, 'material_id');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function student(): BelongsTo
     {
         return $this->belongsTo(User::class, 'student_id');

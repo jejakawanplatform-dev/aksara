@@ -12,7 +12,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -28,8 +27,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class TeacherEvaluation extends Model
 {
-    use HasFactory;
-
     protected $fillable = ['plan_id', 'teacher_id', 'notes', 'challenges', 'next_action'];
 
     /** @return BelongsTo<LearningPlan, $this> */

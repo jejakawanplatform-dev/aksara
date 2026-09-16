@@ -16,6 +16,7 @@ use App\Enums\AttendanceStatus;
 use App\Http\Controllers\Controller;
 use App\Models\LearningPlan;
 use App\Models\TeacherEvaluation;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -26,6 +27,8 @@ class TeacherReportController extends Controller
     public function index(Request $request): Response
     {
         $teacher = Auth::user();
+        abort_unless($teacher instanceof User, 401);
+
         $perPage = (int) $request->query('per_page', 10);
         if (! in_array($perPage, [10, 25, 50, 100], true)) {
             $perPage = 10;
@@ -42,7 +45,8 @@ class TeacherReportController extends Controller
                 $hadirCount = $attendances->where('status', AttendanceStatus::Present)->count();
 
                 $attempts = $plan->quizzes->flatMap->attempts;
-                $avgScore = $attempts->count() > 0 ? (int) round($attempts->avg('score')) : null;
+                $rawAvg = $attempts->avg('score');
+                $avgScore = ($attempts->count() > 0 && is_numeric($rawAvg)) ? (int) round((float) $rawAvg) : null;
 
                 $evaluation = TeacherEvaluation::where('plan_id', $plan->id)
                     ->where('teacher_id', $teacher->id)

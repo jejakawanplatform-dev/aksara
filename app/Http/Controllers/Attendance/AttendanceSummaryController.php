@@ -119,12 +119,13 @@ class AttendanceSummaryController extends Controller
     /**
      * @return Collection<int, int>
      */
-    private function allowedClassIds(User $user)
+    private function allowedClassIds(User $user): Collection
     {
         if ($user->isHomeroomTeacher()) {
             return SchoolClass::query()
                 ->where('homeroom_teacher_id', $user->id)
-                ->pluck('id');
+                ->pluck('id')
+                ->map(fn (mixed $id): int => is_numeric($id) ? (int) $id : 0);
         }
 
         if ($user->isTeacher()) {
@@ -132,13 +133,19 @@ class AttendanceSummaryController extends Controller
                 ->where('teacher_id', $user->id)
                 ->pluck('class_id')
                 ->unique()
-                ->values();
+                ->values()
+                ->map(fn (mixed $id): int => is_numeric($id) ? (int) $id : 0);
         }
 
         // Admin atau role lain yang punya attendance.summary via matrix override.
-        return SchoolClass::query()->pluck('id');
+        return SchoolClass::query()
+            ->pluck('id')
+            ->map(fn (mixed $id): int => is_numeric($id) ? (int) $id : 0);
     }
 
+    /**
+     * @return LengthAwarePaginator<int, mixed>
+     */
     private function emptyPaginator(int $perPage): LengthAwarePaginator
     {
         return new LengthAwarePaginator([], 0, $perPage);

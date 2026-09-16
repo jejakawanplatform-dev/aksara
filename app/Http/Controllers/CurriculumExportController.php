@@ -23,13 +23,16 @@ class CurriculumExportController extends Controller
 {
     public function __construct(protected CurriculumExportImportService $exportService) {}
 
-    public function exportCpTp(Request $request, Subject $subject, string $format)
+    public function exportCpTp(Request $request, Subject $subject, string $format): \Symfony\Component\HttpFoundation\Response|\Illuminate\Contracts\View\View
     {
         $safeCode = preg_replace('/[^A-Za-z0-9_-]/', '', $subject->code ?: 'MAPEL');
         $filename = "CP_TP_{$safeCode}_".now()->format('Ymd_His');
 
         if ($format === 'excel') {
             $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+            if ($tempFile === false) {
+                abort(500);
+            }
             file_put_contents($tempFile, $this->exportService->exportCpTpExcel($subject));
 
             return response()->download($tempFile, "{$filename}.xlsx", [
@@ -39,6 +42,9 @@ class CurriculumExportController extends Controller
 
         if ($format === 'word') {
             $tempFile = tempnam(sys_get_temp_dir(), 'docx_');
+            if ($tempFile === false) {
+                abort(500);
+            }
             file_put_contents($tempFile, $this->exportService->exportCpTpWord($subject));
 
             return response()->download($tempFile, "{$filename}.docx", [
@@ -49,7 +55,7 @@ class CurriculumExportController extends Controller
         if ($format === 'pdf') {
             /** @var SettingService $settingService */
             $settingService = app(SettingService::class);
-            $schoolName = (string) $settingService->get('school.name', 'SMP Negeri 1 Aksara');
+            $schoolName = $settingService->getString('school.name', 'SMP Negeri 1 Aksara');
 
             $cps = CurriculumCp::query()
                 ->with(['tps' => fn ($q) => $q->orderBy('sequence')])
@@ -63,7 +69,7 @@ class CurriculumExportController extends Controller
         abort(404);
     }
 
-    public function exportAtp(Request $request, Subject $subject, string $format)
+    public function exportAtp(Request $request, Subject $subject, string $format): \Symfony\Component\HttpFoundation\Response|\Illuminate\Contracts\View\View
     {
         $grade = $request->query('grade') ? (int) $request->query('grade') : null;
         $safeCode = preg_replace('/[^A-Za-z0-9_-]/', '', $subject->code ?: 'MAPEL');
@@ -71,6 +77,9 @@ class CurriculumExportController extends Controller
 
         if ($format === 'excel') {
             $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+            if ($tempFile === false) {
+                abort(500);
+            }
             file_put_contents($tempFile, $this->exportService->exportAtpExcel($subject, $grade));
 
             return response()->download($tempFile, "{$filename}.xlsx", [
@@ -80,6 +89,9 @@ class CurriculumExportController extends Controller
 
         if ($format === 'word') {
             $tempFile = tempnam(sys_get_temp_dir(), 'docx_');
+            if ($tempFile === false) {
+                abort(500);
+            }
             file_put_contents($tempFile, $this->exportService->exportAtpWord($subject, $grade));
 
             return response()->download($tempFile, "{$filename}.docx", [
@@ -90,7 +102,7 @@ class CurriculumExportController extends Controller
         if ($format === 'pdf') {
             /** @var SettingService $settingService */
             $settingService = app(SettingService::class);
-            $schoolName = (string) $settingService->get('school.name', 'SMP Negeri 1 Aksara');
+            $schoolName = $settingService->getString('school.name', 'SMP Negeri 1 Aksara');
 
             $atpItems = CurriculumAtpItem::query()
                 ->with(['tp', 'semester'])

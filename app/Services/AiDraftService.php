@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * @phpstan-import-type VendorCatalogMeta from \App\Support\Ai\AiVendorProviderCatalog
+ */
 class AiDraftService
 {
     public const FEATURE_PLAN = 'plan';
@@ -25,12 +28,15 @@ class AiDraftService
      * Resolve model for a feature against a specific provider.
      * Uses feature setting only when the model is in that provider's catalog list (or custom vendor).
      * Optional preferredModel wins when it is allowed for this provider.
+     *
+     * @param  VendorCatalogMeta|null  $vendorMeta
      */
     public function resolveModelFor(string $feature, AiProvider $provider, ?array $vendorMeta = null, ?string $preferredModel = null): string
     {
-        $vendorMeta ??= $provider->catalogMeta() ?? AiVendorProviderCatalog::get($provider->vendor_key) ?? [];
+        $vendorMeta ??= $provider->catalogMeta() ?? AiVendorProviderCatalog::get($provider->vendor_key);
         $catalogModels = $vendorMeta['models'] ?? [];
-        $providerDefault = trim((string) ($provider->model ?: ($vendorMeta['default_model'] ?? 'gpt-4o-mini')));
+        $defaultModel = $vendorMeta['default_model'] ?? 'gpt-4o-mini';
+        $providerDefault = trim($provider->model ?: $defaultModel);
 
         $preferred = trim((string) $preferredModel);
         if ($preferred !== '' && ($provider->is_custom || empty($catalogModels) || in_array($preferred, $catalogModels, true))) {
@@ -39,7 +45,12 @@ class AiDraftService
 
         $recs = AiVendorProviderCatalog::featureModelRecommendations();
         $settingKey = $recs[$feature]['key'] ?? null;
-        $featureModel = $settingKey ? trim((string) setting($settingKey, $recs[$feature]['default'] ?? '')) : '';
+        $featureModel = '';
+        if ($settingKey) {
+            $defaultSetting = isset($recs[$feature]['default']) && is_scalar($recs[$feature]['default']) ? (string) $recs[$feature]['default'] : '';
+            $settingVal = setting($settingKey, $defaultSetting);
+            $featureModel = is_scalar($settingVal) ? trim((string) $settingVal) : '';
+        }
 
         if ($featureModel === '') {
             return $providerDefault !== '' ? $providerDefault : 'gpt-4o-mini';
@@ -60,7 +71,9 @@ class AiDraftService
     public function listMaterialModelChoices(): array
     {
         $recs = AiVendorProviderCatalog::featureModelRecommendations();
-        $defaultId = trim((string) setting($recs['material']['key'], $recs['material']['default'] ?? ''));
+        $defaultSetting = isset($recs['material']['default']) && is_scalar($recs['material']['default']) ? (string) $recs['material']['default'] : '';
+        $settingVal = setting($recs['material']['key'], $defaultSetting);
+        $defaultId = is_scalar($settingVal) ? trim((string) $settingVal) : '';
         $choices = [];
         $seen = [];
 
@@ -69,28 +82,29 @@ class AiDraftService
                 continue;
             }
 
-            $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($provider->vendor_key) ?? [];
+            $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($provider->vendor_key);
             $models = $vendorMeta['models'] ?? [];
             if ($provider->is_custom || $models === []) {
-                $fallback = trim((string) ($provider->model ?: ($vendorMeta['default_model'] ?? '')));
+                $defaultModel = $vendorMeta['default_model'] ?? '';
+                $fallback = trim($provider->model ?: $defaultModel);
                 $models = $fallback !== '' ? [$fallback] : [];
             }
 
             foreach ($models as $modelId) {
-                $modelId = trim((string) $modelId);
-                if ($modelId === '' || isset($seen[$modelId])) {
+                $trimmed = trim($modelId);
+                if ($trimmed === '' || isset($seen[$trimmed])) {
                     continue;
                 }
-                $seen[$modelId] = true;
-                $guide = AiVendorProviderCatalog::guideForModel($modelId);
+                $seen[$trimmed] = true;
+                $guide = AiVendorProviderCatalog::guideForModel($trimmed);
                 $choices[] = [
-                    'id' => $modelId,
-                    'label' => $modelId,
+                    'id' => $trimmed,
+                    'label' => $trimmed,
                     'provider' => $provider->name,
                     'recommend' => $guide['recommend'],
                     'limit' => $guide['limit'],
                     'tag' => $guide['tag'],
-                    'isDefault' => $defaultId !== '' && $modelId === $defaultId,
+                    'isDefault' => $defaultId !== '' && $trimmed === $defaultId,
                 ];
             }
         }
@@ -134,6 +148,10 @@ class AiDraftService
         return 'Belum ada provider AI aktif';
     }
 
+    /**
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
     public function generateDraft(array $input): array
     {
         $startTime = microtime(true);
@@ -159,7 +177,7 @@ class AiDraftService
             }
 
             $apiKey = trim((string) $provider->api_key);
-            $baseUrl = trim((string) ($provider->base_url ?: ($vendorMeta['base_url'] ?? '')));
+            $baseUrl = trim($provider->base_url ?: ($vendorMeta['base_url'] ?? ''));
             $model = $this->resolveModelFor(self::FEATURE_PLAN, $provider, $vendorMeta);
             $timeout = (int) ($provider->timeout_seconds ?: 30);
 
@@ -224,6 +242,9 @@ class AiDraftService
         throw new \RuntimeException('Semua AI Provider gagal memberikan respons yang valid. '.($lastException?->getMessage() ?? ''));
     }
 
+    /**
+     * @param  array<string, mixed>  $context
+     */
     public function improveText(string $field, string $originalText, array $context): string
     {
         $startTime = microtime(true);
@@ -239,10 +260,15 @@ class AiDraftService
             .'Jaga agar teks tetap ringkas, profesional, dan sesuai kaidah kurikulum pendidikan. '
             .'Kembalikan HANYA teks perbaikannya saja, tanpa penjelasan tambahan atau format Markdown (kecuali teks dasar).';
 
+        $topic = isset($context['topic']) && is_scalar($context['topic']) ? (string) $context['topic'] : '';
+        $subject = isset($context['subject']) && is_scalar($context['subject']) ? (string) $context['subject'] : '';
+        $grade = isset($context['grade']) && is_scalar($context['grade']) ? (string) $context['grade'] : '';
+        $phase = isset($context['phase']) && is_scalar($context['phase']) ? (string) $context['phase'] : '';
+
         $user = "Konteks Rencana Pembelajaran:\n"
-            ."- Topik: {$context['topic']}\n"
-            ."- Mata Pelajaran: {$context['subject']}\n"
-            ."- Kelas: {$context['grade']} (Fase {$context['phase']})\n\n"
+            ."- Topik: {$topic}\n"
+            ."- Mata Pelajaran: {$subject}\n"
+            ."- Kelas: {$grade} (Fase {$phase})\n\n"
             ."Teks asli yang perlu disempurnakan:\n\"{$originalText}\"";
 
         $messages = [
@@ -259,7 +285,7 @@ class AiDraftService
             $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($vendorId);
 
             $apiKey = trim((string) $provider->api_key);
-            $baseUrl = trim((string) ($provider->base_url ?: ($vendorMeta['base_url'] ?? '')));
+            $baseUrl = trim($provider->base_url ?: ($vendorMeta['base_url'] ?? ''));
             $model = $this->resolveModelFor(self::FEATURE_IMPROVE, $provider, $vendorMeta);
             $timeout = (int) ($provider->timeout_seconds ?: 15);
 
@@ -283,10 +309,10 @@ class AiDraftService
                         throw new \RuntimeException("Gemini API error (HTTP {$response->status()})");
                     }
                     $json = $response->json();
-                    $resultText = $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                    $usageMeta = $json['usageMetadata'] ?? [];
-                    $promptTokens = $usageMeta['promptTokenCount'] ?? 100;
-                    $completionTokens = $usageMeta['candidatesTokenCount'] ?? 50;
+                    $resultText = $this->extractGeminiText($json);
+                    $usageMeta = (is_array($json) && isset($json['usageMetadata']) && is_array($json['usageMetadata'])) ? $json['usageMetadata'] : [];
+                    $promptTokens = isset($usageMeta['promptTokenCount']) && is_numeric($usageMeta['promptTokenCount']) ? (int) $usageMeta['promptTokenCount'] : 100;
+                    $completionTokens = isset($usageMeta['candidatesTokenCount']) && is_numeric($usageMeta['candidatesTokenCount']) ? (int) $usageMeta['candidatesTokenCount'] : 50;
 
                 } else {
                     $url = rtrim($baseUrl, '/').'/chat/completions';
@@ -305,10 +331,10 @@ class AiDraftService
                         throw new \RuntimeException("OpenAI-Compatible API error (HTTP {$response->status()})");
                     }
                     $json = $response->json();
-                    $resultText = $json['choices'][0]['message']['content'] ?? '';
-                    $usageMeta = $json['usage'] ?? [];
-                    $promptTokens = $usageMeta['prompt_tokens'] ?? 100;
-                    $completionTokens = $usageMeta['completion_tokens'] ?? 50;
+                    $resultText = $this->extractOpenAiText($json);
+                    $usageMeta = (is_array($json) && isset($json['usage']) && is_array($json['usage'])) ? $json['usage'] : [];
+                    $promptTokens = isset($usageMeta['prompt_tokens']) && is_numeric($usageMeta['prompt_tokens']) ? (int) $usageMeta['prompt_tokens'] : 100;
+                    $completionTokens = isset($usageMeta['completion_tokens']) && is_numeric($usageMeta['completion_tokens']) ? (int) $usageMeta['completion_tokens'] : 50;
                 }
 
                 $latencyMs = (int) round((microtime(true) - $vendorStartTime) * 1000);
@@ -332,6 +358,8 @@ class AiDraftService
 
     /**
      * Generasi Teks Bacaan Bahan Ajar Siswa Komprehensif via AI.
+     *
+     * @return array{title: string, sections: array<int|string, mixed>, reflectionQuestion: array<int|string, mixed>}
      */
     public function generateFullMaterialContent(LearningPlan $plan): array
     {
@@ -379,7 +407,7 @@ class AiDraftService
             $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($vendorId);
 
             $apiKey = trim((string) $provider->api_key);
-            $baseUrl = trim((string) ($provider->base_url ?: ($vendorMeta['base_url'] ?? '')));
+            $baseUrl = trim($provider->base_url ?: ($vendorMeta['base_url'] ?? ''));
             $model = $this->resolveModelFor(self::FEATURE_MATERIAL, $provider, $vendorMeta);
             $timeout = (int) ($provider->timeout_seconds ?: 30);
 
@@ -407,16 +435,19 @@ class AiDraftService
 
                 if ($response->successful()) {
                     $json = $response->json();
-                    $contentStr = $json['choices'][0]['message']['content'] ?? '';
-                    $data = json_decode($contentStr, true);
+                    $contentStr = $this->extractOpenAiText($json);
+                    $data = $contentStr !== '' ? json_decode($contentStr, true) : null;
 
                     if (is_array($data) && ! empty($data['sections']) && is_array($data['sections'])) {
+                        $title = (isset($data['title']) && is_scalar($data['title'])) ? (string) $data['title'] : "Bahan Ajar: {$plan->topic}";
+                        $sections = $data['sections'];
+                        $rawReflection = $data['reflectionQuestion'] ?? ["Apa yang dapat disimpulkan dari {$plan->topic}?"];
+                        $refArray = is_array($rawReflection) ? $rawReflection : [$rawReflection];
+
                         return [
-                            'title' => $data['title'] ?? "Bahan Ajar: {$plan->topic}",
-                            'sections' => $data['sections'],
-                            'reflectionQuestion' => is_array($data['reflectionQuestion'] ?? null)
-                                ? $data['reflectionQuestion']
-                                : (array) ($data['reflectionQuestion'] ?? ["Apa yang dapat disimpulkan dari {$plan->topic}?"]),
+                            'title' => $title,
+                            'sections' => $sections,
+                            'reflectionQuestion' => $refArray,
                         ];
                     }
                 }
@@ -452,7 +483,10 @@ class AiDraftService
     /**
      * Obrolan 2-arah Asisten Aksara untuk refinement bahan ajar.
      *
-     * @param  array{intent?: string, title?: string, sectionCount?: int, sections?: array, reflections?: string}  $editorContext
+     * @param  list<array{role: string, content: string}>  $chatHistory
+     * @param  array<string, bool>  $selectedTemplates
+     * @param  array{intent?: string, title?: string, sectionCount?: int, sections?: array<int|string, mixed>, reflections?: string}  $editorContext
+     * @return array<string, mixed>
      */
     public function chatRefineMaterial(LearningPlan $plan, array $chatHistory, string $userMessage, array $selectedTemplates = [], array $editorContext = [], ?string $preferredModel = null): array
     {
@@ -535,7 +569,7 @@ class AiDraftService
                 if ($provider->vendor_key === 'mock' || ! $provider->isConfigured()) {
                     return false;
                 }
-                $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($provider->vendor_key) ?? [];
+                $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($provider->vendor_key);
                 $catalogModels = $vendorMeta['models'] ?? [];
 
                 return $provider->is_custom || empty($catalogModels) || in_array($preferred, $catalogModels, true);
@@ -550,7 +584,7 @@ class AiDraftService
             }
             $vendorMeta = $provider->catalogMeta() ?? AiVendorProviderCatalog::get($vendorId);
             $apiKey = trim((string) $provider->api_key);
-            $baseUrl = trim((string) ($provider->base_url ?: ($vendorMeta['base_url'] ?? '')));
+            $baseUrl = trim($provider->base_url ?: ($vendorMeta['base_url'] ?? ''));
             $model = $this->resolveModelFor(
                 self::FEATURE_MATERIAL,
                 $provider,
@@ -578,8 +612,8 @@ class AiDraftService
 
                 if ($response->successful()) {
                     $json = $response->json();
-                    $contentStr = $json['choices'][0]['message']['content'] ?? '';
-                    $data = json_decode($contentStr, true);
+                    $contentStr = $this->extractOpenAiText($json);
+                    $data = $contentStr !== '' ? json_decode($contentStr, true) : null;
 
                     if (is_array($data)) {
                         $materialData = (! empty($data['materialData']) && is_array($data['materialData']))
@@ -622,10 +656,18 @@ class AiDraftService
             if (! is_array($item)) {
                 continue;
             }
-            $desc = trim((string) ($item['description'] ?? ''));
-            $prompt = trim((string) ($item['promptEn'] ?? $item['prompt'] ?? ''));
-            $heading = trim((string) ($item['sectionHeading'] ?? $item['heading'] ?? ''));
-            $keywords = trim((string) ($item['keywords'] ?? $desc));
+            $descRaw = $item['description'] ?? '';
+            $desc = is_scalar($descRaw) ? trim((string) $descRaw) : '';
+
+            $promptRaw = $item['promptEn'] ?? ($item['prompt'] ?? '');
+            $prompt = is_scalar($promptRaw) ? trim((string) $promptRaw) : '';
+
+            $headingRaw = $item['sectionHeading'] ?? ($item['heading'] ?? '');
+            $heading = is_scalar($headingRaw) ? trim((string) $headingRaw) : '';
+
+            $keywordsRaw = $item['keywords'] ?? $desc;
+            $keywords = is_scalar($keywordsRaw) ? trim((string) $keywordsRaw) : '';
+
             if ($desc === '' && $prompt === '') {
                 continue;
             }
@@ -650,7 +692,7 @@ class AiDraftService
     }
 
     /**
-     * @param  array{intent?: string, title?: string, sectionCount?: int, sections?: array, reflections?: string}  $editorContext
+     * @param  array{intent?: string, title?: string, sectionCount?: int, sections?: array<int|string, mixed>, reflections?: string}  $editorContext
      */
     private function formatEditorContextForPrompt(array $editorContext): string
     {
@@ -663,9 +705,14 @@ class AiDraftService
             "- Jumlah seksi: {$count}",
         ];
 
-        foreach ($editorContext['sections'] ?? [] as $i => $sec) {
-            $heading = $sec['heading'] ?? ('Seksi '.($i + 1));
-            $excerpt = $sec['bodyExcerpt'] ?? '';
+        $rawSections = is_iterable($editorContext['sections'] ?? null) ? $editorContext['sections'] : [];
+        foreach ($rawSections as $i => $sec) {
+            $heading = is_array($sec) && isset($sec['heading']) && is_scalar($sec['heading'])
+                ? (string) $sec['heading']
+                : ('Seksi '.((is_numeric($i) ? (int) $i : 0) + 1));
+            $excerpt = is_array($sec) && isset($sec['bodyExcerpt']) && is_scalar($sec['bodyExcerpt'])
+                ? (string) $sec['bodyExcerpt']
+                : '';
             $lines[] = '- ['.$i.'] '.$heading.($excerpt !== '' ? " — cuplikan: {$excerpt}" : ' — (kosong/placeholder)');
         }
 
@@ -676,10 +723,17 @@ class AiDraftService
         return implode("\n", $lines);
     }
 
+    /**
+     * @param  array{intent?: string, title?: string, sectionCount?: int, sections?: array<int|string, mixed>, reflections?: string}  $editorContext
+     * @return array<string, mixed>
+     */
     private function fallbackCopilotResponse(LearningPlan $plan, string $userMessage, string $subjectName, string $intent, array $editorContext): array
     {
         if ($intent === 'patch' && ! empty($editorContext['sections'])) {
-            $firstHeading = $editorContext['sections'][0]['heading'] ?? '1. Seksi';
+            $firstSec = $editorContext['sections'][0] ?? null;
+            $firstHeading = (is_array($firstSec) && isset($firstSec['heading']) && is_scalar($firstSec['heading']))
+                ? (string) $firstSec['heading']
+                : '1. Seksi';
 
             return [
                 'replyMessage' => 'Saya menyiapkan perbaikan seksi terkait instruksi Anda (mode patch). Silakan terapkan bila setuju.',
@@ -747,10 +801,10 @@ class AiDraftService
     {
         try {
             $meta = AiVendorProviderCatalog::get($vendorId);
-            $inputRate = $meta['cost_per_1k_input'] ?? 0;
-            $outputRate = $meta['cost_per_1k_output'] ?? 0;
+            $inputRate = $meta['cost_per_1k_input'] ?? 0.0;
+            $outputRate = $meta['cost_per_1k_output'] ?? 0.0;
 
-            $cost = ($promptTokens * $inputRate / 1000) + ($completionTokens * $outputRate / 1000);
+            $cost = ($promptTokens * $inputRate + $completionTokens * $outputRate) / 1000.0;
 
             AiUsageLog::create([
                 'user_id' => Auth::id(),
@@ -769,6 +823,10 @@ class AiDraftService
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $input
+     * @return array{data: array<string, mixed>, usage: array{prompt_tokens: int, completion_tokens: int, total_tokens: int}}
+     */
     private function callGeminiApi(string $baseUrl, string $apiKey, string $model, int $timeout, array $input): array
     {
         $url = rtrim($baseUrl, '/')."/models/{$model}:generateContent?key={$apiKey}";
@@ -797,25 +855,32 @@ class AiDraftService
         }
 
         $json = $response->json();
-        $text = $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
-        $data = json_decode($text, true);
+        $text = $this->extractGeminiText($json);
+        $data = $text !== '' ? json_decode($text, true) : null;
 
         if (json_last_error() !== JSON_ERROR_NONE || ! is_array($data)) {
             throw new \RuntimeException('Format JSON Gemini tidak valid.');
         }
 
-        $usageMeta = $json['usageMetadata'] ?? [];
+        $usageMeta = (is_array($json) && isset($json['usageMetadata']) && is_array($json['usageMetadata'])) ? $json['usageMetadata'] : [];
+        $promptTokens = isset($usageMeta['promptTokenCount']) && is_numeric($usageMeta['promptTokenCount']) ? (int) $usageMeta['promptTokenCount'] : 250;
+        $completionTokens = isset($usageMeta['candidatesTokenCount']) && is_numeric($usageMeta['candidatesTokenCount']) ? (int) $usageMeta['candidatesTokenCount'] : 450;
+        $totalTokens = isset($usageMeta['totalTokenCount']) && is_numeric($usageMeta['totalTokenCount']) ? (int) $usageMeta['totalTokenCount'] : 700;
 
         return [
             'data' => $this->validateAndFillSchema($data, $input),
             'usage' => [
-                'prompt_tokens' => $usageMeta['promptTokenCount'] ?? 250,
-                'completion_tokens' => $usageMeta['candidatesTokenCount'] ?? 450,
-                'total_tokens' => $usageMeta['totalTokenCount'] ?? 700,
+                'prompt_tokens' => $promptTokens,
+                'completion_tokens' => $completionTokens,
+                'total_tokens' => $totalTokens,
             ],
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $input
+     * @return array{data: array<string, mixed>, usage: array{prompt_tokens: int, completion_tokens: int, total_tokens: int}}
+     */
     private function callOpenAiCompatibleApi(string $baseUrl, string $apiKey, string $model, int $timeout, array $input): array
     {
         $url = rtrim($baseUrl, '/').'/chat/completions';
@@ -838,53 +903,63 @@ class AiDraftService
         }
 
         $json = $response->json();
-        $content = $json['choices'][0]['message']['content'] ?? '';
-        $data = json_decode($content, true);
+        $content = $this->extractOpenAiText($json);
+        $data = $content !== '' ? json_decode($content, true) : null;
 
         if (json_last_error() !== JSON_ERROR_NONE || ! is_array($data)) {
             throw new \RuntimeException('Format JSON AI tidak valid.');
         }
 
-        $usageMeta = $json['usage'] ?? [];
+        $usageMeta = (is_array($json) && isset($json['usage']) && is_array($json['usage'])) ? $json['usage'] : [];
+        $promptTokens = isset($usageMeta['prompt_tokens']) && is_numeric($usageMeta['prompt_tokens']) ? (int) $usageMeta['prompt_tokens'] : 250;
+        $completionTokens = isset($usageMeta['completion_tokens']) && is_numeric($usageMeta['completion_tokens']) ? (int) $usageMeta['completion_tokens'] : 450;
+        $totalTokens = isset($usageMeta['total_tokens']) && is_numeric($usageMeta['total_tokens']) ? (int) $usageMeta['total_tokens'] : 700;
 
         return [
             'data' => $this->validateAndFillSchema($data, $input),
             'usage' => [
-                'prompt_tokens' => $usageMeta['prompt_tokens'] ?? 250,
-                'completion_tokens' => $usageMeta['completion_tokens'] ?? 450,
-                'total_tokens' => $usageMeta['total_tokens'] ?? 700,
+                'prompt_tokens' => $promptTokens,
+                'completion_tokens' => $completionTokens,
+                'total_tokens' => $totalTokens,
             ],
         ];
     }
 
+    /**
+     * @param  array<int|string, mixed>  $data
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
     private function validateAndFillSchema(array $data, array $input): array
     {
-        $cpDraft = $data['cpDraft'] ?? "Draf CP: Understanding {$input['topic']}";
+        $topic = isset($input['topic']) && is_scalar($input['topic']) ? (string) $input['topic'] : '';
+        $defaultCp = $topic !== '' ? "Draf CP: Understanding {$topic}" : 'Draf CP';
+        $cpDraft = $data['cpDraft'] ?? $defaultCp;
         if (is_array($cpDraft)) {
-            $cpDraft = isset($cpDraft['statement'])
+            $cpDraft = (isset($cpDraft['statement']) && is_scalar($cpDraft['statement']))
                 ? (string) $cpDraft['statement']
-                : implode("\n", array_filter(array_map(fn ($v) => is_string($v) ? $v : json_encode($v), $cpDraft)));
+                : implode("\n", array_filter(array_map(fn ($v): string => is_scalar($v) ? (string) $v : (json_encode($v) ?: ''), $cpDraft)));
         }
 
         return [
-            'cpDraft' => (string) $cpDraft,
-            'tpDraft' => is_array($data['tpDraft'] ?? null) ? $data['tpDraft'] : ["TP: Memahami {$input['topic']}"],
+            'cpDraft' => is_scalar($cpDraft) ? (string) $cpDraft : '',
+            'tpDraft' => is_array($data['tpDraft'] ?? null) ? $data['tpDraft'] : ["TP: Memahami {$topic}"],
             'atpDraft' => is_array($data['atpDraft'] ?? null) ? $data['atpDraft'] : [
                 ['sequence' => 1, 'activity' => 'Pengantar'],
                 ['sequence' => 2, 'activity' => 'Eksplorasi'],
             ],
             'lessonPlanDraft' => is_array($data['lessonPlanDraft'] ?? null) ? $data['lessonPlanDraft'] : [
                 'opening' => ['Salam', 'Apersepsi'],
-                'core' => ["Pembahasan {$input['topic']}"],
+                'core' => ["Pembahasan {$topic}"],
                 'closing' => ['Kesimpulan'],
                 'assessmentPlan' => ['Observasi'],
             ],
             'learningMaterialDraft' => is_array($data['learningMaterialDraft'] ?? null) ? $data['learningMaterialDraft'] : [
-                'title' => "Materi: {$input['topic']}",
+                'title' => "Materi: {$topic}",
                 'sections' => [
-                    ['heading' => 'Pendahuluan', 'body' => "Penjelasan materi {$input['topic']}."],
+                    ['heading' => 'Pendahuluan', 'body' => "Penjelasan materi {$topic}."],
                 ],
-                'reflectionQuestion' => "Apa yang dipelajari dari {$input['topic']}?",
+                'reflectionQuestion' => "Apa yang dipelajari dari {$topic}?",
             ],
             'reviewNotes' => is_array($data['reviewNotes'] ?? null) ? $data['reviewNotes'] : [
                 'Draf AI telah diproses — silakan diperiksa dan disesuaikan oleh guru.',
@@ -892,24 +967,77 @@ class AiDraftService
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $input
+     * @return list<array{role: string, content: string}>
+     */
     private function buildMessages(array $input): array
     {
         $system = "Anda adalah asisten penyusunan draf modul ajar kurikulum sekolah berbahasa Indonesia.\n"
             .'Kembalikan HANYA JSON valid dengan key: cpDraft, tpDraft (array of strings), atpDraft (array of objects {sequence, activity}), '
             .'lessonPlanDraft (object {opening, core, closing, assessmentPlan}), learningMaterialDraft (object {title, sections, reflectionQuestion}), reviewNotes (array of strings).';
 
+        $phase = isset($input['phase']) && is_scalar($input['phase']) ? (string) $input['phase'] : '';
+        $grade = isset($input['grade']) && is_scalar($input['grade']) ? (string) $input['grade'] : '';
+        $subject = isset($input['subject']) && is_scalar($input['subject']) ? (string) $input['subject'] : '';
+        $topic = isset($input['topic']) && is_scalar($input['topic']) ? (string) $input['topic'] : '';
+        $duration = isset($input['duration_minutes']) && is_scalar($input['duration_minutes']) ? (string) $input['duration_minutes'] : '';
+        $objectives = isset($input['learning_objectives']) && is_scalar($input['learning_objectives']) ? (string) $input['learning_objectives'] : '';
+        $needs = isset($input['student_needs']) && is_scalar($input['student_needs']) ? (string) $input['student_needs'] : '';
+        $reference = isset($input['curriculum_reference']) && is_scalar($input['curriculum_reference']) ? (string) $input['curriculum_reference'] : '';
+
         $user = "Buat draf modul ajar:\n"
-            ."- Fase/Kelas: {$input['phase']} / Kelas {$input['grade']}\n"
-            ."- Mata Pelajaran: {$input['subject']}\n"
-            ."- Topik: {$input['topic']}\n"
-            ."- Durasi: {$input['duration_minutes']} menit\n"
-            ."- Tujuan Pembelajaran: {$input['learning_objectives']}\n"
-            ."- Kebutuhan Belajar: {$input['student_needs']}\n"
-            ."- Referensi Kurikulum: {$input['curriculum_reference']}";
+            ."- Fase/Kelas: {$phase} / Kelas {$grade}\n"
+            ."- Mata Pelajaran: {$subject}\n"
+            ."- Topik: {$topic}\n"
+            ."- Durasi: {$duration} menit\n"
+            ."- Tujuan Pembelajaran: {$objectives}\n"
+            ."- Kebutuhan Belajar: {$needs}\n"
+            ."- Referensi Kurikulum: {$reference}";
 
         return [
             ['role' => 'system', 'content' => $system],
             ['role' => 'user', 'content' => $user],
         ];
+    }
+
+    private function extractGeminiText(mixed $json): string
+    {
+        if (! is_array($json)) {
+            return '';
+        }
+        $candidates = $json['candidates'] ?? null;
+        if (! is_array($candidates) || ! isset($candidates[0]) || ! is_array($candidates[0])) {
+            return '';
+        }
+        $content = $candidates[0]['content'] ?? null;
+        if (! is_array($content)) {
+            return '';
+        }
+        $parts = $content['parts'] ?? null;
+        if (! is_array($parts) || ! isset($parts[0]) || ! is_array($parts[0])) {
+            return '';
+        }
+        $text = $parts[0]['text'] ?? '';
+
+        return is_scalar($text) ? (string) $text : '';
+    }
+
+    private function extractOpenAiText(mixed $json): string
+    {
+        if (! is_array($json)) {
+            return '';
+        }
+        $choices = $json['choices'] ?? null;
+        if (! is_array($choices) || ! isset($choices[0]) || ! is_array($choices[0])) {
+            return '';
+        }
+        $message = $choices[0]['message'] ?? null;
+        if (! is_array($message)) {
+            return '';
+        }
+        $content = $message['content'] ?? '';
+
+        return is_scalar($content) ? (string) $content : '';
     }
 }

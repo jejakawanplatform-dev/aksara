@@ -36,6 +36,9 @@ class DashboardController extends Controller
     public function __invoke(Request $request): Response|SymfonyResponse
     {
         $user = $request->user();
+        if (! $user) {
+            abort(401);
+        }
 
         if ($user->isAdmin()) {
             return $this->admin($user);
@@ -114,7 +117,8 @@ class DashboardController extends Controller
         $todayAiCount = AiGeneration::where('created_by', $user->id)
             ->whereDate('created_at', now()->today())
             ->count();
-        $dailyLimit = (int) setting('ai.daily_limit_per_teacher', 20);
+        $limitVal = setting('ai.daily_limit_per_teacher', 20);
+        $dailyLimit = is_numeric($limitVal) ? (int) $limitVal : 20;
         $aiPercentage = min(100, (int) round(($todayAiCount / max(1, $dailyLimit)) * 100));
 
         $recentPlans = LearningPlan::with(['subject', 'class', 'semester'])
@@ -229,8 +233,9 @@ class DashboardController extends Controller
                     ->whereHas('quiz', fn ($q) => $q->whereIn('plan_id', $planIds))
                     ->get();
 
-            $avgQuizScore = $attempts->count() > 0
-                ? (int) round($attempts->avg('score'))
+            $scoreAvg = $attempts->avg('score');
+            $avgQuizScore = ($attempts->count() > 0 && $scoreAvg !== null)
+                ? (int) round((float) $scoreAvg)
                 : null;
 
             $attentionStudents = $class->students
@@ -275,8 +280,9 @@ class DashboardController extends Controller
         })->values();
 
         $withAttendance = $classSummaries->filter(fn (array $c) => $c['totalAttendance'] > 0);
-        $overallPct = $withAttendance->isNotEmpty()
-            ? (int) round($withAttendance->avg('pctHadir'))
+        $attendanceAvg = $withAttendance->avg('pctHadir');
+        $overallPct = ($withAttendance->isNotEmpty() && $attendanceAvg !== null)
+            ? (int) round((float) $attendanceAvg)
             : null;
 
         return Inertia::render('Dashboard/WaliKelas', [

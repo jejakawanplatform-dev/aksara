@@ -89,12 +89,13 @@ class ReferenceController extends Controller
             $mapelScopeFilter = $defaultMapelScope;
         }
 
-        $subjectId = $request->query('subjectId');
-        if ($subjectId === null || $subjectId === '') {
-            $subjectId = Subject::query()->where('code', 'INF')->value('id')
+        $rawSubjectId = $request->query('subjectId');
+        if ($rawSubjectId === null || $rawSubjectId === '') {
+            $defaultSubjectId = Subject::query()->where('code', 'INF')->value('id')
                 ?? Subject::query()->value('id');
+            $subjectId = is_numeric($defaultSubjectId) ? (int) $defaultSubjectId : null;
         } else {
-            $subjectId = (int) $subjectId;
+            $subjectId = is_numeric($rawSubjectId) ? (int) $rawSubjectId : null;
         }
 
         $atpGradeFilter = $request->query('atpGradeFilter', 7);
@@ -149,8 +150,8 @@ class ReferenceController extends Controller
             'id' => $y->id,
             'name' => $y->name,
             'code' => $y->code,
-            'starts_on' => optional($y->starts_on)?->format('Y-m-d'),
-            'ends_on' => optional($y->ends_on)?->format('Y-m-d'),
+            'starts_on' => $y->starts_on?->format('Y-m-d'),
+            'ends_on' => $y->ends_on?->format('Y-m-d'),
             'is_active' => (bool) $y->is_active,
         ]);
 
@@ -166,8 +167,8 @@ class ReferenceController extends Controller
                 'name' => $s->name,
                 'code' => $s->code,
                 'number' => $s->number,
-                'starts_on' => optional($s->starts_on)?->format('Y-m-d'),
-                'ends_on' => optional($s->ends_on)?->format('Y-m-d'),
+                'starts_on' => $s->starts_on?->format('Y-m-d'),
+                'ends_on' => $s->ends_on?->format('Y-m-d'),
                 'is_active' => (bool) $s->is_active,
             ]);
 
@@ -292,7 +293,7 @@ class ReferenceController extends Controller
             'tab' => $tab,
             'tabs' => $tabs,
             'canManage' => $canManage,
-            'canManageCurrentSubject' => $this->canManageSubject($subjectId ? (int) $subjectId : null),
+            'canManageCurrentSubject' => $this->canManageSubject($subjectId),
             'filters' => [
                 'subjectId' => $subjectId,
                 'atpGradeFilter' => $atpGradeFilter,
@@ -301,16 +302,16 @@ class ReferenceController extends Controller
                 'per_page' => $perPage,
             ],
             'school' => [
-                'name' => (string) $service->get('school.name', 'SMP Negeri 1 Aksara'),
-                'npsn' => (string) $service->get('school.npsn', '12345678'),
-                'address' => (string) $service->get('school.address', 'Jl. Pendidikan No. 1, Jakarta'),
-                'headmaster' => (string) $service->get('school.headmaster', 'Drs. H. Mulyadi, M.Pd.'),
-                'phone' => (string) $service->get('school.phone', '021-5551234'),
+                'name' => $service->getString('school.name', 'SMP Negeri 1 Aksara'),
+                'npsn' => $service->getString('school.npsn', '12345678'),
+                'address' => $service->getString('school.address', 'Jl. Pendidikan No. 1, Jakarta'),
+                'headmaster' => $service->getString('school.headmaster', 'Drs. H. Mulyadi, M.Pd.'),
+                'phone' => $service->getString('school.phone', '021-5551234'),
             ],
             'academic' => [
-                'passing_score' => (int) $service->get('academic.passing_score', 70),
-                'quiz_attempt_limit' => (int) $service->get('academic.quiz_attempt_limit', 1),
-                'attendance_tolerance_minutes' => (int) $service->get('academic.attendance_tolerance_minutes', 15),
+                'passing_score' => $service->getInt('academic.passing_score', 70),
+                'quiz_attempt_limit' => $service->getInt('academic.quiz_attempt_limit', 1),
+                'attendance_tolerance_minutes' => $service->getInt('academic.attendance_tolerance_minutes', 15),
             ],
             'years' => $years,
             'semesters' => $semesters,
@@ -839,7 +840,7 @@ class ReferenceController extends Controller
             'sequence' => 'required|integer|min:1',
         ]);
 
-        $cp = CurriculumCp::findOrFail($data['curriculum_cp_id']);
+        $cp = CurriculumCp::query()->whereKey($data['curriculum_cp_id'])->firstOrFail();
         abort_unless($this->canManageSubject($cp->subject_id), 403);
 
         CurriculumTp::query()->create([
@@ -864,7 +865,7 @@ class ReferenceController extends Controller
             'sequence' => 'required|integer|min:1',
         ]);
 
-        $cp = CurriculumCp::findOrFail($data['curriculum_cp_id']);
+        $cp = CurriculumCp::query()->whereKey($data['curriculum_cp_id'])->firstOrFail();
         abort_unless($this->canManageSubject($cp->subject_id), 403);
 
         $tp->update([
@@ -973,10 +974,11 @@ class ReferenceController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        $semesterId = $semester?->id;
         $uniqueNumber = Semester::query()
             ->where('academic_year_id', $data['academic_year_id'])
             ->where('number', $data['number'])
-            ->when($semester, fn ($q) => $q->where('id', '!=', $semester->id))
+            ->when($semesterId !== null, fn ($q) => $q->where('id', '!=', $semesterId))
             ->exists();
 
         if ($uniqueNumber) {
@@ -1083,6 +1085,6 @@ class ReferenceController extends Controller
 
     private function ensureCanManage(): void
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::REFERENCES_MANAGE), 403);
+        abort_unless((bool) Auth::user()?->can(PermissionCatalog::REFERENCES_MANAGE), 403);
     }
 }

@@ -103,14 +103,18 @@ class User extends Authenticatable implements MustVerifyEmail
     public function classIds(): array
     {
         if ($this->isStudent()) {
-            return DB::table('class_members')
+            return array_values(DB::table('class_members')
                 ->where('student_id', $this->id)
                 ->pluck('class_id')
-                ->all();
+                ->map(fn ($id): int => is_numeric($id) ? (int) $id : 0)
+                ->all());
         }
 
         if ($this->isHomeroomTeacher()) {
-            return SchoolClass::where('homeroom_teacher_id', $this->id)->pluck('id')->all();
+            return array_values(SchoolClass::where('homeroom_teacher_id', $this->id)
+                ->pluck('id')
+                ->map(fn ($id): int => is_numeric($id) ? (int) $id : 0)
+                ->all());
         }
 
         return [];

@@ -25,9 +25,13 @@ class LearningPlanExportController extends Controller
     /**
      * Batch export filtered Learning Plans (Excel, Word, PDF)
      */
-    public function export(Request $request, string $format)
+    public function export(Request $request, string $format): \Symfony\Component\HttpFoundation\Response|\Illuminate\Contracts\View\View
     {
         $user = Auth::user();
+        if (! $user) {
+            abort(401);
+        }
+
         $query = LearningPlan::query()
             ->forCurrentUser()
             ->with(['teacher', 'class', 'subject', 'academicYear', 'semester']);
@@ -53,6 +57,9 @@ class LearningPlanExportController extends Controller
 
         if ($format === 'excel') {
             $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+            if ($tempFile === false) {
+                abort(500);
+            }
             file_put_contents($tempFile, $this->exportService->exportPlansExcel($plans));
 
             return response()->download($tempFile, "{$filename}.xlsx", [
@@ -62,6 +69,9 @@ class LearningPlanExportController extends Controller
 
         if ($format === 'word') {
             $tempFile = tempnam(sys_get_temp_dir(), 'docx_');
+            if ($tempFile === false) {
+                abort(500);
+            }
             file_put_contents($tempFile, $this->exportService->exportPlansWord($plans));
 
             return response()->download($tempFile, "{$filename}.docx", [
@@ -72,7 +82,7 @@ class LearningPlanExportController extends Controller
         if ($format === 'pdf') {
             /** @var SettingService $settingService */
             $settingService = app(SettingService::class);
-            $schoolName = (string) $settingService->get('school.name', 'SMP Negeri 1 Aksara');
+            $schoolName = $settingService->getString('school.name', 'SMP Negeri 1 Aksara');
 
             return view('exports.plans-pdf', compact('plans', 'schoolName'));
         }
@@ -83,9 +93,13 @@ class LearningPlanExportController extends Controller
     /**
      * Export single Learning Plan (Excel, Word, PDF)
      */
-    public function exportSingle(LearningPlan $plan, string $format)
+    public function exportSingle(LearningPlan $plan, string $format): \Symfony\Component\HttpFoundation\Response|\Illuminate\Contracts\View\View
     {
         $user = Auth::user();
+        if (! $user) {
+            abort(401);
+        }
+
         if (! $user->isAdmin() && $plan->teacher_id !== $user->id) {
             abort(403);
         }
@@ -96,6 +110,9 @@ class LearningPlanExportController extends Controller
 
         if ($format === 'excel') {
             $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+            if ($tempFile === false) {
+                abort(500);
+            }
             file_put_contents($tempFile, $this->exportService->exportPlansExcel(collect([$plan])));
 
             return response()->download($tempFile, "{$filename}.xlsx", [
@@ -105,6 +122,9 @@ class LearningPlanExportController extends Controller
 
         if ($format === 'word') {
             $tempFile = tempnam(sys_get_temp_dir(), 'docx_');
+            if ($tempFile === false) {
+                abort(500);
+            }
             file_put_contents($tempFile, $this->exportService->exportSinglePlanWord($plan));
 
             return response()->download($tempFile, "{$filename}.docx", [
@@ -115,7 +135,7 @@ class LearningPlanExportController extends Controller
         if ($format === 'pdf') {
             /** @var SettingService $settingService */
             $settingService = app(SettingService::class);
-            $schoolName = (string) $settingService->get('school.name', 'SMP Negeri 1 Aksara');
+            $schoolName = $settingService->getString('school.name', 'SMP Negeri 1 Aksara');
 
             return view('exports.single-plan-pdf', compact('plan', 'schoolName'));
         }
@@ -126,9 +146,12 @@ class LearningPlanExportController extends Controller
     /**
      * Download Excel template for import
      */
-    public function downloadTemplate()
+    public function downloadTemplate(): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+        if ($tempFile === false) {
+            abort(500);
+        }
         file_put_contents($tempFile, $this->exportService->downloadTemplate());
 
         return response()->download($tempFile, 'Template_Import_Modul_Ajar.xlsx', [

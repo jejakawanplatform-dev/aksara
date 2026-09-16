@@ -12,7 +12,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -29,8 +28,6 @@ use Illuminate\Support\Carbon;
  */
 class QuizAttempt extends Model
 {
-    use HasFactory;
-
     protected $fillable = ['quiz_id', 'student_id', 'answers', 'score', 'submitted_at'];
 
     protected function casts(): array

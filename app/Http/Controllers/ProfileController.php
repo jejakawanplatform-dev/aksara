@@ -28,13 +28,18 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+        if (! $user) {
+            abort(401);
+        }
+
         return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
             'user' => [
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
-                'email_verified_at' => $request->user()->email_verified_at,
+                'name' => $user->name,
+                'email' => $user->email,
+                'email_verified_at' => $user->email_verified_at,
             ],
         ]);
     }
@@ -44,13 +49,18 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user = $request->user();
+        if (! $user) {
+            abort(401);
         }
 
-        $request->user()->save();
+        $user->fill($request->validated());
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -65,6 +75,9 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        if (! $user) {
+            abort(401);
+        }
 
         Auth::logout();
 

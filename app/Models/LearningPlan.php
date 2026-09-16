@@ -54,6 +54,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class LearningPlan extends Model
 {
+    /** @use HasFactory<\Database\Factories\LearningPlanFactory> */
     use HasFactory, ScopesTeacherOrAdmin, SoftDeletes;
 
     protected $fillable = [

@@ -27,7 +27,7 @@ class AccessController extends Controller
 {
     public function index(): Response
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::ACCESS_MANAGE), 403);
+        abort_unless((bool) Auth::user()?->can(PermissionCatalog::ACCESS_MANAGE), 403);
 
         return Inertia::render('Access/Index', [
             'pageTitle' => 'Hak Akses (RBAC)',
@@ -51,7 +51,7 @@ class AccessController extends Controller
 
     public function save(Request $request): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::ACCESS_MANAGE), 403);
+        abort_unless((bool) Auth::user()?->can(PermissionCatalog::ACCESS_MANAGE), 403);
 
         /** @var array<string, array<string, bool>> $matrix */
         $matrix = $request->input('matrix', []);
@@ -82,7 +82,7 @@ class AccessController extends Controller
 
     public function resetDefaults(): RedirectResponse
     {
-        abort_unless(Auth::user()?->can(PermissionCatalog::ACCESS_MANAGE), 403);
+        abort_unless((bool) Auth::user()?->can(PermissionCatalog::ACCESS_MANAGE), 403);
 
         foreach (UserRole::cases() as $roleEnum) {
             $role = Role::findOrCreate($roleEnum->value, 'web');
