@@ -15,3 +15,4 @@
 | T11 | Template & Impor massal Excel | P1 | done | `UserExportImportController@import` |
 | T12 | Unduh kredensial sementara | P1 | done | `UserExportImportController@downloadCredentials` |
 | T13 | `UserExportImportTest` | P1 | done | 10 feature tests hijau (34 assertions) |
+| T14 | **[HOTFIX]** Cache hasil `User::classIds()` di properti instance untuk hindari N+1 query | P1 | done | BUG-05 — Audit 2026-09-21; `belongsToClass()` memanggil DB query baru di setiap pemanggilan, dipanggil di 4 controller berbeda |

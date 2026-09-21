@@ -577,17 +577,19 @@ class ReferenceController extends Controller
         $deletedCount = 0;
         $skippedCount = 0;
 
-        foreach ($rombels as $rombel) {
-            if ($rombel->learningPlans->isNotEmpty()) {
-                $skippedCount++;
+        DB::transaction(function () use ($rombels, &$deletedCount, &$skippedCount): void {
+            foreach ($rombels as $rombel) {
+                if ($rombel->learningPlans->isNotEmpty()) {
+                    $skippedCount++;
 
-                continue;
+                    continue;
+                }
+
+                $rombel->students()->detach();
+                $rombel->delete();
+                $deletedCount++;
             }
-
-            $rombel->students()->detach();
-            $rombel->delete();
-            $deletedCount++;
-        }
+        });
 
         if ($deletedCount === 0 && $skippedCount > 0) {
             return back()->with('error', "Tidak ada rombel yang dihapus karena {$skippedCount} rombel masih memiliki rencana pembelajaran.");
@@ -722,17 +724,19 @@ class ReferenceController extends Controller
         $deletedCount = 0;
         $skippedCount = 0;
 
-        foreach ($subjects as $subject) {
-            if ($subject->cps->isNotEmpty() || $subject->atpItems->isNotEmpty() || $subject->learningPlans->isNotEmpty()) {
-                $skippedCount++;
+        DB::transaction(function () use ($subjects, &$deletedCount, &$skippedCount): void {
+            foreach ($subjects as $subject) {
+                if ($subject->cps->isNotEmpty() || $subject->atpItems->isNotEmpty() || $subject->learningPlans->isNotEmpty()) {
+                    $skippedCount++;
 
-                continue;
+                    continue;
+                }
+
+                $subject->teachers()->detach();
+                $subject->delete();
+                $deletedCount++;
             }
-
-            $subject->teachers()->detach();
-            $subject->delete();
-            $deletedCount++;
-        }
+        });
 
         if ($deletedCount === 0 && $skippedCount > 0) {
             return back()->with('error', "Tidak ada mata pelajaran yang dihapus karena {$skippedCount} mata pelajaran masih terhubung dengan CP, ATP, atau rencana pembelajaran.");

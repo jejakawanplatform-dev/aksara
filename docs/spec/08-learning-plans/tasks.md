@@ -12,3 +12,4 @@
 | T08 | Open material dari plan | P1 | done | |
 | T09 | `LearningPipelineTest`, `CreatePlanTpTest`, export test | P1 | done | |
 | T10 | Stepper 5-stage di index | P1 | done | |
+| T11 | **[HOTFIX]** Tambahkan `throttle:10,1` pada rute `POST /plans` (AI store) | P0 | done | BUG-01 — Audit 2026-09-21; mencegah Denial-of-Wallet via spam AI generation |

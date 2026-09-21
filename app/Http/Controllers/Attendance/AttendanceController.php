@@ -29,7 +29,9 @@ class AttendanceController extends Controller
 {
     public function edit(LearningPlan $plan): Response
     {
-        abort_unless($plan->teacher_id === Auth::id(), 403);
+        $user = Auth::user();
+        abort_unless($user instanceof User, 401);
+        abort_unless($user->isAdmin() || $plan->teacher_id === $user->id, 403);
 
         $plan->load('class.students');
         $class = $plan->class;
@@ -71,7 +73,9 @@ class AttendanceController extends Controller
 
     public function save(Request $request, LearningPlan $plan): RedirectResponse
     {
-        abort_unless($plan->teacher_id === Auth::id(), 403);
+        $user = Auth::user();
+        abort_unless($user instanceof User, 401);
+        abort_unless($user->isAdmin() || $plan->teacher_id === $user->id, 403);
 
         $class = $plan->class;
         $studentIds = $class !== null ? $class->students->pluck('id')->all() : [];

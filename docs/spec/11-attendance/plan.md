@@ -28,3 +28,4 @@ Guru mengisi absensi per rencana pembelajaran; ringkasan kehadiran tersedia untu
 - [x] Tombol pintas "Tandai Semua Hadir", "Reset", dan Live Counter status di Form Presensi
 - [x] Peringatan dini kehadiran (*early warning badge*) untuk rasio kehadiran `< 75%`
 - [x] Test suite `AttendanceExportTest` dan `AttendanceSummaryTest` hijau
+- [x] Admin dapat mengakses dan mengedit absensi milik semua guru (bukan hanya owner) — GAP-02

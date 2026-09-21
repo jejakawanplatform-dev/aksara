@@ -45,3 +45,4 @@ Toolkit seleksi multi-baris (*bulk selection*) dan aksi massal kontekstual untuk
 - [x] Admin tidak bisa menghapus akun sendiri
 - [x] Guru ber-RPP dan wali kelas aktif otomatis dilindungi / dilewati
 - [x] Seluruh 4 feature test bulk actions hijau (100% passed)
+- [x] Semua endpoint `bulk-destroy` (Materials + Rombel + Mapel) dibungkus `DB::transaction` — BUG-02, BUG-03

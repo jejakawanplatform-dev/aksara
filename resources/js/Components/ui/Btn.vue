@@ -6,6 +6,7 @@
   See the LICENSE file in the project root.
 -->
 <script setup>
+import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -14,6 +15,12 @@ const props = defineProps({
     size: { type: String, default: 'md' }, // sm | md
     disabled: { type: Boolean, default: false },
     href: { type: String, default: null },
+    /**
+     * Gunakan `external` untuk link download, ekspor file, atau URL eksternal.
+     * Link internal (navigasi antar halaman Inertia) tidak perlu prop ini —
+     * secara default Btn akan memakai Inertia <Link> agar SPA tidak full-reload.
+     */
+    external: { type: Boolean, default: false },
 });
 
 const variantClass = computed(() => {
@@ -29,13 +36,25 @@ const sizeClass = computed(() => {
 </script>
 
 <template>
+    <!-- Navigasi internal SPA: pakai Inertia Link agar tidak full-reload -->
+    <Link
+        v-if="href && !external"
+        :href="href"
+        :class="[variantClass, sizeClass, $attrs.class]"
+    >
+        <slot />
+    </Link>
+
+    <!-- Link eksternal / download / ekspor file -->
     <a
-        v-if="href"
+        v-else-if="href && external"
         :href="href"
         :class="[variantClass, sizeClass, $attrs.class]"
     >
         <slot />
     </a>
+
+    <!-- Tombol biasa -->
     <button
         v-else
         :type="type"

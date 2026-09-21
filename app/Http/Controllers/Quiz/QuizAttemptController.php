@@ -100,14 +100,15 @@ class QuizAttemptController extends Controller
             return back()->with('message', 'Kamu sudah mengerjakan quiz ini sebelumnya.');
         }
 
+        $rawQuestions = is_array($quiz->questions) ? $quiz->questions : [];
+        $total = count($rawQuestions);
+
         $validated = $request->validate([
-            'answers' => ['required', 'array'],
-            'answers.*' => ['nullable', 'string'],
+            'answers' => ['required', 'array', 'size:' . $total],
+            'answers.*' => ['nullable', 'string', 'max:500'],
         ]);
 
         $answers = $validated['answers'];
-        $rawQuestions = is_array($quiz->questions) ? $quiz->questions : [];
-        $total = count($rawQuestions);
         $correct = 0;
 
         foreach ($rawQuestions as $i => $question) {

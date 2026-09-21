@@ -24,3 +24,4 @@ Operasional akun sekolah yang efisien tanpa panel admin terpisah — satu shell 
 - [x] Ekspor & Impor data pengguna via Excel (.xlsx) dengan template resmi
 - [x] Unduh rekap kredensial acak sementara
 - [x] `UserManagementTest`, `UserBulkActionTest`, dan `UserExportImportTest` hijau
+- [x] `User::classIds()` di-cache di properti instance untuk eliminasi N+1 per request — BUG-05

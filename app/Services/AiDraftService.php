@@ -457,6 +457,11 @@ class AiDraftService
         }
 
         // Fallback default structured material content
+        Log::error('AI: All providers failed generating material content. Serving static fallback.', [
+            'plan_id' => $plan->id,
+            'topic'   => $plan->topic,
+        ]);
+
         return [
             'title' => "Bahan Ajar: {$plan->topic}",
             'sections' => [

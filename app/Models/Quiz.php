@@ -12,6 +12,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuizStatus;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $plan_id
  * @property string $title
  * @property array<int, array<string, mixed>>|null $questions
- * @property string $status
+ * @property QuizStatus $status
  * @property-read LearningPlan|null $plan
  * @property-read Collection<int, QuizAttempt> $attempts
  */
@@ -37,6 +38,7 @@ class Quiz extends Model
     {
         return [
             'questions' => 'array',
+            'status'    => QuizStatus::class,
         ];
     }
 
@@ -54,6 +56,6 @@ class Quiz extends Model
 
     public function isPublished(): bool
     {
-        return $this->status === 'published';
+        return $this->status === QuizStatus::Published;
     }
 }

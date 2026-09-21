@@ -13,6 +13,7 @@
 namespace App\Http\Controllers\Materials;
 
 use App\Enums\MaterialStatus;
+use App\Enums\QuizStatus;
 use App\Http\Controllers\Controller;
 use App\Models\LearningEvent;
 use App\Models\LearningMaterial;
@@ -23,6 +24,7 @@ use App\Support\SubjectContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -144,19 +146,23 @@ class MaterialController extends Controller
             return back()->with('error', 'Tidak ada materi yang dipilih untuk dihapus.');
         }
 
-        $deletedCount = 0;
-        $skippedPublished = 0;
+        [$deletedCount, $skippedPublished] = DB::transaction(function () use ($materials): array {
+            $deleted = 0;
+            $skipped = 0;
 
-        foreach ($materials as $material) {
-            if ($material->events->isNotEmpty()) {
-                $skippedPublished++;
+            foreach ($materials as $material) {
+                if ($material->events->isNotEmpty()) {
+                    $skipped++;
 
-                continue;
+                    continue;
+                }
+
+                $material->delete();
+                $deleted++;
             }
 
-            $material->delete();
-            $deletedCount++;
-        }
+            return [$deleted, $skipped];
+        });
 
         $messages = [];
         if ($deletedCount > 0) {
@@ -226,18 +232,7 @@ class MaterialController extends Controller
             ? $rawReflection
             : (is_string($rawReflection) && trim($rawReflection) !== '' ? [$rawReflection] : []);
 
-        $publishedQuiz = $plan->quizzes->firstWhere('status', 'published')
-            ?? $plan->quizzes->firstWhere('status.value', 'published');
-
-        // Enum cast may make status an enum
-        if (! $publishedQuiz) {
-            $publishedQuiz = $plan->quizzes->first(function ($q) {
-                $status = $q->status;
-                $value = $status instanceof \BackedEnum ? $status->value : (string) $status;
-
-                return $value === 'published';
-            });
-        }
+        $publishedQuiz = $plan->quizzes->firstWhere('status', QuizStatus::Published);
 
         $materialTitle = $plan->topic;
         if (isset($content['title']) && is_string($content['title']) && $content['title'] !== '') {

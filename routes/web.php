@@ -51,7 +51,9 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'permission:plans.manage'])->prefix('plans')->name('plans.')->group(function () {
     Route::get('/', [PlanController::class, 'index'])->name('index');
     Route::get('/create', [PlanController::class, 'create'])->name('create');
-    Route::post('/', [PlanController::class, 'store'])->name('store');
+    Route::post('/', [PlanController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('store');
     Route::post('/bulk-destroy', [PlanController::class, 'bulkDestroy'])->name('bulk-destroy');
     Route::post('/import', [PlanController::class, 'import'])->name('import');
     Route::get('/export/{format}', [LearningPlanExportController::class, 'export'])->name('export');
@@ -62,7 +64,9 @@ Route::middleware(['auth', 'permission:plans.manage'])->prefix('plans')->name('p
     Route::delete('/{plan}', [PlanController::class, 'destroy'])->name('destroy');
     Route::post('/{plan}/open-material', [PlanController::class, 'openMaterial'])->name('open-material');
     Route::get('/{plan}/draft', [PlanController::class, 'draft'])->name('draft');
-    Route::post('/{plan}/draft/approve', [PlanController::class, 'approveDraft'])->name('draft.approve');
+    Route::post('/{plan}/draft/approve', [PlanController::class, 'approveDraft'])
+        ->middleware('throttle:10,1')
+        ->name('draft.approve');
     Route::post('/{plan}/draft/publish', [PlanController::class, 'publishDraft'])->name('draft.publish');
     Route::get('/{plan}/quiz', [PlanQuizController::class, 'edit'])->name('quiz');
     Route::post('/{plan}/quiz', [PlanQuizController::class, 'store'])->name('quiz.store');

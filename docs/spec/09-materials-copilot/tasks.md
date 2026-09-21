@@ -14,3 +14,4 @@
 | T10 | Smoke browser Co-Pilot apply | P1 | done | feature: patch+merge+update |
 | T11 | Ekspor materi multi-format (PDF/Word/MD) | P1 | done | `MaterialExportController` & `MaterialExportTest` |
 | T12 | Aksi massal penghapusan materi | P1 | done | `MaterialController@bulkDestroy` & `MaterialBulkActionTest` |
+| T13 | **[HOTFIX]** Tambahkan `Log::error` saat semua provider gagal di `generateFullMaterialContent()` | P1 | done | GAP-01 — Audit 2026-09-21; saat ini silent fallback ke template statis tanpa log error |

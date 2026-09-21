@@ -22,3 +22,4 @@ Guru menyusun modul ajar dengan bantuan AI yang selalu berstatus draf sampai dip
 - [x] Generate AI via `AiDraftService` (+ mock/failover)
 - [x] Import/export plan
 - [x] Tests pipeline / create / export hijau
+- [x] Rate limiter `throttle:10,1` pada `POST /plans` (AI store endpoint) — BUG-01

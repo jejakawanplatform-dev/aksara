@@ -21,3 +21,5 @@ Penilaian singkat terhubung rencana pembelajaran.
 - [x] Form kuis guru + attempt siswa
 - [x] Unique one-attempt per siswa
 - [x] Tertutup permission `plans.manage` / `quiz.attempt`
+- [x] `QuizStatus` enum konsisten (`app/Enums/QuizStatus.php`) + cast di model `Quiz` — BUG-04
+- [x] Validasi `size:N` + `max:500` per jawaban di `QuizAttemptController::submit()` — GAP-03

@@ -17,3 +17,4 @@
 | T13 | `ExportMenu` + ikon quiz/attendance dibedakan | P1 | done | Plans + Refs |
 | T14 | `.aksara-toolbar` + `.aksara-form-actions` (aksi kanan) | P1 | done | Refs/Plans/forms/modals |
 | T15 | Coastal polish seluruh Pages + Settings AI | P1 | done | 2026-08-11 |
+| T16 | **[HOTFIX]** Ubah `Btn.vue` pakai Inertia `<Link>` untuk navigasi internal + tambahkan prop `external` | P1 | done | BUG-06 — Audit 2026-09-21; saat ini semua `Btn :href` pakai `<a>` native → full page reload di 11+ halaman |

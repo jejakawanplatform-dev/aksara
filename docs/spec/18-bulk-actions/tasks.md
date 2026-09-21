@@ -14,3 +14,5 @@ Checklist deliverable tahap 18.
 | T08 | Replikasi ke `Materials/Index.vue` & Controller | P1 | done | `MaterialController@bulkDestroy` & `MaterialBulkActionTest` |
 | T09 | Replikasi ke `Plans/Index.vue` & Controller | P1 | done | `PlanController@bulkDestroy` & `PlanBulkActionTest` |
 | T10 | Replikasi ke `References/Index.vue` (Rombel & Mapel) | P1 | done | `ReferenceController@bulkDestroy*` & `ReferenceBulkActionTest` |
+| T11 | **[HOTFIX]** Bungkus loop delete `MaterialController::bulkDestroy` dalam `DB::transaction` | P0 | done | BUG-02 — Audit 2026-09-21; partial delete risk jika iterasi gagal di tengah |
+| T12 | **[HOTFIX]** Bungkus loop delete `ReferenceController::bulkDestroyRombel` dan `bulkDestroyMapel` dalam `DB::transaction` | P0 | done | BUG-03 — Audit 2026-09-21; `detach()` + `delete()` dua operasi terpisah tanpa transaction, state bisa korup |

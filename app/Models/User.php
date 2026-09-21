@@ -43,6 +43,9 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable;
 
+    /** @var list<int>|null Cache hasil classIds() agar tidak query ulang dalam satu request. */
+    private ?array $cachedClassIds = null;
+
     protected $fillable = [
         'name',
         'email',
@@ -102,22 +105,30 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function classIds(): array
     {
+        if ($this->cachedClassIds !== null) {
+            return $this->cachedClassIds;
+        }
+
         if ($this->isStudent()) {
-            return array_values(DB::table('class_members')
+            $this->cachedClassIds = array_values(DB::table('class_members')
                 ->where('student_id', $this->id)
                 ->pluck('class_id')
                 ->map(fn ($id): int => is_numeric($id) ? (int) $id : 0)
                 ->all());
+
+            return $this->cachedClassIds;
         }
 
         if ($this->isHomeroomTeacher()) {
-            return array_values(SchoolClass::where('homeroom_teacher_id', $this->id)
+            $this->cachedClassIds = array_values(SchoolClass::where('homeroom_teacher_id', $this->id)
                 ->pluck('id')
                 ->map(fn ($id): int => is_numeric($id) ? (int) $id : 0)
                 ->all());
+
+            return $this->cachedClassIds;
         }
 
-        return [];
+        return $this->cachedClassIds = [];
     }
 
     public function belongsToClass(?int $classId): bool

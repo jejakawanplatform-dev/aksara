@@ -44,3 +44,4 @@ Standarisasi UI supaya page domain konsisten; agent/dev tidak menambah palette/l
 - [x] Dashboard/report bebas ungu ad-hoc
 - [x] Token enterprise (slate netral + teal brand); dashboard hero flat
 - [x] Pagination / IconButton / ExportMenu / toolbar / densitas tabel (2026-08-11)
+- [x] `Btn.vue` pakai Inertia `<Link>` untuk navigasi internal + prop `external` untuk link download/eksternal — BUG-06

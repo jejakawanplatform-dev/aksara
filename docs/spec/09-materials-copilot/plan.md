@@ -37,3 +37,4 @@ Authoring bahan ajar kaya konten tanpa broken image; AI hanya asisten draf di si
 - [x] Co-Pilot `POST …/copilot` + apply aman
 - [x] Sanitasi HTML (ADR-008)
 - [x] Tests authoring/copilot/html hijau
+- [x] `Log::error` saat semua provider gagal di `generateFullMaterialContent()` — GAP-01

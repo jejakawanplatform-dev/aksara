@@ -246,3 +246,60 @@ Catat keputusan arsitektur/produk yang mengubah arah kerja. Format mengikuti ADR
 - **Alternatif yang dipertimbangkan:**
 - **Dampak:**
 ```
+
+## ADR-017: Throttle HTTP-Level Wajib pada Semua Endpoint yang Memanggil AI Eksternal
+
+- **Tanggal:** 2026-09-21
+- **Status:** diterima
+- **Konteks:** Audit 2026-09-21 (BUG-01) menemukan bahwa endpoint `POST /plans` (mode AI) tidak memiliki middleware `throttle:` meskipun memicu pemanggilan API berbayar ke OpenAI/Gemini. Hanya soft-limit harian berbasis DB yang ada, dan soft-limit tersebut rentan race condition (dua request simultan dapat sama-sama lolos batas). Endpoint `POST /materials/{material}/copilot` dan `POST /settings/providers/test` sudah benar memiliki `throttle:15,1`.
+- **Keputusan:**
+  1. **Setiap route yang memanggil AI provider eksternal wajib memiliki middleware `throttle:` di level HTTP** — tidak cukup hanya soft-limit DB.
+  2. Nilai default yang direkomendasikan: `throttle:10,1` (10 request per menit per user) untuk endpoint generasi berat (RPP, materi penuh), dan `throttle:15,1` untuk endpoint ringan (improve text, test koneksi).
+  3. Soft-limit harian per guru tetap dipertahankan sebagai guardrail bisnis, **bukan** sebagai pengganti rate limiter HTTP.
+  4. Daftar endpoint terdampak yang wajib memiliki `throttle:`:
+     - `POST /plans` (mode `ai`) → `throttle:10,1`
+     - `POST /plans/{plan}/draft/approve` (memicu material generation) → `throttle:10,1`
+     - `POST /materials/{material}/copilot` → sudah ada `throttle:15,1` ✅
+     - `POST /settings/providers/test` → sudah ada `throttle:15,1` ✅
+- **Alasan:** Mencegah *Denial-of-Wallet* — satu user yang melakukan spam (sengaja atau akibat multi-click) dapat menguras kuota token berbayar sekolah dalam hitungan detik. Rate limiter HTTP adalah perlindungan pertama dan paling efisien.
+- **Alternatif:** Hanya soft-limit DB — ditolak karena ada race condition dan tidak mencegah burst dalam satu menit; Redis atomic counter tanpa throttle middleware — lebih kompleks untuk benefit yang sama.
+- **Dampak:** `routes/web.php` (tambahkan `->middleware('throttle:10,1')` pada rute terdampak); `08-learning-plans` T11; `docs/steering/api-contract.md` perlu mencatat parameter mode AI dan throttle-nya.
+
+---
+
+## ADR-018: Enum Backing Wajib untuk Semua Kolom `status` Model Eloquent
+
+- **Tanggal:** 2026-09-21
+- **Status:** diterima
+- **Konteks:** Audit 2026-09-21 (BUG-04) menemukan bahwa model `Quiz` masih menggunakan raw string untuk kolom `status` (`'draft'` / `'published'`), sementara semua model lain (`LearningPlan`, `LearningMaterial`, `AttendanceRecord`) sudah menggunakan PHP 8.1 backed enum. Inkonsistensi ini menyebabkan *triple-fallback detection* di `MaterialController::show()` untuk mendeteksi quiz yang published — duplikasi logika yang rapuh dan sulit dirawat.
+- **Keputusan:**
+  1. **Semua kolom `status` pada model Eloquent wajib di-cast ke PHP 8.1 string-backed enum.**
+  2. Enum baru `App\Enums\QuizStatus` wajib dibuat dengan nilai `Draft` dan `Published`.
+  3. `Quiz::casts()` diupdate dengan `'status' => QuizStatus::class`.
+  4. Method `Quiz::isPublished()` diperbarui menggunakan `$this->status === QuizStatus::Published`.
+  5. Kode triple-fallback di `MaterialController::show()` (baris ~195–207) dihapus dan diganti dengan `$plan->quizzes->firstWhere('status', QuizStatus::Published)`.
+  6. Aturan ini berlaku retroaktif: jika ada model baru di masa depan dengan kolom status, **wajib** menggunakan backed enum.
+- **Alasan:** Type safety (PHPStan Level 9 dapat memeriksa penggunaan), eliminasi string literal tersebar di codebase, menghilangkan kebutuhan workaround/fallback deteksi status.
+- **Alternatif:** Tetap raw string dengan konstanta `const STATUS_PUBLISHED = 'published'` — ditolak karena tidak memanfaatkan fitur PHP 8.1 yang sudah digunakan proyek ini secara konsisten.
+- **Dampak:** `app/Enums/QuizStatus.php` (baru); `app/Models/Quiz.php` (tambah cast); `app/Http/Controllers/Materials/MaterialController.php` (hapus triple-fallback); `10-quizzes` T10.
+
+---
+
+## ADR-019: Standar Komponen `Btn.vue` — Navigasi Internal via Inertia `<Link>`, Navigasi Eksternal via `<a>`
+
+- **Tanggal:** 2026-09-21
+- **Status:** diterima
+- **Konteks:** Audit 2026-09-21 (BUG-06) menemukan bahwa `Btn.vue` selalu merender `<a :href="href">` native HTML untuk semua prop `href`, termasuk navigasi internal Inertia. Akibatnya, 11+ halaman melakukan full HTTP reload saat user klik tombol navigasi (kembali ke daftar, pindah halaman, dll.) — kehilangan keunggulan SPA Inertia (shared layout, scroll restoration, flash message timing). Sementara itu, `Dashboard/Admin.vue` sudah menggunakan Inertia `<Link>` langsung — inkonsistensi yang bisa membingungkan kontributor baru.
+- **Keputusan:**
+  1. `Btn.vue` ditambahkan prop baru `external` (Boolean, default `false`).
+  2. Ketika `href` diberikan dan `external = false` (default): render Inertia `<Link :href="href">`.
+  3. Ketika `href` diberikan dan `external = true`: render `<a :href="href" target="_blank" rel="noopener noreferrer">`.
+  4. Ketika tidak ada `href`: render `<button>` seperti sebelumnya.
+  5. Semua penggunaan `Btn :href` yang saat ini ada (11+ halaman) **tidak perlu diubah** — default `external=false` menjadikan behavior baru otomatis benar untuk navigasi internal.
+  6. Penggunaan yang memerlukan `<a>` (link download, ekspor file, URL eksternal) **wajib** menambahkan prop `external` secara eksplisit: `<Btn :href="exportUrl" external>`.
+  7. Dokumentasikan kontrak ini di `docs/spec/17-design-system/implementation.md`.
+- **Alasan:** Konsistensi SPA — navigasi internal seharusnya tidak pernah memicu full page reload di aplikasi Inertia. Default yang benar (`external=false`) memastikan existing code otomatis diperbaiki tanpa refactor besar di 11+ halaman.
+- **Alternatif:** Biarkan `<a>` native — ditolak karena merusak UX SPA secara sistematis; Hapus prop `href` dari `Btn` dan paksa pakai `<Link>` langsung — ditolak karena membutuhkan refactor masif.
+- **Dampak:** `resources/js/Components/ui/Btn.vue` (ubah template + tambah prop `external`); semua pemanggil `Btn :href` yang merupakan link download/ekspor wajib tambahkan `external`; `17-design-system` T16; perbarui `implementation.md` spec 17.
+
+---
